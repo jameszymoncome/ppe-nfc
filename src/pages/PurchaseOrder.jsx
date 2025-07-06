@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { Search, CalendarDays, ListOrdered, Eye, CheckCircle2, Edit, Truck, X } from 'lucide-react';
 import AIRModal from '../components/AIRModal';
+import InspectionModal from '../components/InspectionModal';
 
 const purchaseOrders = [
   {
@@ -191,6 +192,8 @@ const PurchaseOrderModal = ({ open, onClose }) => {
 const PurchaseOrder = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [airModalOpen, setAirModalOpen] = useState(false);
+  const [inspectionModalOpen, setInspectionModalOpen] = useState(false);
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -298,7 +301,15 @@ const PurchaseOrder = () => {
       </div>
       {/* Modal */}
       <PurchaseOrderModal open={modalOpen} onClose={() => setModalOpen(false)} />
-      <AIRModal open={airModalOpen} onClose={() => setAirModalOpen(false)} />
+      <AIRModal
+        open={airModalOpen}
+        onClose={() => setAirModalOpen(false)}
+        onNext={() => setInspectionModalOpen(true)}
+      />
+      <InspectionModal
+        open={inspectionModalOpen}
+        onClose={() => setInspectionModalOpen(false)}
+      />
     </div>
   );
 };

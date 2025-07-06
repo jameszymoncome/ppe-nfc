@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-const AIRModal = ({ open, onClose }) => {
+const AIRModal = ({ open, onClose, onNext }) => {
   const [form, setForm] = useState({
     receivedBy: '',
     lgu: '',
@@ -47,7 +47,14 @@ const AIRModal = ({ open, onClose }) => {
           Prepared to ensure all items are received in full and inspected based on required specifications.
         </p>
 
-        <form className="space-y-8" onSubmit={e => { e.preventDefault(); onClose(); }}>
+        <form
+          className="space-y-8"
+          onSubmit={e => {
+            e.preventDefault();
+            onClose();
+            if (onNext) onNext(form);
+          }}
+        >
           {/* Acceptance Section */}
           <div>
             <p className="font-semibold italic mb-2">ACCEPTANCE SECTION</p>
