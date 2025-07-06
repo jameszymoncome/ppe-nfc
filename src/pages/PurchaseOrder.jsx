@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { Search, CalendarDays, ListOrdered, Eye, CheckCircle2, Edit, Truck, X } from 'lucide-react';
 import AIRModal from '../components/AIRModal';
 import InspectionModal from '../components/InspectionModal';
+import { BASE_URL } from '../utils/connection';
+import axios from 'axios';
+import { Trash2 } from 'lucide-react';
 
 const purchaseOrders = [
   {
@@ -46,7 +49,78 @@ const statusColors = {
   'Delivered': 'text-gray-500',
 };
 
+
 const PurchaseOrderModal = ({ open, onClose }) => {
+  const [lguBranch, setLguBranch] = React.useState('LGU_Daet');
+  const [selectedModeProcurement, setSelectedModeProcurement] = React.useState("");
+  const [supplierQuery, setSupplierQuery] = useState('');
+  const [supplierResults, setSupplierResults] = useState([]);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [selectedSupplierID, setSelectedSupplierID] = useState(null);
+  const [selectedSupplierAddress, setSelectedSupplierAddress] = useState('');
+  const [selectedSupplierTIN, setSelectedSupplierTIN] = useState('');
+  const [selectedDeliveryTerm, setSelectedDeliveryTerm] = useState('');
+
+  const modeProcurement = [
+    { key: 1, label: "Public Bidding" },
+    { key: 2, label: "Through Procurement Service" },
+    { key: 3, label: "Limited Source Bidding" },
+    { key: 4, label: "Direct Contracting" },
+    { key: 5, label: "Repeat Order" },
+    { key: 6, label: "Shopping" }
+  ];
+
+  const deliveryTerms = [
+    { key: 1, label: "FOB destination" },
+    { key: 2, label: "FOB shipping point" }
+  ];
+
+  const [items, setItems] = useState([
+    { stockNo: '', unit: '', description: '', quantity: '', unitCost: '', amount: '0.00' }
+  ]);
+
+  useEffect(() => {
+    if (!supplierQuery || (selectedSupplier && supplierQuery === selectedSupplier.name)) {
+      setSupplierResults([]);
+      return;
+    }
+    const fetchSuppliers = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/getSupplier.php`, {
+          params: { q: supplierQuery }
+        });
+        setSupplierResults(response.data);
+      } catch (error) {
+        setSupplierResults([]);
+      }
+    };
+    fetchSuppliers();
+  }, [supplierQuery]);
+
+  const handleConfirm = (e) => {
+    e.preventDefault();
+    console.log(lguBranch);
+    console.log(selectedModeProcurement);
+    console.log(selectedSupplierID);
+    console.log(selectedDeliveryTerm);
+    console.log(items);
+  };
+
+  const handleItemChange = (idx, field, value) => {
+    setItems(prev =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
+        const updated = { ...item, [field]: value };
+        // Always calculate amount
+        const quantity = parseFloat(field === 'quantity' ? value : updated.quantity) || 0;
+        const unitCost = parseFloat(field === 'unitCost' ? value : updated.unitCost) || 0;
+        updated.amount = (quantity * unitCost).toFixed(2);
+        return updated;
+      })
+    );
+  };
+
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 px-2">
@@ -72,31 +146,85 @@ const PurchaseOrderModal = ({ open, onClose }) => {
               <p className="text-xs font-semibold mb-2">1. Purchase Order Info</p>
               <div className="mb-2 flex items-center">
                 <label className="w-40 text-xs text-gray-700">Local Government Unit:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                  value={lguBranch}
+                  readOnly
+                  // onChange={(e) => setLguBranch(e.target.value)}
+                />
               </div>
               <div className="mb-2 flex items-center">
                 <label className="w-40 text-xs text-gray-700">Mode of Procurement:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <select className="flex-1 border-b border-gray-300 outline-none text-xs px-1 py-1 bg-transparent"
+                  value={selectedModeProcurement}
+                  onChange={e => setSelectedModeProcurement(e.target.value)}
+                >
+                  <option value="">Select mode</option>
+                  {modeProcurement.map((mode) => (
+                    <option key={mode.key} value={mode.label}>{mode.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="mb-2 flex items-center">
                 <label className="w-40 text-xs text-gray-700">Purchase Request No.:</label>
                 <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
               </div>
             </div>
+
             {/* Right */}
             <div>
               <p className="text-xs font-semibold mb-2">2. Supplier Information</p>
-              <div className="mb-2 flex items-center">
+              <div className="mb-2 flex items-center relative">
                 <label className="w-32 text-xs text-gray-700">Supplier Name:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <input 
+                  type="search"
+                  className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                  placeholder="Search supplier..."
+                  value={supplierQuery}
+                  onChange={e => {
+                    setSupplierQuery(e.target.value);
+                    setSelectedSupplier(null);
+                    if (e.target.value === "") {
+                      setSupplierResults([]);
+                      setSelectedSupplierID("");
+                      setSelectedSupplierAddress("");
+                      setSelectedSupplierTIN("");
+                    }
+                  }}
+                  autoComplete="off"
+                />
+                {supplierResults.length > 0 && (
+                  <ul className="absolute left-32 top-8 bg-white border border-gray-200 rounded shadow z-10 w-[calc(100%-8rem)] max-h-40 overflow-y-auto text-xs">
+                    {supplierResults.map(supplier => (
+                      <li
+                        key={supplier.id}
+                        className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                        onClick={() => {
+                          setSupplierQuery(supplier.name);
+                          const address = supplier.address || '';
+                          const tin = supplier.tin || '';
+                          console.log(address, tin);
+                          setSelectedSupplierID(supplier.id);
+                          setSelectedSupplierAddress(address);
+                          setSelectedSupplierTIN(tin);
+                          setSelectedSupplier(supplier);
+                          setSupplierResults([]);
+                        }}
+                      >
+                        {supplier.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
               <div className="mb-2 flex items-center">
                 <label className="w-32 text-xs text-gray-700">Address:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" value={selectedSupplierAddress} readOnly />
               </div>
+
               <div className="mb-2 flex items-center">
                 <label className="w-32 text-xs text-gray-700">TIN:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" value={selectedSupplierTIN} readOnly />
               </div>
             </div>
           </div>
@@ -106,7 +234,7 @@ const PurchaseOrderModal = ({ open, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <div className="mb-2 flex items-center">
-                  <label className="w-40 text-xs text-gray-700">Place of Delivery:</label>
+                  <label className="w-40 text-xs text-gray-700">Place of Deliverys:</label>
                   <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
                 </div>
                 <div className="mb-2 flex items-center">
@@ -117,7 +245,15 @@ const PurchaseOrderModal = ({ open, onClose }) => {
               <div>
                 <div className="mb-2 flex items-center">
                   <label className="w-32 text-xs text-gray-700">Delivery Term:</label>
-                  <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                  <select className="flex-1 border-b border-gray-300 outline-none text-xs px-1 py-1 bg-transparent"
+                    value={selectedDeliveryTerm}
+                    onChange={e => setSelectedDeliveryTerm(e.target.value)}
+                  >
+                    <option value="">Select delivery Term</option>
+                    {deliveryTerms.map((term) => (
+                      <option key={term.key} value={term.label}>{term.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mb-2 flex items-center">
                   <label className="w-32 text-xs text-gray-700">Payment Term:</label>
@@ -139,23 +275,82 @@ const PurchaseOrderModal = ({ open, onClose }) => {
                     <th className="font-medium text-left">Quantity</th>
                     <th className="font-medium text-left">Unit Cost</th>
                     <th className="font-medium text-left">Amount</th>
+                    <th className="font-medium text-left">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                    <td><input className="border-b border-gray-300 outline-none px-1 py-0.5 w-full" /></td>
-                  </tr>
+                  {items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={item.stockNo}
+                          onChange={e => handleItemChange(idx, 'stockNo', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={item.unit}
+                          onChange={e => handleItemChange(idx, 'unit', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={item.description}
+                          onChange={e => handleItemChange(idx, 'description', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={item.quantity}
+                          onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={item.unitCost}
+                          onChange={e => handleItemChange(idx, 'unitCost', e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                          value={`₱${item.amount}`}
+                          onChange={e => handleItemChange(idx, 'amount', e.target.value)}
+                          readOnly
+                        />
+                      </td>
+                      <td className="align-middle text-center">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center mx-auto text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            const newItems = items.filter((_, i) => i !== idx);
+                            setItems(newItems);
+                          }}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
             <button
               type="button"
               className="mt-3 flex items-center px-3 py-1.5 bg-blue-700 text-white text-xs rounded shadow hover:bg-blue-900 transition"
+              onClick={() =>
+                setItems([
+                  ...items,
+                  { stockNo: '', unit: '', description: '', quantity: '', unitCost: '', amount: '0.00' }
+                ])
+              }
             >
               + Add Item
             </button>
@@ -172,6 +367,7 @@ const PurchaseOrderModal = ({ open, onClose }) => {
             <button
               type="submit"
               className="px-6 py-2 rounded bg-blue-800 text-white font-medium hover:bg-blue-900 transition"
+              onClick={handleConfirm}
             >
               Confirm
             </button>
