@@ -1,0 +1,1 @@
+export const BASE_URL = 'http://localhost/ppedaet-backend'; // Update this to your backend URL
