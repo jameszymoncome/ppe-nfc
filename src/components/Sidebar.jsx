@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X } from 'lucide-react';
-import lgu_seal from '/assets/images/lgu_seal.png';
+import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen } from 'lucide-react';
+import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
@@ -138,16 +138,37 @@ const Sidebar = () => {
               </a>
             </li>
             <li>
-              <a href="#" className={navLinkClass + " hover:bg-gray-100"}>
+              <NavLink
+                to="/accounts"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                }
+              >
                 <Users className="w-5 h-5" />
                 <span className="text-sm font-medium">Account Management</span>
-              </a>
+              </NavLink>
             </li>
             <li>
-              <a href="#" className={navLinkClass + " hover:bg-gray-100"}>
-                <Database className="w-5 h-5" />
-                <span className="text-sm font-medium">Manage Tables</span>
-              </a>
+              <NavLink
+                to="/departments"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                }
+              >
+                <Building2 className="w-5 h-5" />
+                <span className="text-sm font-medium">Department/Offices</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                }
+              >
+                <UserRoundPen className="w-5 h-5" />
+                <span className="text-sm font-medium">Profile</span>
+              </NavLink>
             </li>
             <li>
               <button

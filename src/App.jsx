@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Dashboard from './components/Dashboard';
 import PurchaseOrder from './pages/PurchaseOrder';
 import AIR from './pages/AIR';
+import Accounts from './pages/Accounts';
+import Department from './pages/Department';
 
 const App = () => {
   return (
@@ -15,6 +17,8 @@ const App = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/purchase-order" element={<PurchaseOrder />} />
         <Route path="/air-report" element={<AIR />} />
+        <Route path="/accounts" element={<Accounts />} />
+        <Route path="/departments" element={<Department />} />
       </Routes>
     </BrowserRouter>
   );

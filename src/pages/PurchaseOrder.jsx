@@ -60,6 +60,10 @@ const PurchaseOrderModal = ({ open, onClose }) => {
   const [selectedSupplierAddress, setSelectedSupplierAddress] = useState('');
   const [selectedSupplierTIN, setSelectedSupplierTIN] = useState('');
   const [selectedDeliveryTerm, setSelectedDeliveryTerm] = useState('');
+  const [purchaseRequestNo, setPurchaseRequestNo] = useState('');
+  const [placeOfDelivery, setPlaceOfDelivery] = useState('');
+  const [dateOfDelivery, setDateOfDelivery] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('');
 
   const modeProcurement = [
     { key: 1, label: "Public Bidding" },
@@ -73,6 +77,14 @@ const PurchaseOrderModal = ({ open, onClose }) => {
   const deliveryTerms = [
     { key: 1, label: "FOB destination" },
     { key: 2, label: "FOB shipping point" }
+  ];
+
+  const unitOptions = [
+    { value: '', label: 'Unit' },
+    { value: 'kg', label: 'kg' },
+    { value: 'pieces', label: 'pieces' },
+    { value: 'mm', label: 'mm' },
+    { value: 'L', label: 'L' },
   ];
 
   const [items, setItems] = useState([
@@ -101,8 +113,12 @@ const PurchaseOrderModal = ({ open, onClose }) => {
     e.preventDefault();
     console.log(lguBranch);
     console.log(selectedModeProcurement);
-    console.log(selectedSupplierID);
+    console.log(purchaseRequestNo);
+    // console.log(selectedSupplierID);
+    console.log(placeOfDelivery);
+    console.log(dateOfDelivery);
     console.log(selectedDeliveryTerm);
+    console.log(paymentTerms);
     console.log(items);
   };
 
@@ -164,10 +180,16 @@ const PurchaseOrderModal = ({ open, onClose }) => {
                   ))}
                 </select>
               </div>
+
               <div className="mb-2 flex items-center">
                 <label className="w-40 text-xs text-gray-700">Purchase Request No.:</label>
-                <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                <input 
+                  className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                  value={purchaseRequestNo}
+                  onChange={e => setPurchaseRequestNo(e.target.value)}
+                />
               </div>
+              
             </div>
 
             {/* Right */}
@@ -234,12 +256,21 @@ const PurchaseOrderModal = ({ open, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <div className="mb-2 flex items-center">
-                  <label className="w-40 text-xs text-gray-700">Place of Deliverys:</label>
-                  <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                  <label className="w-40 text-xs text-gray-700">Place of Delivery:</label>
+                  <input 
+                    className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                    value={placeOfDelivery}
+                    onChange={e => setPlaceOfDelivery(e.target.value)}
+                  />
                 </div>
                 <div className="mb-2 flex items-center">
                   <label className="w-40 text-xs text-gray-700">Date of Delivery:</label>
-                  <input type="date" className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                  <input 
+                    type="date"
+                    className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                    value={dateOfDelivery}
+                    onChange={e => setDateOfDelivery(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
@@ -257,7 +288,11 @@ const PurchaseOrderModal = ({ open, onClose }) => {
                 </div>
                 <div className="mb-2 flex items-center">
                   <label className="w-32 text-xs text-gray-700">Payment Term:</label>
-                  <input className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1" />
+                  <input
+                    className="flex-1 border-b border-gray-300 outline-none text-xs px-2 py-1"
+                    value={paymentTerms}
+                    onChange={e => setPaymentTerms(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -289,11 +324,15 @@ const PurchaseOrderModal = ({ open, onClose }) => {
                         />
                       </td>
                       <td>
-                        <input
-                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full"
+                        <select
+                          className="border-b border-gray-300 outline-none px-1 py-0.5 w-full bg-transparent"
                           value={item.unit}
                           onChange={e => handleItemChange(idx, 'unit', e.target.value)}
-                        />
+                        >
+                          {unitOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </td>
                       <td>
                         <input
