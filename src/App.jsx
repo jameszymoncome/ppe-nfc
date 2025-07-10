@@ -7,6 +7,8 @@ import PurchaseOrder from './pages/PurchaseOrder';
 import AIR from './pages/AIR';
 import Accounts from './pages/Accounts';
 import Department from './pages/Department';
+import PAR_ICS from './pages/PAR_ICS';
+import Property_Assignment from './pages/Property_Assignment';
 
 const App = () => {
   return (
@@ -19,6 +21,8 @@ const App = () => {
         <Route path="/air-report" element={<AIR />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/departments" element={<Department />} />
+        <Route path="/par-ics" element={<PAR_ICS />} />
+        <Route path="/property-assignment" element={<Property_Assignment />} />
       </Routes>
     </BrowserRouter>
   );

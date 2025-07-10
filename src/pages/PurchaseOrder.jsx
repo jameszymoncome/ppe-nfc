@@ -109,7 +109,7 @@ const PurchaseOrderModal = ({ open, onClose }) => {
     fetchSuppliers();
   }, [supplierQuery]);
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
     console.log(lguBranch);
     console.log(selectedModeProcurement);
@@ -120,6 +120,23 @@ const PurchaseOrderModal = ({ open, onClose }) => {
     console.log(selectedDeliveryTerm);
     console.log(paymentTerms);
     console.log(items);
+
+    try{
+      const response = await axios.post(`${BASE_URL}/purchaseOrder.php`, {
+        lguBranch,
+        selectedModeProcurement,
+        purchaseRequestNo,
+        selectedSupplierID,
+        placeOfDelivery,
+        dateOfDelivery,
+        selectedDeliveryTerm,
+        paymentTerms,
+        items
+      });
+      console.log("Purchase order confirmed:", response.data.data);
+    } catch (error) {
+      console.error("Error confirming purchase order:", error);
+    }
   };
 
   const handleItemChange = (idx, field, value) => {
@@ -412,13 +429,7 @@ const PurchaseOrderModal = ({ open, onClose }) => {
             </button>
           </div>
         </form>
-        {/* Notes */}
-        <div className="mt-4 text-xs text-gray-500">
-          <ul className="list-disc ml-5">
-            <li>Purchase No. is generated after saving/confirmation – auto print</li>
-            <li>also save the Date</li>
-          </ul>
-        </div>
+
       </div>
     </div>
   );

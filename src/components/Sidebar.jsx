@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
+
+  const location = useLocation();
+  const pathname = location.pathname;
 
   // Get user info from localStorage
   const firstName = localStorage.getItem('firstName') || '';
@@ -14,7 +17,7 @@ const Sidebar = () => {
   const navLinkClass =
     'flex items-center space-x-3 text-gray-700 p-3 rounded-lg transition-colors';
   const activeClass =
-    'bg-blue-100 text-blue-800 font-semibold';
+    'bg-blue-300 text-blue-800 font-semibold';
 
   return (
     <>
@@ -105,24 +108,13 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/purchase-order"
+                to="/par-ics"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
                 }
               >
                 <FileText className="w-5 h-5" />
-                <span className="text-sm font-medium">Purchase Order</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/air-report"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <FileText className="w-5 h-5" />
-                <span className="text-sm font-medium">Acceptance and Inspection</span>
+                <span className="text-sm font-medium">PAR/ICS</span>
               </NavLink>
             </li>
             <li>
