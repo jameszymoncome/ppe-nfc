@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { Search, X, PlusCircle, Trash2, Eye } from 'lucide-react';
 import { BASE_URL } from '../utils/connection';
+import Swal from 'sweetalert2';
 
 const initialForm = {
   lastname: '',
@@ -14,6 +15,7 @@ const initialForm = {
   password: '',
   role: '',
   department: '',
+  position: '',
 };
 
 const Accounts = () => {
@@ -78,9 +80,21 @@ const Accounts = () => {
       body: JSON.stringify(form),
     });
     const data = await res.json();
+    if (!/^\d{11}$/.test(form.contactNumber)) {
+      setMessage({
+        type: 'error',
+        text: 'Contact number must be exactly 11 digits and numeric only.',
+      });
+      return;
+    }
     
     if (data.success) {
-      setShowSuccessModal(true); // Show success modal
+      Swal.fire({
+        icon: 'success',
+        title: 'Account Successfully Created',
+        confirmButtonText: 'Okay',
+        confirmButtonColor: '#2563eb', // Tailwind blue-600
+      });
       setForm(initialForm);
       setTimeout(() => {
         setShowAddModal(false);
@@ -114,7 +128,13 @@ const Accounts = () => {
     
     if (data.success) {
       setUsers(users.filter(u => u.user_id !== userToDelete));
-      setShowDeleteSuccess(true);
+      Swal.fire({
+        icon: 'success',
+        title: 'Account Successfully Deleted',
+        confirmButtonText: 'Okay',
+        confirmButtonColor: '#2563eb', // Tailwind blue-600
+      });
+
       setTimeout(() => setShowDeleteSuccess(false), 2000);
     } else {
       alert(data.message);
@@ -245,9 +265,11 @@ const Accounts = () => {
                 <form onSubmit={handleSubmit} className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     {Object.entries(initialForm).map(([key, _]) => (
-                      <div key={key} className={key === 'role' || key === 'password' || key === 'department' ? 'md:col-span-2' : ''}>
+                      <div key={key} className={['role', 'password', 'department', 'position'].includes(key)
+                        ? 'md:col-span-2'
+                        : ''}>
                         <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-                          {key.replace(/([A-Z])/g, ' $1')} {['lastname','firstname','email','username','password','role','department'].includes(key) && '*'}
+                          {key.replace(/([A-Z])/g, ' $1')} {['lastname','firstname','email','username','password','role','department','position'].includes(key) && '*'}
                         </label>
                         {key === 'role' ? (
                           <select
@@ -259,9 +281,9 @@ const Accounts = () => {
                           >
                             <option value="">Select role</option>
                             <option value="ADMIN">ADMIN</option>
-                            <option value="DEPARTMENT HEAD">DEPARTMENT HEAD</option>
                             <option value="END USER">END USER</option>
-                            <option value="PROPERTY CUSTODIAN">PROPERTY CUSTODIAN</option>
+                            <option value="GSO EMPLOYEE">GSO EMPLOYEE</option>
+                            <option value="INVENTORY COMMITTEE">INVENTORY COMMITTEE</option>
                           </select>
                         ) : key === 'department' ? (
                           <select
@@ -278,13 +300,42 @@ const Accounts = () => {
                               </option>
                             ))}
                           </select>
-                        ) : (
+                        ) : key === 'contactNumber' ? (
+                          <input
+                            type="text"
+                            name="contactNumber"
+                            value={form.contactNumber}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d{0,11}$/.test(value)) {
+                                handleChange(e); // allow only digits and max 11 characters
+                              }
+                            }}
+                            required
+                            placeholder="e.g. 09123456789"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        ) : key === 'suffix' ? (
+                        <select
+                          name={key}
+                          value={form[key]}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="">N/A</option>
+                          <option value="Jr.">Jr.</option>
+                          <option value="Sr.">Sr.</option>
+                          <option value="II">II</option>
+                          <option value="III">III</option>
+                          <option value="IV">IV</option>
+                        </select>
+                      ) : (
                           <input
                             type={key === 'password' ? 'password' : 'text'}
                             name={key}
                             value={form[key]}
                             onChange={handleChange}
-                            required={['lastname','firstname','email','username','password','role','department'].includes(key)}
+                            required={['lastname','firstname','email','username','password','role','department', 'position'].includes(key)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                           />
                         )}
@@ -364,6 +415,10 @@ const Accounts = () => {
                     </p>
                   </div>
                   <div>
+                    <h4 className="text-sm font-medium text-gray-500">Position</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedUser.position || 'N/A'}</p>
+                  </div>
+                  <div>
                     <h4 className="text-sm font-medium text-gray-500">Department</h4>
                     <p className="mt-1 text-sm text-gray-900">{selectedUser.department || 'N/A'}</p>
                   </div>
@@ -393,27 +448,6 @@ const Accounts = () => {
               <div className="mt-4">
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Okay
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Show Delete Success Modal */}
-        {showDeleteSuccess && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Account Successfully Deleted</h3>
-              <div className="mt-4">
-                <button
-                  onClick={() => setShowDeleteSuccess(false)}
                   className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Okay

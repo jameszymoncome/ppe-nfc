@@ -15,8 +15,10 @@ const Property_Assignment = () => {
   const [dropdownPosition, setDropdownPosition] = useState(null);
   const [focusedItemId, setFocusedItemId] = useState(null);
   const inputRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [highValue, setHighValue] = useState([]);
+  const [lowValue, setLowValue] = useState([]);
+  const [showModalHigh, setShowModalHigh] = useState(false);
+  const [showModalLow, setShowModalLow] = useState(false);
   
 
   useEffect(() => {
@@ -60,12 +62,12 @@ const Property_Assignment = () => {
     fetchArticles();
   }, [articleSearchQuery]);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
+
     const newItem = {
       id: Date.now(),
+      parNo: '',
       airNo: '',
       airDate: '',
       fund: '',
@@ -96,27 +98,100 @@ const Property_Assignment = () => {
     setItems([]);
   };
 
- const saveForm = async () => {
-  try {
-    const payload = {
-      endUser,
-      department,
-      items: items.filter(item => item.description.trim() !== ''),
-    };
+  const saveForm = async () => {
+    // try {
+    //   const payload = {
+    //     endUser,
+    //     department,
+    //     items: items.filter(item => item.description.trim() !== ''),
+    //   };
 
-    await axios.post(`${BASE_URL}/insertAirItems.php`, payload);
-    alert('Form saved successfully!');
-  } catch (error) {
-    console.error('Save failed:', error);
-    alert('Failed to save.');
-  }
-};
+    //   await axios.post(`${BASE_URL}/insertAirItems.php`, payload);
+    //   alert('Form saved successfully!');
+    // } catch (error) {
+    //   console.error('Save failed:', error);
+    //   alert('Failed to save.');
+    // }
+  };
 
 
-const handleConfirm = () => {
-  // Open modal to preview current data
-  openModal();
-};
+  const handleConfirm = () => {
+    const high = items.filter(item => parseFloat(item.totalAmount) >= 50000);
+    const low = items.filter(item => parseFloat(item.totalAmount) < 50000);
+
+    setHighValue(high);
+    setLowValue(low);
+
+    if (high.length > 0) {
+      setShowModalHigh(true);
+    } else if (low.length > 0) {
+      setShowModalLow(true);
+    }
+  };
+
+  const handleNextFromHighModal = () => {
+    setShowModalHigh(false); // close Modal A
+
+    if (lowValue.length > 0) {
+      setShowModalLow(true); // open Modal B if needed
+    }
+  };
+
+  const getValidItemCount = () => {
+    return highValue.filter(item =>
+      item.airNo &&
+      item.airDate &&
+      item.fund &&
+      item.article &&
+      item.description &&
+      item.model &&
+      item.unit &&
+      item.unitCost &&
+      item.totalAmount
+    ).length;
+  };
+
+  const getFormattedDescriptions = () => {
+    return highValue
+      .filter(item =>
+        item.airNo &&
+        item.airDate &&
+        item.fund &&
+        item.article &&
+        item.description &&
+        item.model &&
+        item.unit &&
+        item.unitCost &&
+        item.totalAmount
+      )
+      .map(item => `${item.description} ${item.model} ${item.serialNo}`)
+      .join('\n');
+  };
+
+  const getCommonValue = (key) => {
+    const validItems = highValue.filter(item =>
+      item.airNo &&
+      item.airDate &&
+      item.fund &&
+      item.article &&
+      item.description &&
+      item.model &&
+      item.unit &&
+      item.unitCost &&
+      item.totalAmount
+    );
+
+    if (validItems.length === 0) return null;
+
+    const firstValue = validItems[0][key];
+    const allSame = validItems.every(item => item[key] === firstValue);
+
+    return allSame ? firstValue : null;
+  };
+
+  const commonUnit = getCommonValue("unit");
+  const commonAmount = getCommonValue("totalAmount");
+  const commonDate = getCommonValue("airDate");
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -412,7 +487,7 @@ const handleConfirm = () => {
         </div>
       </div>
 
-      {isModalOpen && (
+      {showModalHigh && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
@@ -460,38 +535,38 @@ const handleConfirm = () => {
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto mb-6">
-                <table className="w-full border-collapse border border-gray-300">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-black">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Quantity</th>
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Unit</th>
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Description</th>
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Property Number</th>
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Date Acquired</th>
-                      <th className="border border-gray-300 px-2 py-2 text-xs font-medium">Amount</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Quantity</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Unit</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Description</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Property Number</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Date Acquired</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, index) => (
+                    {highValue.map((item, index) => (
                       <tr key={item.id}>
-                        <td className="border px-2 py-2 text-xs">{item.unit || '-'}</td>
-                        <td className="border px-2 py-2 text-xs">{item.unit || '-'}</td>
-                        <td className="border px-2 py-2 text-xs">{item.description || '-'} {item.model || '-'} {item.serialNo || '-'}</td>
-                        <td className="border px-2 py-2 text-xs">{item.airNo || '-'}</td>
-                        <td className="border px-2 py-2 text-xs">{item.airDate || '-'}</td>
-                        <td className="border px-2 py-2 text-xs">{item.totalAmount || '-'}</td>
+                        <td className="border border-black px-2 py-2 text-xs">{index === 0 ? getValidItemCount() : ''}</td>
+                        <td className="border border-black px-2 py-2 text-xs">{index === 0 ? (commonUnit || '-') : ''}</td>
+                        <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">{index === 0 ? getFormattedDescriptions() : ''}</td>
+                        <td className="border border-black px-2 py-2 text-xs">{item.airNo || '-'}</td>
+                        <td className="border border-black px-2 py-2 text-xs">{index === 0 ? (commonDate || '-') : ''}</td>
+                        <td className="border border-black px-2 py-2 text-xs">{index === 0 ? (commonAmount || '-') : ''}</td>
                       </tr>
                     ))}
                     {/* Fill up to 15 rows if needed */}
-                    {Array.from({ length: Math.max(0, 15 - items.length) }, (_, i) => (
+                    {Array.from({ length: Math.max(0, 15 - highValue.length) }, (_, i) => (
                       <tr key={`empty-${i}`}>
-                        <td className="border px-2 py-2 text-xs">-</td>
-                        <td className="border px-2 py-2 text-xs">-</td>
-                        <td className="border px-2 py-2 text-xs">-</td>
-                        <td className="border px-2 py-2 text-xs">-</td>
-                        <td className="border px-2 py-2 text-xs">-</td>
-                        <td className="border px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
                       </tr>
                     ))}
                   </tbody>
@@ -499,8 +574,8 @@ const handleConfirm = () => {
               </div>
 
               {/* Signature Section */}
-              <div className="grid grid-cols-2 gap-8 mt-8">
-                <div className="text-center">
+              <div className="grid grid-cols-2 border border-black">
+                <div className="text-center border-r border-black p-6">
                   <p className="text-sm font-medium mb-2">Received by:</p>
                   <div className='border-b border-gray-300 mt-4 h-8 flex items-center justify-center
                   text-sm font-semibold'> {endUser || 'N/A'}</div>
@@ -512,7 +587,7 @@ const handleConfirm = () => {
                   text-sm font-semibold">{new Date().toLocaleDateString()}</p>
                   <p className="text-xs">Date</p>
                 </div>
-                <div className="text-center">
+                <div className="text-center border-l border-black p-6">
                   <p className="text-sm font-medium mb-2">Issued by:</p>
                   <div className="border-b border-gray-300 mt-4 h-8 flex items-center justify-center
                   text-sm font-semibold"></div>
@@ -530,19 +605,165 @@ const handleConfirm = () => {
             {/* Modal Footer */}
             <div className="flex justify-end gap-4 p-4 border-t bg-gray-50">
               <button
-                onClick={closeModal}
+                onClick={() => setShowModalHigh(false)}
                 className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
               >
                 Back
               </button>
               <button
                 onClick={async () => {
-                  await saveForm();
-                  closeModal();
+                  // await saveForm();
+                  handleNextFromHighModal();
                 }}
                 className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showModalLow && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            {/* <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-lg font-semibold">Inventory Custodian Slip</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div> */}
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="border-2 border-black bg-white">
+                {/* Header */}
+                <div className="text-center p-4">
+                  <h1 className="text-lg font-bold">INVENTORY CUSTODIAN SLIP</h1>
+                  <p className="text-sm">-Office/Department-</p>
+                  <p className="text-sm">Local Government Unit of Daet</p>
+                  <p className="text-sm">Daet, Camarines Norte</p>
+                </div>
+
+                {/* Fund and ICS No. */}
+                <div className="flex border-b border-black">
+                  <div className="flex-1 p-2 border-black">
+                    <span className="text-sm font-semibold">Fund: </span>
+                    <span className="border-b border-black inline-block w-40 ml-2"></span>
+                  </div>
+                  <div className="flex-1 p-2">
+                    <span className="text-sm font-semibold">ICS No.: </span>
+                    <span className="border-b border-black inline-block w-40 ml-2"></span>
+                  </div>
+                </div>
+
+                {/* Table Headers */}
+                <div className="grid grid-cols-7 border-b border-black text-xs font-semibold">
+                  <div className="p-2 border-r border-black text-center">Quantity</div>
+                  <div className="p-2 border-r border-black text-center">Unit</div>
+                  <div className="p-2 border-r border-black text-center">
+                    <div className="text-center">Amount</div>
+                    <div className="grid grid-cols-2 border-t border-black mt-1">
+                      <div className="border-r border-black p-1">Unit Cost</div>
+                      <div className="p-1">Total Cost</div>
+                    </div>
+                  </div>
+                  <div className="p-2 border-r border-black text-center">Description</div>
+                  <div className="p-2 border-r border-black text-center">Inventory Item No.</div>
+                  <div className="p-2 text-center">Estimated Useful Life</div>
+                </div>
+
+                {/* Table Rows */}
+                {lowValue.map((item, index) => (
+                  <div key={item.id} className="grid grid-cols-7 border-b border-gray-300 text-xs min-h-[30px]">
+                    <div className="p-2 border-r border-black">{item.quantity || '-'}</div>
+                    <div className="p-2 border-r border-black">{item.unit || '-'}</div>
+                    <div className="border-r border-black">
+                      <div className="grid grid-cols-2 h-full">
+                        <div className="p-2 border-r border-black">{item.unitCost || '-'}</div>
+                        <div className="p-2">{item.totalAmount || '-'}</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border-r border-black">{item.description || '-'}</div>
+                    <div className="p-2 border-r border-black">{item.inventoryItemNo || '-'}</div>
+                    <div className="p-2">{item.estimatedLife || '-'}</div>
+                  </div>
+                ))}
+                {/* Fill up to 20 rows if needed */}
+                {Array.from({ length: Math.max(0, 15 - lowValue.length) }, (_, i) => (
+                  <div key={`empty-${i}`} className="grid grid-cols-7 border-b border-gray-300 text-xs min-h-[30px]">
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="border-r border-black">
+                      <div className="grid grid-cols-2 h-full">
+                        <div className="p-2 border-r border-black">-</div>
+                        <div className="p-2">-</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2">-</div>
+                  </div>
+                ))}
+
+                {/* Footer */}
+                <div className="grid grid-cols-2 border-t-2 border-black">
+                  {/* Left Side */}
+                  <div className="p-4 border-r border-black">
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold">Received by :</p>
+                    </div>
+                    <div className="mt-8 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Signature over Printed Name of End User</p>
+                    </div>
+                    <div className="mt-6 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Position/Office</p>
+                    </div>
+                    <div className="mt-6">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Date</p>
+                    </div>
+                  </div>
+
+                  {/* Right Side */}
+                  <div className="p-4">
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold">Issued by :</p>
+                    </div>
+                    <div className="mt-8 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Signature over Printed Name of Supply</p>
+                      <p className="text-xs text-center">and/or Property Custodian</p>
+                    </div>
+                    <div className="mt-6 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Position/Office</p>
+                    </div>
+                    <div className="mt-6">
+                      <div className="border-b border-black w-full h-8 mb-2"></div>
+                      <p className="text-xs text-center">Date</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end p-4 border-t">
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors mr-2"
+              >
+                Close
+              </button>
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              >
+                Print
               </button>
             </div>
           </div>

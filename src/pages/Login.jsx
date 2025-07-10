@@ -43,6 +43,8 @@ const Login = () => {
         localStorage.setItem('accessLevel', data.accessLevel);
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('department', data.department);
+        localStorage.setItem('email', data.email);
+        localStorage.setItem('contactNumber', data.contactNumber);
         // Redirect or update UI as needed
         alert('Login successful!');
         navigate('/dashboard'); // Redirect to dashboard
