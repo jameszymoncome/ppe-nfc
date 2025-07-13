@@ -1,15 +1,15 @@
 import React from 'react';
-import Sidebar from './Sidebar';
+import GE_Sidebar from './GE_Sidebar';
 import { Search } from 'lucide-react';
 
-const Dashboard = () => {
+const GE_Dashboard = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
+      <GE_Sidebar />
 
       {/* Main content area */}
       <div className="flex-1 p-8 overflow-auto">
@@ -37,4 +37,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default GE_Dashboard;

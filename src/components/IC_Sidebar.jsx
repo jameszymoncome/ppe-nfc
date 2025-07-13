@@ -3,7 +3,7 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
-const Sidebar = () => {
+const IC_Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
 
@@ -102,7 +102,7 @@ const Sidebar = () => {
           <ul className="space-y-2">
             <li>
               <NavLink
-                to="/dashboard"
+                to="/inv-com-dashboard"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -113,9 +113,9 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/par-ics"
+                to="/ic-par-ics"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/ic-par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
                 }
               >
                 <FileText className="w-5 h-5" />
@@ -123,56 +123,56 @@ const Sidebar = () => {
               </NavLink>
             </li>
             <li>
-              <div>
-                {/* Main Inspection Item */}
-                <a 
-                  href="#" 
-                  className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleInspection();
-                  }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <ClipboardCheck className="w-5 h-5" />
-                    <span className="text-sm font-medium">Inspection</span>
-                  </div>
-                  {isInspectionOpen ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </a>
-
-                {/* Sub-menu Items */}
-                {isInspectionOpen && (
-                  <ul className="ml-6 mt-2 space-y-1">
-                    <li>
-                      <NavLink
-                        to="/inspection/nfc-tagged"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
-                        }
-                      >
-                        <Smartphone className="w-4 h-4 mr-2" />
-                        <span className="text-sm">NFC-Tagged Items</span>
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
-                        to="/inspection/manual-untagged"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
-                        }
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        <span className="text-sm">Manual Inspection (Untagged)</span>
-                      </NavLink>
-                    </li>
-                  </ul>
-                )}
-              </div>
-            </li>
+                          <div>
+                            {/* Main Inspection Item */}
+                            <a 
+                              href="#" 
+                              className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                toggleInspection();
+                              }}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <ClipboardCheck className="w-5 h-5" />
+                                <span className="text-sm font-medium">Inspection</span>
+                              </div>
+                              {isInspectionOpen ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                            </a>
+            
+                            {/* Sub-menu Items */}
+                            {isInspectionOpen && (
+                              <ul className="ml-6 mt-2 space-y-1">
+                                <li>
+                                  <NavLink
+                                    to="/inspection/ic-nfc-tagged"
+                                    className={({ isActive }) =>
+                                      `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                                    }
+                                  >
+                                    <Smartphone className="w-4 h-4 mr-2" />
+                                    <span className="text-sm">NFC-Tagged Items</span>
+                                  </NavLink>
+                                </li>
+                                <li>
+                                  <NavLink
+                                    to="/inspection/manual-untagged"
+                                    className={({ isActive }) =>
+                                      `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                                    }
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    <span className="text-sm">Manual Inspection (Untagged)</span>
+                                  </NavLink>
+                                </li>
+                              </ul>
+                            )}
+                          </div>
+                        </li>
             <li>
               <a href="#" className={navLinkClass + " hover:bg-gray-100"}>
                 <BarChart3 className="w-5 h-5" />
@@ -181,40 +181,7 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/accounts"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <Users className="w-5 h-5" />
-                <span className="text-sm font-medium">Account Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/departments"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <Building2 className="w-5 h-5" />
-                <span className="text-sm font-medium">Department/Offices</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/category"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <Folder className="w-5 h-5" />
-                <span className="text-sm font-medium">Category</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/profile"
+                to="/ic-profile"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -252,4 +219,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default IC_Sidebar;

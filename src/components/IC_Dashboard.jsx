@@ -1,15 +1,15 @@
 import React from 'react';
-import Sidebar from './Sidebar';
+import IC_Sidebar from './IC_Sidebar';
 import { Search } from 'lucide-react';
 
-const Dashboard = () => {
+const IC_Dashboard = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
+      <IC_Sidebar />
 
       {/* Main content area */}
       <div className="flex-1 p-8 overflow-auto">
@@ -37,4 +37,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default IC_Dashboard;

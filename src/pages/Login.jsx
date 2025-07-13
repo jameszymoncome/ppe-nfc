@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import lgu_seal from '/assets/images/lgu_seal.png';
 import img_1 from '/assets/images/login_image1.png';
 import { BASE_URL } from '../utils/connection'; // Ensure this path is correct
@@ -30,10 +31,10 @@ const Login = () => {
       });
 
       const data = await response.json();
-      console.log(data); // <-- Add this line
+      console.log(data);
 
       if (data.success) {
-        // Save token and user info as needed (e.g., localStorage)
+        // Save user info in localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data));
         localStorage.setItem('rememberMe', rememberMe);
@@ -45,14 +46,49 @@ const Login = () => {
         localStorage.setItem('department', data.department);
         localStorage.setItem('email', data.email);
         localStorage.setItem('contactNumber', data.contactNumber);
-        // Redirect or update UI as needed
-        alert('Login successful!');
-        navigate('/dashboard'); // Redirect to dashboard
-        // window.location.href = '/dashboard'; // Example redirect
+
+        console.log('User role:', data.accessLevel);
+
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Successful!',
+          text: `Welcome back, ${data.firstName || username}!`,
+          showConfirmButton: false,
+          timer: 500,
+          timerProgressBar: true,
+          toast: true,
+          position: 'top-end'
+        }).then(() => {
+          if (data.accessLevel === "ADMIN") {
+            navigate('/dashboard');
+          } else if (data.accessLevel === "GSO EMPLOYEE") {
+            navigate('/gso-employee-dashboard');
+          } else if (data.accessLevel === "INVENTORY COMMITTEE") {
+            navigate('/inv-com-dashboard');
+          } else {
+            navigate('/end-user-dashboard');
+          }
+        });
+
       } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: data.message || 'Invalid credentials. Please try again.',
+          confirmButtonText: 'Try Again',
+          confirmButtonColor: '#ef4444'
+        });
         setError(data.message || 'Login failed');
       }
     } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Unable to connect to the server. Please check your internet connection and try again.',
+        confirmButtonText: 'Retry',
+        confirmButtonColor: '#ef4444'
+      });
       setError('Network error');
     } finally {
       setLoading(false);
@@ -60,10 +96,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center"
-      style={{
-        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(147, 51, 234, 0.8)), url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
-      }}>
+    <div className="min-h-screen flex items-center justify-center bg-white-400">
       <div className="bg-white rounded-lg shadow-2xl overflow-hidden max-w-4xl w-full mx-4 flex">
         {/* Left Side - Login Form */}
         <div className="w-full md:w-1/2 p-8">

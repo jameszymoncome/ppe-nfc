@@ -1,15 +1,15 @@
 import React from 'react';
-import Sidebar from './Sidebar';
 import { Search } from 'lucide-react';
+import EU_Sidebar from './EU_Sidebar';
 
-const Dashboard = () => {
+const EU_Dashboard = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
+      <EU_Sidebar />
 
       {/* Main content area */}
       <div className="flex-1 p-8 overflow-auto">
@@ -37,4 +37,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default EU_Dashboard;
