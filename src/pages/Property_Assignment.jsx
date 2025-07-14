@@ -3,9 +3,11 @@ import { Plus, Eye, Home, FileCheck, ClipboardList, BarChart, Users, Settings, F
 import Sidebar from '../components/Sidebar'; // Adjust the path if needed
 import axios from 'axios';
 import { BASE_URL } from '../utils/connection';
+import Swal from "sweetalert2";
 
 const Property_Assignment = () => {
   const [endUser, setEndUser] = useState('');
+  const [endUserId, setEndUserId] = useState('');
   const [endUserResults, setEndUserResults] = useState([]);
   const [selectedEndUser, setSelectedEndUser] = useState(null);
   const [department, setDepartment] = useState('');
@@ -128,9 +130,31 @@ const Property_Assignment = () => {
           highValue,
           items,
           endUser,
+          endUserId,
           formType
         });
-        console.log(response.data);
+        console.log(response.data.received.parNo);
+        const data = response.data;
+        if (data.success) {
+          const parNos = data.received.parNo || [];
+
+          Swal.fire({
+            title: "PAR/ICS successfully created and saved.",
+            icon: "success",
+            html: `
+              <p class="mt-2 font-semibold">Generated PAR No(s):</p>
+              <div class="mt-1 text-blue-600 font-bold">${parNos.join(', ')} <br/> successfully created</div>
+            `,
+            confirmButtonText: "OK",
+            customClass: {
+              popup: "rounded-2xl",
+              confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
+            },
+            buttonsStyling: false,
+          }).then(() => {
+            window.location.reload();
+          });
+        }
       } catch (error) {
         console.error('Error fetching GSO head:', error);
       }
@@ -142,6 +166,7 @@ const Property_Assignment = () => {
           lowValue,
           items,
           endUser,
+          endUserId,
           formType
         });
         console.log(response.data);
@@ -157,6 +182,7 @@ const Property_Assignment = () => {
           lowValue,
           items,
           endUser,
+          endUserId,
           formType: 'Both'
         });
         console.log(response.data);
@@ -326,6 +352,7 @@ const Property_Assignment = () => {
                             className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
                             onClick={() => {
                               setEndUser(user.enduser);
+                              setEndUserId(user.user_id);
                               setSelectedEndUser(user);
                               setDepartment(user.department || '');
                               setEndUserResults([]);

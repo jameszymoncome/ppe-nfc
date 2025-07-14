@@ -132,13 +132,13 @@ const handleSave = async () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
+                <h1 className="text-2xl font-bold text-blue-800">Profile</h1>
                 <p className="text-gray-600">Manage your account information</p>
               </div>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Edit3 size={20} />
                   Edit Profile
@@ -170,7 +170,7 @@ const handleSave = async () => {
               <User size={48} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">{getFullName()}</h2>
+              <h2 className="text-2xl font-bold text-blue-800">{getFullName()}</h2>
               <p className="text-gray-600">{userData.position}</p>
               <p className="text-gray-500">{userData.department}</p>
             </div>
@@ -180,7 +180,7 @@ const handleSave = async () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-4">Personal Information</h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -279,7 +279,7 @@ const handleSave = async () => {
 
             {/* Account Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Information</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-4">Account Information</h3>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>

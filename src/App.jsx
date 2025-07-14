@@ -12,6 +12,8 @@ import Property_Assignment from './pages/Property_Assignment';
 import Category from './pages/Category';
 import Nfc_Tagged from './pages/Nfc_Tagged';
 import Profile from './pages/Profile';
+import Manual_Inspection from './pages/Manual_Inspection';
+import Reports from './pages/Reports';
 //GSO Employee Routes
 import GE_Dashboard from './components/GE_Dashboard';
 import GE_PAR_ICS from './pages/gso_employee_pages/GE_PAR_ICS';
@@ -24,6 +26,7 @@ import IC_Profile from './pages/inv_committee_pages/IC_Profile';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
+
 
 const App = () => {
   return (
@@ -50,6 +53,8 @@ const App = () => {
         <Route path="/eu-profile" element={<EU_Profile />} />
         <Route path="/ge-profile" element={<GE_Profile />} />
         <Route path="/ic-profile" element={<IC_Profile />} />
+        <Route path="/inspection/manual-untagged" element={<Manual_Inspection />} />
+        <Route path="/reports" element={<Reports />} />
       </Routes>
     </BrowserRouter>
   );

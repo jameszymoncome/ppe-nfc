@@ -174,10 +174,15 @@ const Sidebar = () => {
               </div>
             </li>
             <li>
-              <a href="#" className={navLinkClass + " hover:bg-gray-100"}>
+              <NavLink
+                to="/reports"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                }
+              >
                 <BarChart3 className="w-5 h-5" />
-                <span className="text-sm font-medium">Report</span>
-              </a>
+                <span className="text-sm font-medium">Reports</span>
+              </NavLink>
             </li>
             <li>
               <NavLink
