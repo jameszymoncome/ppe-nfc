@@ -281,6 +281,7 @@ const Accounts = () => {
                           >
                             <option value="">Select role</option>
                             <option value="ADMIN">ADMIN</option>
+                            <option value="DEPARTMENT HEAD">DEPARTMENT HEAD</option>
                             <option value="END USER">END USER</option>
                             <option value="GSO EMPLOYEE">GSO EMPLOYEE</option>
                             <option value="INVENTORY COMMITTEE">INVENTORY COMMITTEE</option>

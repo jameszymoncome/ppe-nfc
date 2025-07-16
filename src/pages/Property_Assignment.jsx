@@ -139,11 +139,11 @@ const Property_Assignment = () => {
           const parNos = data.received.parNo || [];
 
           Swal.fire({
-            title: "PAR/ICS successfully created and saved.",
+            title: "PAR successfully created and saved.",
             icon: "success",
             html: `
               <p class="mt-2 font-semibold">Generated PAR No(s):</p>
-              <div class="mt-1 text-blue-600 font-bold">${parNos.join(', ')} <br/> successfully created</div>
+              <div class="mt-1 text-blue-600 font-bold text-sm">${parNos.join(', ')} <br/> successfully created</div>
             `,
             confirmButtonText: "OK",
             customClass: {
@@ -170,6 +170,26 @@ const Property_Assignment = () => {
           formType
         });
         console.log(response.data);
+        const data = response.data;
+        if (data.success) {
+          const icsNos = data.received.icsNo || [];
+          Swal.fire({
+            title: "ICS successfully created and saved.",
+            icon: "success",
+            html: `
+              <p class="mt-2 font-semibold">Generated ICS No(s):</p>
+              <div class="mt-1 text-blue-600 font-bold text-sm">${icsNos.join(', ')} <br/> successfully created</div>
+            `,
+            confirmButtonText: "OK",
+            customClass: {
+              popup: "rounded-2xl",
+              confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
+            },
+            buttonsStyling: false,
+          }).then(() => {
+            window.location.reload();
+          });
+        }
       } catch (error) {
         console.error('Error fetching GSO head:', error);
       }
@@ -186,6 +206,40 @@ const Property_Assignment = () => {
           formType: 'Both'
         });
         console.log(response.data);
+        const data = response.data;
+
+        if (data.success) {
+          const parNos = data.received.parNo || [];
+          const icsNos = data.received.icsNo || [];
+
+          Swal.fire({
+            title: "PAR/ICS successfully created and saved.",
+            icon: "success",
+            html: `
+              ${parNos.length > 0 ? `
+                <p class="mt-2 font-semibold">Generated PAR No(s):</p>
+                <div class="mt-1 text-blue-600 font-bold text-sm">
+                  ${parNos.join(', ')}<br/>successfully created
+                </div>
+              ` : ''}
+
+              ${icsNos.length > 0 ? `
+                <p class="mt-4 font-semibold">Generated ICS No(s):</p>
+                <div class="mt-1 text-green-600 font-bold text-sm">
+                  ${icsNos.join(', ')}<br/>successfully created
+                </div>
+              ` : ''}
+            `,
+            confirmButtonText: "OK",
+            customClass: {
+              popup: "rounded-2xl",
+              confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
+            },
+            buttonsStyling: false,
+          }).then(() => {
+            window.location.reload();
+          });
+        }
       } catch (error) {
         console.error('Error fetching GSO head:', error);
       }
@@ -294,6 +348,8 @@ const Property_Assignment = () => {
     );
   };
 
+  const dropdownWidth = 250;
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -374,6 +430,7 @@ const Property_Assignment = () => {
                       onChange={(e) => setDepartment(e.target.value)}
                       className="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent"
                       placeholder="Enter department"
+                      readOnly
                     />
                   </div>
                 </div>
@@ -525,8 +582,8 @@ const Property_Assignment = () => {
                       className="fixed bg-white border border-gray-300 rounded shadow z-[9999] max-h-40 overflow-y-auto text-xs"
                       style={{
                         top: dropdownPosition.top,
-                        left: dropdownPosition.left,
-                        width: dropdownPosition.width
+                        left: dropdownPosition.left + (dropdownPosition.width / 2) - (dropdownWidth / 2),
+                        width: dropdownWidth
                       }}
                     >
                       {articleResults.map((result, index) => (
