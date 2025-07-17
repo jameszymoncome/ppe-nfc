@@ -52,7 +52,7 @@ const GE_Dashboard = () => {
       <div className="flex-1 p-8 overflow-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-800 mb-2 italic">Welcome, {firstName} {lastName}!</h1>
+          <h1 className="text-3xl font-bold text-blue-800 mb-2">Welcome, {firstName} {lastName}!</h1>
           <p className="text-gray-600">Here's a quick overview of your tasks and activity for today.</p>
         </div>
 
