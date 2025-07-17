@@ -404,11 +404,11 @@ const PAR_ICS = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
+            <div className="bg-blue-800 text-white p-4 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold">Inventory Custodian Slip (ICS)</h2>
-                <p className="text-blue-100 text-sm">Tagging and Printing</p>
-                <p className="text-blue-100 text-xs">Clear, professional, and reflects both viewing and tagging actions.</p>
+                <p className="text-white text-sm">Tagging and Printing</p>
+                <p className="text-white text-xs">Clear, professional, and reflects both viewing and tagging actions.</p>
               </div>
               <button 
                 onClick={() => setViewModal(false)}
@@ -423,13 +423,13 @@ const PAR_ICS = () => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-2 mb-6">
                 <button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                 >
                   <Eye size={16} />
                   Print Property Sticker Tag
                 </button>
                 <button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                 >
                   <FileText size={16} />
                   Print Inventory Custodian Slip (ICS)
