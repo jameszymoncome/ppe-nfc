@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Sidebar from '../components/Sidebar';
+import AD_Sidebar from '../../components/AD_Sidebar';
 import { Search, X, PlusCircle, Trash2, Eye } from 'lucide-react';
-import { BASE_URL } from '../utils/connection';
+import { BASE_URL } from '../../utils/connection';
 import Swal from 'sweetalert2';
 
 const initialForm = {
@@ -18,7 +18,7 @@ const initialForm = {
   position: '',
 };
 
-const Accounts = () => {
+const AD_Accounts = () => {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
@@ -237,7 +237,7 @@ const Accounts = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      <AD_Sidebar />
       <div className="flex-1 p-6 overflow-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
           <div>
@@ -650,4 +650,4 @@ const Accounts = () => {
   );
 };
 
-export default Accounts;
+export default AD_Accounts;

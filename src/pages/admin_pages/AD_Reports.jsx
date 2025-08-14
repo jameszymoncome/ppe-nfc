@@ -8,9 +8,9 @@ import {
   Download,
   Printer,
 } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
+import AD_Sidebar from '../../components/AD_Sidebar';
 
-function Reports() {
+function AD_Reports() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
@@ -144,7 +144,7 @@ function Reports() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <Sidebar/>
+      <AD_Sidebar/>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -306,4 +306,4 @@ function Reports() {
   );
 }
 
-export default Reports;
+export default AD_Reports;

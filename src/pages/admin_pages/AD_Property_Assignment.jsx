@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef} from 'react';
 import { Plus, Eye, Home, FileCheck, ClipboardList, BarChart, Users, Settings, FileText } from 'lucide-react';
-import Sidebar from '../components/Sidebar'; // Adjust the path if needed
+import AD_Sidebar from '../../components/AD_Sidebar';
 import axios from 'axios';
-import { BASE_URL } from '../utils/connection';
+import { BASE_URL } from '../../utils/connection';
 import Swal from "sweetalert2";
 
-const Property_Assignment = () => {
+const AD_Property_Assignment = () => {
   const [endUser, setEndUser] = useState('');
   const [endUserId, setEndUserId] = useState('');
   const [endUserResults, setEndUserResults] = useState([]);
@@ -143,7 +143,7 @@ const Property_Assignment = () => {
             icon: "success",
             html: `
               <p class="mt-2 font-semibold">Generated PAR No(s):</p>
-              <div class="mt-1 text-blue-600 font-bold text-sm">${parNos.join(', ')} successfully created</div>
+              <div class="mt-1 text-blue-600 font-bold text-sm">${parNos.join(', ')} <br/> successfully created</div>
             `,
             confirmButtonText: "OK",
             customClass: {
@@ -178,7 +178,7 @@ const Property_Assignment = () => {
             icon: "success",
             html: `
               <p class="mt-2 font-semibold">Generated ICS No(s):</p>
-              <div class="mt-1 text-blue-600 font-bold text-sm">${icsNos.join(', ')} successfully created</div>
+              <div class="mt-1 text-blue-600 font-bold text-sm">${icsNos.join(', ')} <br/> successfully created</div>
             `,
             confirmButtonText: "OK",
             customClass: {
@@ -219,14 +219,14 @@ const Property_Assignment = () => {
               ${parNos.length > 0 ? `
                 <p class="mt-2 font-semibold">Generated PAR No(s):</p>
                 <div class="mt-1 text-blue-600 font-bold text-sm">
-                  ${parNos.join(', ')}successfully created
+                  ${parNos.join(', ')}<br/>successfully created
                 </div>
               ` : ''}
 
               ${icsNos.length > 0 ? `
                 <p class="mt-4 font-semibold">Generated ICS No(s):</p>
                 <div class="mt-1 text-green-600 font-bold text-sm">
-                  ${icsNos.join(', ')}successfully created
+                  ${icsNos.join(', ')}<br/>successfully created
                 </div>
               ` : ''}
             `,
@@ -254,39 +254,7 @@ const Property_Assignment = () => {
     }
   };
 
-  const requiredFields = [
-    "airNo",
-    "airDate",
-    "fund",
-    "articleCode",
-    "article",
-    "description",
-    "model",
-    "serialNo",
-    "unit",
-    "unitCost"
-  ];
-
-  const hasCompleteItem = items.some(item =>
-    requiredFields.every(field => item[field] && item[field].toString().trim() !== "")
-  );
-
   const handleConfirm = () => {
-    if (!endUser || !hasCompleteItem) {
-      Swal.fire({
-        title: "Please fill all fields",
-        icon: "warning",
-        confirmButtonText: "OK",
-        customClass: {
-          popup: "rounded-2xl",
-          confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
-        },
-        buttonsStyling: false,
-      }).then(() => {
-        return;
-      });
-      return;
-    }
     const high = items.filter(item => parseFloat(item.unitCost) >= 50000);
     const low = items.filter(item => parseFloat(item.unitCost) < 50000);
 
@@ -338,13 +306,13 @@ const Property_Assignment = () => {
 
     const validItems = currentGroupItems.filter(item =>
       item.airNo && item.airDate && item.fund &&
-      item.article && item.description && item.model && item.unit
+      item.article && item.description && item.model && item.unit && item.unitCost
     );
 
     const grouped = {};
 
     validItems.forEach(item => {
-      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}`;
+      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}|${item.unitCost}`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
@@ -358,13 +326,13 @@ const Property_Assignment = () => {
 
     const validItems = currentGroupItems.filter(item =>
       item.airNo && item.airDate && item.fund &&
-      item.article && item.description && item.model && item.unit
+      item.article && item.description && item.model && item.unit && item.unitCost
     );
 
     const grouped = {};
 
     validItems.forEach(item => {
-      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}`;
+      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}|${item.unitCost}`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
@@ -384,9 +352,8 @@ const Property_Assignment = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-
-      <Sidebar />
-      
+      {/* Sidebar */}
+      <AD_Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-white shadow-sm border-b px-6 py-4">
@@ -757,8 +724,8 @@ const Property_Assignment = () => {
                                 </td>
                                 <td className="border border-black px-2 py-2 text-xs italic text-gray-500">{'--Generated After Saving--'}</td>
                                 <td className="border border-black px-2 py-2 text-xs">{firstItem.airDate}</td>
-                                <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">
-                                  {group.map(item => parseFloat(item.unitCost).toFixed(2)).join('\n')}
+                                <td className="border border-black px-2 py-2 text-xs">
+                                  {parseFloat(firstItem.unitCost) * quantity}
                                 </td>
                               </tr>
                             );
@@ -1014,4 +981,4 @@ const Property_Assignment = () => {
   );
 };
 
-export default Property_Assignment;
+export default AD_Property_Assignment;

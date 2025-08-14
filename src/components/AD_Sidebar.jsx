@@ -3,7 +3,7 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
-const Sidebar = () => {
+const AD_Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
 
@@ -108,7 +108,7 @@ const Sidebar = () => {
           <ul className="space-y-2">
             <li>
               <NavLink
-                to="/dashboard"
+                to="/ad-dashboard"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -119,9 +119,9 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/par-ics"
+                to="/ad-par-ics"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/ad-par-ics') || pathname.startsWith('/ad-property-assignment') ? activeClass : ''}`
                 }
               >
                 <FileText className="w-5 h-5" />
@@ -155,7 +155,7 @@ const Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/inspection/nfc-tagged"
+                        to="/inspection/ad-nfc-tagged"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
                         }
@@ -166,7 +166,7 @@ const Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/inspection/manual-untagged"
+                        to="/inspection/ad-manual-untagged"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
                         }
@@ -181,7 +181,7 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/reports"
+                to="/ad-reports"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -192,7 +192,7 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/accounts"
+                to="/ad-accounts"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -203,29 +203,7 @@ const Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/departments"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <Building2 className="w-5 h-5" />
-                <span className="text-sm font-medium">Department/Offices</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/category"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
-              >
-                <Folder className="w-5 h-5" />
-                <span className="text-sm font-medium">Category</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/profile"
+                to="/ad-profile"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -263,4 +241,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default AD_Sidebar;

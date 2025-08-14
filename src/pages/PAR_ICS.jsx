@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Trash, Radio, Calendar, Download, Eye, FileText, ChevronDown, Home, FileCheck, ClipboardList, BarChart, Users, Settings, Upload } from 'lucide-react';
+import { Search, X, Trash, Radio, Calendar, CloudUpload, Download, Eye, FileText, ChevronDown, Home, FileCheck, ClipboardList, BarChart, Users, Settings, Upload } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from '../utils/connection';
 import { ref, onValue, set } from "firebase/database";
 import { db } from '../utils/firebase';
+import html2pdf from 'html2pdf.js';
+import { saveAs } from 'file-saver';
 
 const PAR_ICS = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,42 +20,27 @@ const PAR_ICS = () => {
   const [users, setUsers] = useState('');
   const [departments, setDepartments] = useState('');
   const [getDocDatas, setGetDocDatas] = useState([]);
+  const [getDocPrint, setGetDocsPrint] = useState([]);
 
   const [propertyNo, setPropertyNo] = useState('XXXX-XX-XXX-XXXX-XX');
   const [description, setDescription] = useState('Description');
   const [nfcId, setNfcId] = useState('');
   const [isScanning, setIsScanning] = useState(true);
+  const [docsPrint, setDocsPrint] = useState('');
   const [tableType, setTableType] = useState('');
   const [errorMessage, setErrorMessage] = useState("");
+  const [headData, setHeadData] = useState([]);
+  const [uploadScannedModal, setUploadScannedModal] = useState(false);
+  const [droppedFile, setDroppedFile] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [docNos, setDocNos] = useState('');
 
-
-  const [assignedTo, setAssignedTo] = useState('');
   const [office, setOffice] = useState('');
   const [items, setItems] = useState([
     { id: 1, propertyNo: '', description: '', model: '', serialNo: '', icsNo: '', action: '' }
   ]);
-
-  const addItem = () => {
-    setItems([...items, { 
-      id: items.length + 1, 
-      propertyNo: '', 
-      description: '', 
-      model: '', 
-      serialNo: '', 
-      icsNo: '', 
-      action: '' 
-    }]);
-  };
-
-  const removeItem = (id) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-
-  const updateItem = (id, field, value) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
 
   useEffect(() => {
     fetchItems();
@@ -66,6 +53,7 @@ const PAR_ICS = () => {
 
       const formatted = response.data.items.map((item, index) => ({
         id: index + 1,
+        air_no: item.air_no,
         documentNo: item.documentNo,
         type: item.type,
         user: item.user,
@@ -109,6 +97,20 @@ const PAR_ICS = () => {
     }
   }, [viewNFCModal]);
 
+  useEffect(() => {
+    const fetchHead = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/getGSOHead.php`);
+        console.log('GSO Head Data:', response.data.head.fullname);
+        setHeadData(response.data.head);
+      } catch (error) {
+        console.error('Error fetching GSO head:', error);
+      }
+    };
+    fetchHead();
+  }, []);
+
+
   const filterOptions = ['All', 'PAR', 'ICS'];
   const statusOptions = ['All', 'For Signature', 'Complete', 'Pending'];
 
@@ -117,7 +119,14 @@ const PAR_ICS = () => {
                          doc.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.office.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = selectedFilter === 'All' || doc.type === selectedFilter;
-    return matchesSearch && matchesFilter;
+    let selectedDateMMDDYYYY = '';
+    if (selectedDate) {
+      const [yyyy, mm, dd] = selectedDate.split('-');
+      selectedDateMMDDYYYY = `${mm}-${dd}-${yyyy}`;
+    }
+    const matchesDate = selectedDate ? selectedDateMMDDYYYY === doc.dateIssued : true;
+
+    return matchesSearch && matchesFilter && matchesDate;
   });
 
   const getStatusColor = (status) => {
@@ -168,6 +177,53 @@ const PAR_ICS = () => {
       console.error('Error fetching end users:', error);
     }
   }
+
+  const printDocs = async (docsNo, typess, dept) => {
+    setDepartments(dept);
+    console.log(typess);
+    if(typess === 'PAR'){
+      setDocsPrint('par');
+    } else{
+      setDocsPrint('ics');
+    }
+    try {
+      const response = await axios.get(`${BASE_URL}/printDocs.php`, {
+        params: {
+          docsNo,
+          typess
+        }
+      });
+      console.log(response.data);
+      setGetDocsPrint(response.data);
+      
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
+  }
+
+  const getGroupedItems = () => {
+    const validItems = getDocPrint.filter(item =>
+      item.air_no &&
+      item.air_date &&
+      item.fund &&
+      item.article &&
+      item.description &&
+      item.model &&
+      item.unit
+    );
+
+    const grouped = {};
+
+    validItems.forEach(item => {
+      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}|${item.unitCost}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+
+    return Object.values(grouped);
+  };
+
+  const groupedItems = getGroupedItems();
 
   const handleSave = async () => {
     console.log(nfcId);
@@ -234,6 +290,463 @@ const PAR_ICS = () => {
       console.error('❌ Error checking tag ID:', error);
     }
   }
+
+  const handleExportPDF = () => {
+    const contentICS = `
+      <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
+        <div style="text-align: center; font-size: 20px; font-weight: bold;">
+          INVENTORY CUSTODIAN SLIP
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          ${departments}
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Local Goverment Unit of Daet
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Daet Camarines Norte
+        </div>
+
+        <table style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Quantity</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Unit</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" colspan="2">Amount</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Description</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Inventory Item No.</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Estimated Useful Life</th>
+            </tr>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Unit Cost</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Total Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedItems.map(group => `
+              <tr style="background-color: #fff; padding: 5px;">
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 90px; display: flex; justify-content: space-around;">
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of End User</div>
+            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+        </div>
+      </div>
+    `;
+    const contentPAR = `
+      <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
+        <div style="text-align: center; font-size: 20px; font-weight: bold;">
+          PROPERTY ACKNOWLEDGMENT RECEIPT
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          ${departments}
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Local Goverment Unit of Daet
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Daet Camarines Norte
+        </div>
+
+        <table border="1" cellspacing="0" cellpadding="10" style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Quantity</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Description</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Property Number</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Date Acquired</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedItems.map(group => `
+              <tr style="background-color: #fff; padding: 5px;">
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 90px; display: flex; justify-content: space-around;">
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of End User</div>
+            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const element = document.createElement('div');
+    element.innerHTML = (docsPrint === 'par') ? contentPAR : contentICS;
+
+    html2pdf().set({
+      margin: 0.5,
+      filename: `${`${docsPrint === 'par' ? 'PAR' : 'ICS'}-${groupedItems[0][0]?.enduserName}`.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    }).from(element).save();
+  }
+
+  const handlePrintPDF = () => {
+    const contentICS = `
+      <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
+        <div style="text-align: center; font-size: 20px; font-weight: bold;">
+          INVENTORY CUSTODIAN SLIP
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          ${departments}
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Local Goverment Unit of Daet
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Daet Camarines Norte
+        </div>
+
+        <table style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Quantity</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Unit</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" colspan="2">Amount</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Description</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Inventory Item No.</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Estimated Useful Life</th>
+            </tr>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Unit Cost</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Total Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedItems.map(group => `
+              <tr style="background-color: #fff; padding: 5px;">
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <div style="padding-top: 50px; border: 1px solid #000; border-collapse: collapse; display: flex; justify-content: space-around;">
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of End User</div>
+            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Issued by:</div>
+            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+        </div>
+      </div>
+    `;
+    const contentPAR = `
+      <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
+        <div style="text-align: center; font-size: 20px; font-weight: bold;">
+          PROPERTY ACKNOWLEDGMENT RECEIPT
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          ${departments}
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Local Goverment Unit of Daet
+        </div>
+        <div style="text-align: center; font-size: 11px;">
+          Daet Camarines Norte
+        </div>
+
+        <table border="1" cellspacing="0" cellpadding="10" style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+          <thead>
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Quantity</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Description</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Property Number</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Date Acquired</th>
+              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedItems.map(group => `
+              <tr style="background-color: #fff; padding: 5px;">
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                </td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
+                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-top: 90px; display: flex; justify-content: space-around;">
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Received by:</div>
+            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of End User</div>
+            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+          <div style="text-align: center; font-size: 10px; font-weight: bold;">
+            <div>Issued by:</div>
+            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Position/Office</div>
+            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+            <div>Date</div>
+          </div>
+        </div>
+      </div>
+    `;
+    printContent((docsPrint === 'par') ? contentPAR : contentICS);
+  }
+
+  const printContent = (html) => {
+    const frame = document.createElement('iframe');
+    frame.style.position = 'absolute';
+    frame.style.top = '-9999px';
+    frame.style.left = '-9999px';
+
+    document.body.appendChild(frame);
+
+    const frameDoc = frame.contentWindow || frame.contentDocument;
+    const doc = frameDoc.document || frameDoc;
+
+    doc.open();
+    doc.write(`
+      <html>
+        <head>
+          <title>Print</title>
+          <style>
+            @page { size: A4; margin: 20mm; }
+            body { font-family: Arial, sans-serif; font-size: 10px; }
+            table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+            }
+            th, td {
+              padding: 5px;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          ${html}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    frame.onload = () => {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      setTimeout(() => document.body.removeChild(frame), 1000);
+    };
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === "application/pdf" && file.size <= 50 * 1024 * 1024) {
+      setDroppedFile(file);
+      // Automatically upload after setting the file
+      setTimeout(() => handleUpload(file), 0);
+    } else {
+      alert("Only PDF files up to 50MB are allowed.");
+    }
+  };
+
+  const handleUpload = async (fileArg) => {
+    const fileToUpload = fileArg || droppedFile;
+    if (!fileToUpload) return alert("No file selected");
+
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("docNos", docNos);
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      const response = await axios.post(`${BASE_URL}/uploadScannedFile.php`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percent);
+        },
+      });
+
+      console.log(response.data);
+      fetchItems();
+
+    } catch (error) {
+      console.error("Upload failed", error);
+      if (error.response) {
+        // ✅ Server responded with an error (e.g., 400 or 500)
+        console.error("Server error:", error.response.data);
+
+        // Show server error to user
+        const serverMessage = error.response.data.error || error.response.data.warning || "Unknown error from server";
+        alert("Server Error: " + serverMessage);
+      } else if (error.request) {
+        console.error("No response from server:", error.request);
+        alert("No response from server. Please check your internet or CORS settings.");
+      } else {
+        // 😵 Other unknown error
+        alert("Upload failed: " + error.message);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDownload = async (airNo) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/downloadFile.php`, {
+        params: { air_no: airNo },
+        responseType: 'blob',
+      });
+
+      const fileName = response.headers['content-disposition']
+        ?.split('filename=')[1]
+        ?.replace(/["']/g, '') || `${airNo}.pdf`;
+
+      saveAs(new Blob([response.data], { type: 'application/pdf' }), fileName);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('File download failed.');
+    }
+  };
+
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -326,7 +839,7 @@ const PAR_ICS = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-900">{doc.user}</td>
-                    <td className="py-4 px-6 text-sm text-gray-900">{doc.office}</td>
+                    <td className="py-4 px-6 text-sm text-gray-900 text-center">{doc.office}</td>
                     <td className="py-4 px-6 text-sm text-gray-900">{doc.dateIssued}</td>
                     <td className="py-4 px-6 text-sm text-gray-900 text-center">{doc.items}</td>
                     <td className="py-4 px-6">
@@ -345,11 +858,16 @@ const PAR_ICS = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors">
+                          <button 
+                            className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors"
+                            onClick={() => {
+                              printDocs(doc.documentNo, doc.type, doc.office);
+                            }}
+                          >
                             <FileText className="h-4 w-4" />
                           </button>
                         </div>
-                      ) : doc.status === 'Uploaded Scan' ? (
+                      ) : doc.status === 'Upload Scanned Copy' ? (
                         <div className="flex gap-2">
                           <button
                             className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
@@ -359,10 +877,20 @@ const PAR_ICS = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors">
+                          <button 
+                            className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors"
+                            onClick={() => {
+                              printDocs(doc.documentNo, doc.type, doc.office);
+                            }}
+                          >
                             <FileText className="h-4 w-4" />
                           </button>
-                          <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors">
+                          <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
+                            onClick={() => {
+                              setDocNos(doc.air_no);
+                              setUploadScannedModal(true);
+                            }}
+                          >
                             <Upload className="h-4 w-4" />
                           </button>
                         </div>
@@ -376,7 +904,11 @@ const PAR_ICS = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button className="text-orange-600 hover:text-orange-800 p-1 rounded hover:bg-orange-50 transition-colors">
+                          <button className="text-orange-600 hover:text-orange-800 p-1 rounded hover:bg-orange-50 transition-colors"
+                            onClick={async () => {
+                              await handleDownload(doc.air_no);
+                            }}
+                          >
                             <Download className="h-4 w-4" />
                           </button>
                         </div>
@@ -404,11 +936,11 @@ const PAR_ICS = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="bg-blue-800 text-white p-4 flex justify-between items-center">
+            <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold">Inventory Custodian Slip (ICS)</h2>
-                <p className="text-white text-sm">Tagging and Printing</p>
-                <p className="text-white text-xs">Clear, professional, and reflects both viewing and tagging actions.</p>
+                <p className="text-blue-100 text-sm">Tagging and Printing</p>
+                <p className="text-blue-100 text-xs">Clear, professional, and reflects both viewing and tagging actions.</p>
               </div>
               <button 
                 onClick={() => setViewModal(false)}
@@ -423,13 +955,13 @@ const PAR_ICS = () => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-2 mb-6">
                 <button 
-                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                 >
                   <Eye size={16} />
                   Print Property Sticker Tag
                 </button>
                 <button 
-                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                 >
                   <FileText size={16} />
                   Print Inventory Custodian Slip (ICS)
@@ -447,9 +979,9 @@ const PAR_ICS = () => {
                     <input 
                       type="text"
                       value={users}
-                      onChange={(e) => setAssignedTo(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter name..."
+                      readOnly
                     />
                   </div>
                   <div>
@@ -611,6 +1143,418 @@ const PAR_ICS = () => {
               >
                 Save
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {docsPrint === 'par' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            {/* <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-lg font-semibold">Property Acknowledgment Receipt</h2>
+              <button
+                onClick={closeModal}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div> */}
+
+            {/* Form Content */}
+            <div className="p-6">
+              {/* Header Section */}
+              <div className="text-center mb-6">
+                <h1 className="text-xl font-bold mb-2">PROPERTY ACKNOWLEDGMENT RECEIPT</h1>
+                <p className="text-sm">{departments || ''}</p>
+                <p className="text-sm">Local Government Unit of Daet</p>
+                <p className="text-sm">Daet, Camarines Norte</p>
+              </div>
+
+              {/* PAR Number */}
+              <div className="flex gap-4 mb-6">
+                {/* Fund */}
+                <div className="w-1/2 flex items-center gap-2">
+                  <label className="text-sm font-medium whitespace-nowrap">Fund:</label>
+                  <input
+                    type="text"
+                    value={getDocPrint[0]?.fund || ''}
+                    className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm"
+                    placeholder="Enter Fund"
+                    readOnly
+                  />
+                </div>
+
+                {/* PAR No. */}
+                <div className="w-1/2 flex items-center gap-2">
+                  <label className="text-sm font-medium whitespace-nowrap">PAR No.:</label>
+                  <input
+                    type="text"
+                    value={'Generated After Saving'}
+                    className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm italic text-gray-500 "
+                    placeholder="Enter PAR Number"
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-black">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Quantity</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Unit</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Description</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Property Number</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Date Acquired</th>
+                      <th className="border border-black px-2 py-2 text-xs font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedItems.map((group, index) => {
+                      const firstItem = group[0]; // representative item
+                      const quantity = group.length;
+                      const totalAmount = parseFloat(firstItem.unitCost) * quantity;
+
+                      return (
+                        <tr key={index}>
+                          <td className="border border-black px-2 py-2 text-xs text-center">{quantity}</td>
+                          <td className="border border-black px-2 py-2 text-xs text-center">{firstItem.unit}</td>
+                          <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">
+                            {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
+                          </td>
+                          <td className="border border-black px-2 py-2 text-xs whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</td>
+                          <td className="border border-black px-2 py-2 text-xs">{firstItem.airDate}</td>
+                          <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">
+                            {group.map(item => parseFloat(firstItem.unitCost).toFixed(2)).join('\n')}
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {Array.from({ length: Math.max(0, 15 - groupedItems.length) }, (_, i) => (
+                      <tr key={`empty-${i}`}>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                        <td className="border border-black px-2 py-2 text-xs">-</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Signature Section */}
+              <div className="grid grid-cols-2 border border-black">
+                <div className="text-center border-r border-black p-6">
+                  <p className="text-sm font-medium mb-2">Received by:</p>
+                  <div className='border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold'> {getDocPrint[0]?.enduserName || 'N/A'}</div>
+                  <p className="text-xs">Signature over Printed Name of End User</p>
+                  <div className='border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold'> {departments || 'N/A'}</div>
+                  <p className="text-xs">Position/Office</p>
+                  <p className="border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold">{new Date().toLocaleDateString()}</p>
+                  <p className="text-xs">Date</p>
+                </div>
+                <div className="text-center border-l border-black p-6">
+                  <p className="text-sm font-medium mb-2">Issued by:</p>
+                  <div className="border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold">{headData.fullname || 'N/A'}</div>
+                  <p className="text-xs">Signature over Printed Name of Supply and/or Property Custodian</p>
+                  <div className="border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold">{headData.position || 'N/A'}</div>
+                  <p className="text-xs">Position/Office</p>
+                  <div className="border-b border-gray-300 mt-4 h-8 flex items-center justify-center
+                  text-sm font-semibold">{new Date().toLocaleDateString()}</div>
+                  <p className="text-xs">Date</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-4 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setDocsPrint(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => {
+                  handlePrintPDF();
+                }}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Print
+              </button>
+              <button
+                onClick={() => {
+                  handleExportPDF();
+                }}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {docsPrint === 'ics' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            {/* <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-lg font-semibold">Inventory Custodian Slip</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div> */}
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="border-2 border-black bg-white">
+                {/* Header */}
+                <div className="text-center p-4">
+                  <h1 className="text-lg font-bold">INVENTORY CUSTODIAN SLIP</h1>
+                  <p className="text-sm">{departments || ''}</p>
+                  <p className="text-sm">Local Government Unit of Daet</p>
+                  <p className="text-sm">Daet, Camarines Norte</p>
+                </div>
+
+                {/* Fund and ICS No. */}
+                <div className="flex gap-4 p-3 border-b border-black">
+                  <div className="w-1/2 flex items-center gap-2">
+                    <label className="text-sm font-medium whitespace-nowrap">Fund:</label>
+                    <input
+                      type="text"
+                      value={getDocPrint[0]?.fund || ''}
+                      className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm"
+                      placeholder="Enter Fund"
+                      readOnly
+                    />
+                  </div>
+                  <div className="w-1/2 flex items-center gap-2">
+                    <label className="text-sm font-medium whitespace-nowrap">ICS No.:</label>
+                    <input
+                      type="text"
+                      value={'Generated After Saving'}
+                      className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm italic text-gray-500 "
+                      placeholder="Enter PAR Number"
+                      readOnly
+                    />
+                  </div>
+                </div>
+
+                {/* Table Headers */}
+                <div className="grid grid-cols-7 border-b border-black text-xs font-semibold">
+                  <div className="p-2 border-r border-black text-center">Quantity</div>
+                  <div className="p-2 border-r border-black text-center">Unit</div>
+                  <div className="p-2 border-r border-black text-center">
+                    <div className="text-center">Amount</div>
+                    <div className="grid grid-cols-2 border-t border-black mt-1">
+                      <div className="border-r border-black p-1">Unit Cost</div>
+                      <div className="p-1">Total Cost</div>
+                    </div>
+                  </div>
+                  <div className="p-2 border-r border-black text-center">Description</div>
+                  <div className="p-2 border-r border-black text-center">Inventory Item No.</div>
+                  <div className="p-2 text-center">Estimated Useful Life</div>
+                </div>
+
+                {/* Table Rows */}
+                {groupedItems.map((group, index) => {
+                  const firstItem = group[0]; // representative item
+                  const quantity = group.length;
+
+                  return (
+                    <div key={index} className="grid grid-cols-7 border-b border-gray-300 text-xs min-h-[30px]">
+                      <div className="p-2 border-r border-black">{quantity}</div>
+                      <div className="p-2 border-r border-black">{firstItem.unit || '-'}</div>
+                      <div className="border-r border-black">
+                        <div className="grid grid-cols-2 h-full">
+                          <div className="p-2 border-r border-black">{firstItem.unitCost || '-'}</div>
+                          <div className="p-2">{parseFloat(firstItem.unitCost) * quantity || '-'}</div>
+                        </div>
+                      </div>
+                      <div className="p-2 border-r border-black whitespace-pre-line">
+                        {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
+                      </div>
+                      <div className="p-2 border-r border-black whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</div>
+                      <div className="p-2">{firstItem.estimatedLife || '-'}</div>
+                    </div>
+                  );
+                })}
+
+                {Array.from({ length: Math.max(0, 15 - groupedItems.length) }, (_, i) => (
+                  <div key={`empty-${i}`} className="grid grid-cols-7 border-b border-gray-300 text-xs min-h-[30px]">
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="border-r border-black">
+                      <div className="grid grid-cols-2 h-full">
+                        <div className="p-2 border-r border-black">-</div>
+                        <div className="p-2">-</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2 border-r border-black">-</div>
+                    <div className="p-2">-</div>
+                  </div>
+                ))}
+
+                {/* Footer */}
+                <div className="grid grid-cols-2 border-t-2 border-black">
+                  <div className="p-4 border-r border-black">
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold">Received by :</p>
+                    </div>
+                    <div className="mt-8 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center"> {getDocPrint[0]?.enduserName || 'N/A'}</div>
+                      <p className="text-xs text-center">Signature over Printed Name of End User</p>
+                    </div>
+                    <div className="mt-6 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center"> {departments || 'N/A'} </div>
+                      <p className="text-xs text-center">Position/Office</p>
+                    </div>
+                    <div className="mt-6">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center"> {new Date().toLocaleDateString() || 'N/A'} </div>
+                      <p className="text-xs text-center">Date</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold">Issued by :</p>
+                    </div>
+                    <div className="mt-8 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center">{headData.fullname || 'N/A'}</div>
+                      <p className="text-xs text-center">Signature over Printed Name of Supply</p>
+                      <p className="text-xs text-center">and/or Property Custodian</p>
+                    </div>
+                    <div className="mt-6 mb-4">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center">{headData.position || 'N/A'}</div>
+                      <p className="text-xs text-center">Position/Office</p>
+                    </div>
+                    <div className="mt-6">
+                      <div className="border-b border-black w-full h-8 mb-2 flex items-center justify-center">{new Date().toLocaleDateString() || 'N/A'}</div>
+                      <p className="text-xs text-center">Date</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-4 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setDocsPrint(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => {
+                  handlePrintPDF();
+                }}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Print
+              </button>
+              <button
+                onClick={() => {
+                  handleExportPDF();
+                }}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {uploadScannedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-4 flex justify-between items-center border-b border-gray">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Upload Scanned Copy
+                </h2>
+              </div>
+              <button 
+                onClick={() => setUploadScannedModal(false)}
+                className="hover:text-gray-200 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div
+              className={`mx-4 border-2 border-gray border-dotted rounded-2xl my-4 flex flex-col items-center justify-center p-8 transition-colors duration-200 ${isDragging ? "bg-blue-50 border-blue-400" : ""}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const files = Array.from(e.dataTransfer.files);
+                const validFiles = files.filter(
+                  file =>
+                    (file.type === "application/pdf" || file.type.startsWith("image/")) &&
+                    file.size <= 50 * 1024 * 1024
+                );
+                if (validFiles.length !== files.length) {
+                  alert("Only PDF files up to 50MB are allowed.");
+                }
+                if (validFiles.length > 0) {
+                  setDroppedFile(prev => [...(prev || []), ...validFiles]);
+                  validFiles.forEach(file => setTimeout(() => handleUpload(file), 0));
+                }
+              }}
+            >
+              <CloudUpload className="mb-2" size={40} />
+              <div className="font-bold">Choose files or drag & drop them here</div>
+              <div className="text-base font-small italic text-gray-700">PDF up to 50MB only</div>
+            </div>
+            <div className="mx-4 border border-gray rounded-2xl my-4 flex flex-col items-center justify-center p-4">
+              <div
+                style={{
+                  maxHeight: "100px",
+                  overflowY: "auto",
+                  width: "100%",
+                }}
+              >
+                {(Array.isArray(droppedFile) ? droppedFile : droppedFile ? [droppedFile] : []).length > 0
+                  ? (Array.isArray(droppedFile) ? droppedFile : [droppedFile]).map((file, idx) => (
+                      <div key={idx} className="text-sm py-1 px-2 border-b last:border-b-0 border-gray-200 w-full truncate">
+                        {file.name}
+                      </div>
+                    ))
+                  : <div>file here</div>
+                }
+              </div>
+              {uploading && (
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="bg-blue-500 h-full transition-all duration-200"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+
+              {!uploading && uploadProgress === 100 && (
+                <div className="text-green-600 mt-2 font-medium">Upload complete</div>
+              )}
+              {!uploading && uploadProgress === 0 && droppedFile && droppedFile.length === 0 && (
+                <div className="text-red-600 mt-2 font-medium">Error: PDF or image files only (max 50MB).</div>
+              )}
             </div>
           </div>
         </div>

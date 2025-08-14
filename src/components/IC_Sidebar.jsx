@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
@@ -23,6 +23,12 @@ const IC_Sidebar = () => {
   const toggleInspection = () => {
     setIsInspectionOpen(!isInspectionOpen);
   };
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/inspection')) {
+      setIsInspectionOpen(true);
+    }
+  }, [location]);
 
   return (
     <>
@@ -160,7 +166,7 @@ const IC_Sidebar = () => {
                                 </li>
                                 <li>
                                   <NavLink
-                                    to="/inspection/manual-untagged"
+                                    to="/inspection/ic-manual-untagged"
                                     className={({ isActive }) =>
                                       `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
                                     }
