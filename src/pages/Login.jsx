@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import lgu_seal from '/assets/images/lgu_seal.png';
@@ -14,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
+  const [departments, setDepartments] = useState([]);
   const [signupData, setSignupData] = useState({
     lastname: '',
     firstname: '',
@@ -90,6 +91,23 @@ const Login = () => {
 
     return true;
   };
+
+  //useEffect to fetch departments
+    useEffect(() => {
+      const fetchDepartments = async () => {
+        try {
+          const response = await fetch(`${BASE_URL}/get_departments.php`);
+          const data = await response.json();
+          if (data.success) {
+            setDepartments(data.data);
+          }
+        } catch (error) {
+          console.error('Error fetching departments:', error);
+        }
+      };
+  
+      fetchDepartments();
+    }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -529,13 +547,12 @@ const Login = () => {
                     disabled={signupLoading}
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
-                    <option value="">Select Department</option>
-                    <option value="Accounting">Accounting</option>
-                    <option value="Budget">Budget</option>
-                    <option value="General Services Office">General Services Office</option>
-                    <option value="HRM Office">HRM Office</option>
-                    <option value="Information Technology">Information Technology</option>
-                    <option value="Office of the Mayor">Office of the Mayor</option>
+                    <option value="">Select department</option>
+                            {departments.map(dept => (
+                              <option key={dept.entity_id} value={dept.entity_name}>
+                                {dept.entity_name}
+                              </option>
+                            ))}
                   </select>
                 </div>
                 

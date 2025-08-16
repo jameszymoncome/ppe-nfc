@@ -34,9 +34,15 @@ const AD_Accounts = () => {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [userToApprove, setUserToApprove] = useState(null);
   const [approvalRole, setApprovalRole] = useState('');
+  const [departmentss, setDepartmentss] = useState('');
 
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
+
+  useEffect(() => {
+  const department = localStorage.getItem('department');
+  setDepartmentss(department);
+}, []);
 
   useEffect(() => {
     fetchUsers();
@@ -60,12 +66,23 @@ const AD_Accounts = () => {
   }, []);
 
   const fetchUsers = () => {
-    fetch(`${BASE_URL}/retrieve_users.php`)
+    fetch(`${BASE_URL}/ad_retrieve_users.php`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setUsers(data.data);
       });
   };
+
+  useEffect(() => {
+  const department = localStorage.getItem('department');
+  if (department) {
+    fetch(`${BASE_URL}/ad_retrieve_users.php?department=${encodeURIComponent(department)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUsers(data.data);
+      });
+  }
+}, []);
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -376,14 +393,10 @@ const AD_Accounts = () => {
                             value={form[key]}
                             onChange={handleChange}
                             required
+                            disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                           >
-                            <option value="">Select role</option>
-                            <option value="ADMIN">ADMIN</option>
-                            <option value="DEPARTMENT HEAD">DEPARTMENT HEAD</option>
-                            <option value="END USER">END USER</option>
-                            <option value="GSO EMPLOYEE">GSO EMPLOYEE</option>
-                            <option value="INVENTORY COMMITTEE">INVENTORY COMMITTEE</option>
+                            <option value="EMPLOYEE">EMPLOYEE</option>
                           </select>
                         ) : key === 'department' ? (
                           <select
@@ -391,14 +404,10 @@ const AD_Accounts = () => {
                             value={form[key]}
                             onChange={handleChange}
                             required
+                            disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                           >
-                            <option value="">Select department</option>
-                            {departments.map(dept => (
-                              <option key={dept.entity_id} value={dept.entity_name}>
-                                {dept.entity_name}
-                              </option>
-                            ))}
+                            <option value={departmentss}>{departmentss}</option>
                           </select>
                         ) : key === 'contactNumber' ? (
                           <input
@@ -621,11 +630,7 @@ const AD_Accounts = () => {
           onChange={(e) => setApprovalRole(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
-          <option value="">Select role</option>
-          <option value="SUPER ADMIN">SUPER ADMIN</option>
-          <option value="ADMIN">ADMIN</option>
           <option value="EMPLOYEE">EMPLOYEE</option>
-          <option value="INVENTORY COMMITTEE">INVENTORY COMMITTEE</option>
         </select>
       </div>
       <div className="px-5 py-3 bg-gray-50 flex justify-end gap-3">
