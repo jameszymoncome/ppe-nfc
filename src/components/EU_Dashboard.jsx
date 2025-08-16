@@ -5,6 +5,7 @@ import EU_Sidebar from './EU_Sidebar';
 const EU_Dashboard = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
+  const department = localStorage.getItem('department') || 'General';
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -14,10 +15,11 @@ const EU_Dashboard = () => {
       {/* Main content area */}
       <div className="flex-1 p-8 overflow-auto">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-blue-800">Hi, {firstName && lastName
-                    ? `${firstName} ${lastName}`
-                    : 'User'}</h2>
+        <div className="flex items-center justify-between">
+          <div className="mb-8">
+          <h1 className="text-3xl font-bold text-blue-800 mb-2">Department - {department}</h1>
+          <p className="text-gray-600">Hi, {firstName} {lastName}</p>
+        </div>
           <div className="relative w-80">
             <input
               type="text"

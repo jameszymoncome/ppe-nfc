@@ -42,32 +42,34 @@ const AD_PAR_ICS = () => {
     { id: 1, propertyNo: '', description: '', model: '', serialNo: '', icsNo: '', action: '' }
   ]);
 
+  // At the top of your component
+  const userDepartment = localStorage.getItem('department'); // or from context/auth
+
   useEffect(() => {
     fetchItems();
   }, []);
 
   const fetchItems = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/ad_getItems.php`);
-      console.log(response.data);
-
-      const formatted = response.data.items.map((item, index) => ({
-        id: index + 1,
-        air_no: item.air_no,
-        documentNo: item.documentNo,
-        type: item.type,
-        user: item.user,
-        office: item.office,
-        dateIssued: item.dateIssued,
-        items: item.items,
-        status: item.status || 'N/A'
-      }));
-
-      setParIcsItem(formatted);
-    } catch (error) {
-      console.error('Error fetching end users:', error);
-    }
+  try {
+    const response = await axios.get(`${BASE_URL}/ad_getItems.php`, {
+      params: { department: userDepartment }
+    });
+    const formatted = response.data.items.map((item, index) => ({
+      id: index + 1,
+      air_no: item.air_no,
+      documentNo: item.documentNo,
+      type: item.type,
+      user: item.user,
+      office: item.office,
+      dateIssued: item.dateIssued,
+      items: item.items,
+      status: item.status || 'N/A'
+    }));
+    setParIcsItem(formatted);
+  } catch (error) {
+    console.error('Error fetching end users:', error);
   }
+};
 
   const hasInitialized = useRef(false);
 

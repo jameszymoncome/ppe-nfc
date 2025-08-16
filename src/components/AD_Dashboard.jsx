@@ -5,6 +5,7 @@ import AD_Sidebar from './AD_Sidebar';
 const AD_Dashboard = () => {
   const firstName = localStorage.getItem("firstName");
   const lastName = localStorage.getItem("lastname");
+  const department = localStorage.getItem("department");
 
   const sidebarItems = [
     { name: 'Dashboard', icon: Home, active: true },
@@ -52,7 +53,7 @@ const AD_Dashboard = () => {
       <div className="flex-1 p-8 overflow-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-800 mb-2">GSO Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-blue-800 mb-2">Department - {department}</h1>
           <p className="text-gray-600">Hi, {firstName} {lastName}</p>
         </div>
 
