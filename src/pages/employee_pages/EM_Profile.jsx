@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Building, Calendar, Edit3, Save, X, Eye, EyeOff } from 'lucide-react';
-import GE_Sidebar from '../../components/GE_Sidebar';
+import GE_Sidebar from '../../components/EM_Sidebar';
 import { BASE_URL } from '../../utils/connection';
 import Swal from 'sweetalert2';
 
-const GE_Profile = () => {
+const EM_Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [userData, setUserData] = useState('');
@@ -385,4 +385,4 @@ const handleSave = async () => {
   );
 };
 
-export default GE_Profile;
+export default EM_Profile;

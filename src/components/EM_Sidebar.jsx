@@ -3,7 +3,7 @@ import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
-const GE_Sidebar = () => {
+const EM_Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
 
@@ -102,7 +102,7 @@ const GE_Sidebar = () => {
           <ul className="space-y-2">
             <li>
               <NavLink
-                to="/gso-employee-dashboard"
+                to="/em-dashboard"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -113,9 +113,9 @@ const GE_Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/ge-par-ics"
+                to="/em-par-ics"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/ge-par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/em-par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
                 }
               >
                 <FileText className="w-5 h-5" />
@@ -130,7 +130,7 @@ const GE_Sidebar = () => {
             </li>
             <li>
               <NavLink
-                to="/ge-profile"
+                to="/em-profile"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
                 }
@@ -168,4 +168,4 @@ const GE_Sidebar = () => {
   );
 };
 
-export default GE_Sidebar;
+export default EM_Sidebar;

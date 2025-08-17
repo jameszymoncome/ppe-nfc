@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Trash, Radio, Calendar, CloudUpload, Download, Eye, FileText, ChevronDown, Home, FileCheck, ClipboardList, BarChart, Users, Settings, Upload } from 'lucide-react';
-import IC_Sidebar from '../../components/IC_Sidebar';
+import EM_Sidebar from '../../components/EM_Sidebar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from '../../utils/connection';
@@ -9,7 +9,7 @@ import { db } from '../../utils/firebase';
 import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 
-const IC_PAR_ICS = () => {
+const EM_PAR_ICS = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
@@ -753,7 +753,7 @@ const IC_PAR_ICS = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <IC_Sidebar />
+      <EM_Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-white shadow-sm border-b px-6 py-4">
@@ -1566,4 +1566,4 @@ const IC_PAR_ICS = () => {
   );
 };
 
-export default IC_PAR_ICS;
+export default EM_PAR_ICS;

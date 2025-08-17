@@ -24,10 +24,10 @@ import AD_ManualInspection from './pages/admin_pages/AD_Manual_Inspection';
 import AD_Reports from './pages/admin_pages/AD_Reports';
 import AD_Accounts from './pages/admin_pages/AD_Accounts';
 import AD_Profile from './pages/admin_pages/AD_Profile';
-//GSO Employee Routes
-import GE_Dashboard from './components/GE_Dashboard';
-import GE_PAR_ICS from './pages/gso_employee_pages/GE_PAR_ICS';
-import GE_Profile from './pages/gso_employee_pages/GE_Profile';
+//Employee Routes
+import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
+import EM_Profile from './pages/employee_pages/EM_Profile';
+import EM_Dashboard from './components/EM_Dashboard';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -53,16 +53,16 @@ const App = () => {
         <Route path="/par-ics" element={<PAR_ICS />} />
         <Route path="/property-assignment" element={<Property_Assignment />} />
         <Route path="/category" element={<Category />} />
-        <Route path="/gso-employee-dashboard" element={<GE_Dashboard />} />
+        <Route path="/em-dashboard" element={<EM_Dashboard />} />
         <Route path="/inv-com-dashboard" element={<IC_Dashboard />} />
         <Route path="/end-user-dashboard" element={<EU_Dashboard />} />
         <Route path="/inspection/nfc-tagged" element={<Nfc_Tagged />} />
         <Route path="/ic-par-ics" element={<IC_PAR_ICS />} />
         <Route path="/inspection/ic-nfc-tagged" element={<IC_Nfc_Tagged />} />
-        <Route path="/ge-par-ics" element={<GE_PAR_ICS />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/eu-profile" element={<EU_Profile />} />
-        <Route path="/ge-profile" element={<GE_Profile />} />
+        <Route path="/em-profile" element={<EM_Profile />} />
+        <Route path="/em-par-ics" element={<EM_PAR_ICS />} />
         <Route path="/ic-profile" element={<IC_Profile />} />
         <Route path="/inspection/manual-untagged" element={<Manual_Inspection />} />
         <Route path="/reports" element={<Reports />} />

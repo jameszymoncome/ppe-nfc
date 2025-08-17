@@ -186,7 +186,7 @@ const Login = () => {
         const routes = {
           "SUPER ADMIN": '/dashboard',
           "ADMIN": '/ad-dashboard',
-          "GSO EMPLOYEE": '/gso-employee-dashboard',
+          "EMPLOYEE": '/em-dashboard',
           "INVENTORY COMMITTEE": '/inv-com-dashboard'
         };
         

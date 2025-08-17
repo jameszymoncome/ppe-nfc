@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Search, Mail, FileText, Building, Wrench, Printer, Home, FileCheck, Eye, BarChart, Users, Settings } from 'lucide-react';
-import GE_Sidebar from './GE_Sidebar';
+import EM_Sidebar from './EM_Sidebar';
 
-const GE_Dashboard = () => {
+const EM_Dashboard = () => {
   const firstName = localStorage.getItem('firstName');
   const lastName = localStorage.getItem('lastname');
 
@@ -46,7 +46,7 @@ const GE_Dashboard = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <GE_Sidebar />
+      <EM_Sidebar />
 
       {/* Main content area */}
       <div className="flex-1 p-8 overflow-auto">
@@ -117,4 +117,4 @@ const GE_Dashboard = () => {
   );
 };
 
-export default GE_Dashboard;
+export default EM_Dashboard;
