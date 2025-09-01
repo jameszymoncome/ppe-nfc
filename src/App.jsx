@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import Manual_Inspection from './pages/Manual_Inspection';
 import Reports from './pages/Reports';
 import Signup from './pages/Signup';
+import Notification from './pages/Notification';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -28,12 +29,14 @@ import AD_Profile from './pages/admin_pages/AD_Profile';
 import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
 import EM_Dashboard from './components/EM_Dashboard';
+import EM_Reports from './pages/employee_pages/EM_Reports';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
 import IC_Nfc_Tagged from './pages/inv_committee_pages/IC_Nfc_Tagged';
 import IC_Profile from './pages/inv_committee_pages/IC_Profile';
 import IC_ManualInspection from './pages/inv_committee_pages/IC_Manual_Inspection';
+import IC_Reports from './pages/inv_committee_pages/IC_Reports';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
@@ -76,6 +79,9 @@ const App = () => {
         <Route path="/ad-reports" element={<AD_Reports />} />
         <Route path="/ad-accounts" element={<AD_Accounts />} />
         <Route path="/ad-profile" element={<AD_Profile />} />
+        <Route path="/notification" element={<Notification />} />
+        <Route path="/ic-reports" element={<IC_Reports />} />
+        <Route path="/em-reports" element={<EM_Reports />} />
       </Routes>
     </BrowserRouter>
   );

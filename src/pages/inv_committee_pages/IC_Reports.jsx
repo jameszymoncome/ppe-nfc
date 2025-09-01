@@ -10,10 +10,10 @@ import {
   Filter,
   Menu,
 } from 'lucide-react';
-import AD_Sidebar from '../../components/AD_Sidebar';
+import IC_Sidebar from '../../components/IC_Sidebar';
 import { BASE_URL } from '../../utils/connection';
 
-function AD_Reports() {
+function IC_Reports() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
@@ -37,15 +37,15 @@ function AD_Reports() {
     }
   };
 
-  const loggedInUserDept = localStorage.getItem('department');
+  const loggedInUserID = localStorage.getItem('userId');
 
     useEffect(() => {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      // assume you have loggedInUserDept from context or props
+      // assume you have loggedInUserID from context or props
       const response = await fetch(
-        `${BASE_URL}/ad_reportsgetItems.php?department=${encodeURIComponent(loggedInUserDept)}`
+        `${BASE_URL}/ic_reportsgetItems.php?userId=${encodeURIComponent(loggedInUserID)}`
       );
 
       const data = await response.json();
@@ -62,10 +62,10 @@ function AD_Reports() {
     }
   };
 
-  if (loggedInUserDept) {
+  if (loggedInUserID) {
     fetchDocuments();
   }
-}, [loggedInUserDept]);
+}, [loggedInUserID]);
 
   // Get unique users for the dropdown
   const uniqueUsers = ['All', ...new Set(documents.map(doc => doc.user))];
@@ -116,7 +116,7 @@ function AD_Reports() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar Placeholder - Hidden on mobile */}
-      <AD_Sidebar />
+      <IC_Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -418,4 +418,4 @@ function AD_Reports() {
   );
 }
 
-export default AD_Reports;
+export default IC_Reports;

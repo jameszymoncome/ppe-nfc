@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
-import lgu_seal from '/assets/images/lgu_seal.png'; 
+import { useLocation, NavLink, useNavigate } from 'react-router-dom';
+import {
+  MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3,
+  Users, Menu, X, Building2, UserRoundPen, Folder,
+  ChevronDown, ChevronRight, Smartphone, Bell
+} from 'lucide-react';
+import lgu_seal from '/assets/images/lgu_seal.png';
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const location = useLocation();
   const pathname = location.pathname;
+  const navigate = useNavigate();
 
   // Get user info from localStorage
   const firstName = localStorage.getItem('firstName') || '';
@@ -24,15 +33,112 @@ const Sidebar = () => {
     setIsInspectionOpen(!isInspectionOpen);
   };
 
+  // Expand submenu if already on inspection route
   useEffect(() => {
-  if (location.pathname.startsWith('/inspection')) {
-    setIsInspectionOpen(true);
-  }
-}, [location]);
+    if (location.pathname.startsWith('/inspection')) {
+      setIsInspectionOpen(true);
+    }
+  }, [location]);
+
+  // Restore notifications from localStorage
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("notifications")) || [];
+    setNotifications(saved);
+  }, []);
+
+  // Persist notifications
+  useEffect(() => {
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+  }, [notifications]);
+
+  // WebSocket for SUPER ADMIN
+  useEffect(() => {
+    if (accessLevel === 'SUPER ADMIN') {
+      const ws = new WebSocket('ws://localhost:8080'); // change to server
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'signup') {
+          setNotifications(prev => {
+            const exists = prev.some(
+              n => n.message === `New user signed up: ${data.fullName} (${data.department})`
+            );
+            if (exists) return prev;
+            return [
+              {
+                id: Date.now(),
+                message: `New user signed up: ${data.fullName} (${data.department})`,
+                time: new Date().toISOString(),
+                read: false,
+                target: '/accounts', // <-- add this property for navigation
+              },
+              ...prev,
+            ];
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
+      return () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      };
+    }
+  }, [accessLevel]);
+
+  // Format time (e.g., "2m ago")
+  const formatTime = (time) => {
+    const diff = (new Date() - new Date(time)) / 1000; // seconds
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return new Date(time).toLocaleDateString();
+  };
+
+  const handleOpenDropdown = () => {
+    setShowNotifDropdown(!showNotifDropdown);
+
+    // Mark all as read when opening
+    if (!showNotifDropdown) {
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
+      );
+    }
+  };
+
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifDropdown && !event.target.closest('.notification-dropdown')) {
+        setShowNotifDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifDropdown]);
 
   return (
     <>
-      {/* Mobile menu button - only show when sidebar is closed */}
+      {/* Mobile menu button */}
       {!open && (
         <button
           className="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-full shadow"
@@ -82,7 +188,7 @@ const Sidebar = () => {
               <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">
                   {firstName && lastName
-                    ? `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase()
+                    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
                     : 'U'}
                 </span>
               </div>
@@ -104,7 +210,7 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="p-4">
+        <nav className="p-4 flex-1">
           <ul className="space-y-2">
             <li>
               <NavLink
@@ -117,6 +223,7 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Dashboard</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/par-ics"
@@ -128,11 +235,12 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">PAR/ICS</span>
               </NavLink>
             </li>
+
+            {/* Inspection dropdown */}
             <li>
               <div>
-                {/* Main Inspection Item */}
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -150,7 +258,6 @@ const Sidebar = () => {
                   )}
                 </a>
 
-                {/* Sub-menu Items */}
                 {isInspectionOpen && (
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
@@ -179,6 +286,7 @@ const Sidebar = () => {
                 )}
               </div>
             </li>
+
             <li>
               <NavLink
                 to="/reports"
@@ -190,6 +298,7 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Reports</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/accounts"
@@ -201,6 +310,7 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Account Management</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/departments"
@@ -212,6 +322,7 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Department/Offices</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/category"
@@ -223,17 +334,44 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Category</span>
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/profile"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
-                }
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`}
               >
                 <UserRoundPen className="w-5 h-5" />
                 <span className="text-sm font-medium">Profile</span>
               </NavLink>
             </li>
+
+            {/* Notifications */}
+            <li>
+              <div className="relative notification-dropdown">
+                <button
+                  className={
+                    `${navLinkClass} hover:bg-gray-100 w-full relative ` +
+                    (pathname.startsWith('/notification') ? activeClass : '')
+                  }
+                  onClick={() => {
+                    setShowNotifDropdown(false);
+                    navigate("/notification");
+                  }}
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  <span className="text-sm font-medium">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 right-3 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </li>
+
+            {/* Logout */}
             <li>
               <button
                 onClick={() => {
@@ -248,7 +386,7 @@ const Sidebar = () => {
                 <span className="text-sm font-medium">Logout</span>
               </button>
             </li>
-          </ul>
+          </ul> {/* ✅ Close UL properly */}
         </nav>
       </div>
 

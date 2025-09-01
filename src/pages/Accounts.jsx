@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
-import { Search, X, PlusCircle, Trash2, Eye } from 'lucide-react';
+import { Search, X, PlusCircle, Trash2, Eye, Replace } from 'lucide-react';
 import { BASE_URL } from '../utils/connection';
 import Swal from 'sweetalert2';
 
@@ -34,6 +34,9 @@ const Accounts = () => {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [userToApprove, setUserToApprove] = useState(null);
   const [approvalRole, setApprovalRole] = useState('');
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [userToReplace, setUserToReplace] = useState(null);
+  const [selectedReplacement, setSelectedReplacement] = useState('');
 
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
@@ -337,6 +340,18 @@ const Accounts = () => {
                               <span>Approve</span>
                             </button>
                           )}
+                          <button
+                            onClick={() => {
+                              setUserToReplace(user);
+                              setShowReplaceModal(true);
+                              setSelectedReplacement('');
+                            }}
+                            className="text-yellow-600 hover:text-yellow-800 flex items-center gap-1"
+                            title="Replace account"
+                          >
+                            <Replace size={14} />
+                            <span>Replace</span>
+                          </button>
                         </div>
                       </td>
 
@@ -641,6 +656,108 @@ const Accounts = () => {
           disabled={!approvalRole}
         >
           Approve
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      {showReplaceModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+      <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-yellow-700">Replace Account</h3>
+        <button
+          onClick={() => {
+            setShowReplaceModal(false);
+            setUserToReplace(null);
+            setSelectedReplacement('');
+          }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      <div className="p-5 space-y-4">
+        <p className="text-sm text-gray-700">
+          Replace <strong>{userToReplace?.full_name}</strong> with:
+        </p>
+        <div className="space-y-3">
+          <button
+            className="w-full px-4 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 font-medium"
+            onClick={() => setSelectedReplacement('choose')}
+          >
+            Choose from current users
+          </button>
+          <button
+            className="w-full px-4 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-medium"
+            onClick={() => setSelectedReplacement('create')}
+          >
+            Create a new user
+          </button>
+        </div>
+        {selectedReplacement === 'choose' && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
+              onChange={e => setSelectedReplacement(e.target.value)}
+              value={selectedReplacement}
+            >
+              <option value="choose">Select user</option>
+              {users
+                .filter(u => u.user_id !== userToReplace?.user_id)
+                .map(u => (
+                  <option key={u.user_id} value={u.user_id}>
+                    {u.full_name} ({u.department})
+                  </option>
+                ))}
+            </select>
+            <button
+              className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+              onClick={() => {
+                // TODO: Add your replace logic here
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Account replaced!',
+                  confirmButtonColor: '#2563eb',
+                });
+                setShowReplaceModal(false);
+                setUserToReplace(null);
+                setSelectedReplacement('');
+              }}
+              disabled={selectedReplacement === 'choose'}
+            >
+              Confirm Replace
+            </button>
+          </div>
+        )}
+        {selectedReplacement === 'create' && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-700 mb-2">Proceed to create a new user to replace this account.</p>
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => {
+                setShowReplaceModal(false);
+                setShowAddModal(true);
+                setUserToReplace(null);
+                setSelectedReplacement('');
+              }}
+            >
+              Create New User
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="px-5 py-3 bg-gray-50 flex justify-end gap-3">
+        <button
+          onClick={() => {
+            setShowReplaceModal(false);
+            setUserToReplace(null);
+            setSelectedReplacement('');
+          }}
+          className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Cancel
         </button>
       </div>
     </div>

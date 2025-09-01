@@ -766,10 +766,6 @@ const EM_PAR_ICS = () => {
                 From Needs to Assets—Simplified PPE Requests.
               </p>
             </div>
-            <button onClick={handleIssuePAR} className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-              <FileText className="h-4 w-4" />
-              Issue PAR/ICS
-            </button>
           </div>
         </div>
 
