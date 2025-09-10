@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, QrCode, FileText } from 'lucide-react';
+import { Search, QrCode, FileText, X, Eye } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { BASE_URL } from '../utils/connection';
-import { ref, onValue, set } from "firebase/database";
-import { db } from '../utils/firebase';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Nfc_Tagged = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [yearFilter, setYearFilter] = useState('Year');
@@ -17,8 +17,20 @@ const Nfc_Tagged = () => {
   const [remarks, setRemarks] = useState('');
   const [nfcTagID, setNfcTagID] = useState('');
   const [mode, setMode] = useState('');
+  const [totalTagItems, setTotalTagItems] = useState('');
+  const [lastInspectedDate, setLastInspectedDate] = useState('');
+  const [totalItemsLastYear, setTotalItemsLastYear] = useState('');
+  const [totalInspectedItems, setTotalInspectedItems] = useState('');
   const [nfcChecked, setNFCChecked] = useState(true);
+  const [tagAssetsModal, setTagAssetsModal] = useState(false);
   const [taggedItems, setTaggedItems] = useState([]);
+  const [taggedAssetsitems, setTaggedAssetsitems] = useState([]);
+  const [taggedAssetsList, setTaggedAssetsList] = useState([]);
+  const [departmentModal, setDepartmentModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [ws, setWs] = useState(null);
+  const [messages, setMessages] = useState('');
+  const [wsStatus, setWsStatus] = useState("❌ Disconnected");
 
   const hasInitialized = useRef(false);
 
@@ -32,31 +44,88 @@ const Nfc_Tagged = () => {
     { label: 'Scrap Condition', color: 'bg-red-500 hover:bg-red-600' }
   ];
 
-  useEffect(() => {
-    if (scanningTag) {
-      const nfcRef = ref(db, "inspection");
-      const unsubscribe = onValue(nfcRef, (snapshot) => {
-        const data = snapshot.val();
+  // useEffect(() => {
+  //   if (scanningTag) {
+  //     const nfcRef = ref(db, "inspection");
+  //     const unsubscribe = onValue(nfcRef, (snapshot) => {
+  //       const data = snapshot.val();
 
-        if (!hasInitialized.current) {
-          hasInitialized.current = true;
-          return;
-        }
-        if (data) {
-          checkScannedID(data);
-        }
-      });
+  //       if (!hasInitialized.current) {
+  //         hasInitialized.current = true;
+  //         return;
+  //       }
+  //       if (data) {
+  //         checkScannedID(data);
+  //       }
+  //     });
 
-      return () => {
-        unsubscribe();
-        hasInitialized.current = false;
-      };
-    }
-  }, [scanningTag]);
+  //     return () => {
+  //       unsubscribe();
+  //       hasInitialized.current = false;
+  //     };
+  //   }
+  // }, [scanningTag]);
 
   useEffect(() => {
     fetchInspect();
   }, []);
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onmessage = (event) => {
+      console.log("Received:", event.data);
+      checkScannedID(event.data);
+      setMessages((prev) => [...prev, event.data]);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+    };
+
+    return () => ws.close();
+  }, []);
+
+  const websock = () => {
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onmessage = (event) => {
+      console.log("Received:", event.data);
+      setMessages((prev) => [...prev, event.data]);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+    };
+
+    return () => ws.close();
+  }
+
+
+  const getData = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/getTagData.php`);
+      setTotalTagItems(response.data.tagItems.totalTag); // Save to state
+      setTotalItemsLastYear(response.data.tagItems.sinceLastYear); // Save to state
+      setTotalInspectedItems(response.data.tagItems.inspectionCount); // Save to state
+      console.log(response.data.tagItems.formatted_date);
+      setLastInspectedDate(response.data.tagItems.formatted_date); // Save to state
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
+  }
 
   const fetchInspect = async () => {
     try {
@@ -93,7 +162,7 @@ const Nfc_Tagged = () => {
           lastInspected: item.dateInspected || "",
           inspectionDate: "", // optional
         });
-        setNfcTagID('');
+
         setShowScannedModal(true);
         setMode('scan');
         setNFCChecked(true);
@@ -115,6 +184,7 @@ const Nfc_Tagged = () => {
   });
 
   const handleSave = async () => {
+    console.log(nfcTagID);
     try {
       const response = await axios.post(`${BASE_URL}/inspect.php`, {
         nfcTagID,
@@ -150,6 +220,38 @@ const Nfc_Tagged = () => {
     setShowScannedModal(true);
   }
 
+  const goto = (propNo) => {
+    navigate('/inspection/nfc-tagged/scanned-history', {
+      state: { tagID: propNo }
+    });
+  }
+
+  const gotoTaggedAssets = async () => {
+    setTagAssetsModal(true);
+    try {
+      const response = await axios.get(`${BASE_URL}/taggedAssets.php`);
+      setTaggedAssetsitems(response.data.data);
+      console.log(response.data.data);
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
+  }
+
+  const openDepartmentModal = async (departmentName) => {
+    setSelectedDepartment(departmentName);
+    try {
+      const response = await axios.get(`${BASE_URL}/taggedAssetList.php`, {
+        params: {departmentName}
+      });
+      console.log(response.data.data);
+      setTaggedAssetsList(response.data.data);
+      setDepartmentModal(true);
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
+    
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar placeholder - replace with actual Sidebar component */}
@@ -180,17 +282,22 @@ const Nfc_Tagged = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Total Tagged Items */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div 
+            className="bg-white rounded-lg shadow-sm p-6"
+            onClick={() => {
+              gotoTaggedAssets();
+            }}
+          >
             <h3 className="text-sm font-medium text-gray-500 mb-2">Total Tagged Items</h3>
-            <div className="text-3xl font-bold text-gray-800 mb-1">1,056</div>
-            <p className="text-sm text-green-600">+ 35 items added since Last Year</p>
+            <div className="text-3xl font-bold text-gray-800 mb-1">{totalTagItems || 0}</div>
+            <p className="text-sm text-green-600">+ {totalItemsLastYear || 0} items added since Last Year</p>
           </div>
 
           {/* Annual Inspection Progress */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Annual Inspection Progress (2025)</h3>
             <div className="flex items-center gap-4">
-              <div className="text-3xl font-bold text-gray-800">25%</div>
+              <div className="text-3xl font-bold text-gray-800">{totalTagItems > 0 ? ((totalInspectedItems / totalTagItems) * 100).toFixed(2) : "0.00%"}%</div>
               <div className="relative w-20 h-20">
                 <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
                   <path
@@ -198,37 +305,29 @@ const Nfc_Tagged = () => {
                       a 15.9155 15.9155 0 0 1 0 31.831
                       a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="3"
-                    strokeDasharray="25, 75"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
                     stroke="#10b981"
                     strokeWidth="3"
-                    strokeDasharray="0, 25, 15, 60"
+                    strokeDasharray= {`${(totalInspectedItems / totalTagItems) * 100}, ${((totalTagItems - totalInspectedItems) / totalTagItems) * 100}`}
+                  />
+                  <path
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#ef4444" // red
+                    strokeWidth="3"
+                    strokeDasharray={`0, ${(totalInspectedItems / totalTagItems) * 100}, ${((totalTagItems - totalInspectedItems) / totalTagItems) * 100}, 0`}
                   />
                 </svg>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-2">315 of 420 tagged items inspected</p>
+            <p className="text-sm text-gray-600 mt-2">{totalInspectedItems || 0} of {totalTagItems || 0} tagged items inspected</p>
           </div>
 
           {/* Last Inspection Date */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Last Inspection Date</h3>
-            <div className="text-3xl font-bold text-gray-800 mb-1">July 12, 2025</div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">{lastInspectedDate}</div>
             <p className="text-sm text-gray-600">Most recent inspection recorded this year</p>
           </div>
         </div>
@@ -388,8 +487,15 @@ const Nfc_Tagged = () => {
       {showScannedModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[550px] px-6 overflow-hidden flex flex-col">
-            <div className="text-blue-800 py-3 rounded-t-lg">
-              <h2 className="text-lg font-semibold">Inspect Item</h2>
+            <div className="text-blue-800 py-3 rounded-t-lg flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex-1 text-left">Inspect Item</h2>
+              <button
+                onClick={() => goto(formData.propertyNo)}
+                className="bg-blue-600 text-white py-3 px-6 rounded-md font-medium hover:bg-blue-700 transition-colors ml-4"
+                style={{ minWidth: '100px' }}
+              >
+                History
+              </button>
             </div>
 
             <div className="pb-3 border-b-2 border-b-black space-y-4">
@@ -493,8 +599,138 @@ const Nfc_Tagged = () => {
         </div>
       )}
 
+      {tagAssetsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[950px] px-6 overflow-hidden flex flex-col p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-blue-800">Tagged Assets Overview by Office/Department</h1>
+                <p className="text-gray-600">A summary of all assets tagged with NFC, grouped by office or department.</p>
+              </div>
+              <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                onClick={() => {
+                  setTagAssetsModal(false)
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {/* Table aligned with header */}
+            <div className="w-full">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-300">
+                    <th className="text-left py-4 px-6 text-sm text-gray-700">Office/Department</th>
+                    <th className="text-left py-4 px-6 text-sm text-gray-700">Tagged Items</th>
+                    <th className="text-left py-4 px-6 text-sm text-gray-700">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taggedAssetsitems.map((item) => (
+                    <tr className="border-b border-gray-300" key={item.department}>
+                      <td className="py-4 px-6 text-sm text-gray-900">{item.department}</td>
+                      <td className="y-4 px-6 text-sm text-gray-900">{item.total_count}</td>
+                      <td className="y-4 px-6 text-sm text-gray-900 text-center">
+                        <button className="flex items-center justify-center mx-auto gap-2 group"
+                          onClick={() => openDepartmentModal(item.department)}
+                        >
+                          <Eye className="h-5 w-5 text-blue-600 group-hover:text-blue-800" />
+                          <span className="text-xs text-blue-600 group-hover:text-blue-800 font-medium">View</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
-
+      {departmentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1100px] px-8 py-8 overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <h1 className="text-2xl font-bold text-blue-800">
+                  [{selectedDepartment}] – Tagged Assets List
+                </h1>
+                <p className="text-gray-600">
+                  Assets currently assigned and tagged under this department.
+                </p>
+              </div>
+              <button
+                className="text-black text-3xl font-bold"
+                onClick={() => setDepartmentModal(false)}
+              >
+                <X size={32} />
+              </button>
+            </div>
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 items-center mb-4 mt-4">
+              <div className="flex-1 relative min-w-[220px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <select className="px-4 py-2 border border-gray-300 rounded-lg min-w-[160px]">
+                <option>All Condition</option>
+              </select>
+              <select className="px-4 py-2 border border-gray-300 rounded-lg min-w-[120px]">
+                <option>Year</option>
+              </select>
+              <select className="px-4 py-2 border border-gray-300 rounded-lg min-w-[120px]">
+                <option>All Status</option>
+              </select>
+            </div>
+            {/* Table */}
+            <div className="w-full">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-300">
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Property/Inventory No.</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Description</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Model</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Serial No.</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Condition</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Inspection Date</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taggedAssetsList.map((item) => (
+                    <tr className="border-b border-gray-300">
+                      <td className="py-3 px-4 text-gray-800">{item.propertyID}</td>
+                      <td className="py-3 px-4 text-gray-800">{item.description}</td>
+                      <td className="py-3 px-4 text-gray-800">{item.model}</td>
+                      <td className="py-3 px-4 text-gray-800">{item.serialNo}</td>
+                      <td className="py-3 px-4 text-gray-800">
+                        {item.conditions
+                          ? item.conditions
+                          : <span className="text-gray-400 italic">N/A</span>
+                        }
+                      </td>
+                      <td className="py-3 px-4 text-gray-800">
+                        {item.dateInspected
+                          ? item.dateInspected
+                          : <span className="text-gray-400 italic">N/A</span>
+                        }
+                      </td>
+                      <td className="py-3 px-4 text-gray-800">
+                        {/* Example avatar for status */}
+                        <img src="https://randomuser.me/api/portraits/men/33.jpg" alt="Status" className="w-8 h-8 rounded-full border-2 border-gray-400" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

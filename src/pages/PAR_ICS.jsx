@@ -36,6 +36,7 @@ const PAR_ICS = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [docNos, setDocNos] = useState('');
+  const [messages, setMessages] = useState('');
 
   const [office, setOffice] = useState('');
   const [items, setItems] = useState([
@@ -71,31 +72,52 @@ const PAR_ICS = () => {
 
   const hasInitialized = useRef(false);
 
+  // useEffect(() => {
+  //   if (viewNFCModal) {
+  //     const nfcRef = ref(db, "nfcTagging");
+
+  //     const unsubscribe = onValue(nfcRef, (snapshot) => {
+  //       const data = snapshot.val();
+
+  //       if (!hasInitialized.current) {
+  //         hasInitialized.current = true; // Ignore initial load
+  //         return;
+  //       }
+
+  //       if (data) {
+  //         setNfcId(data);
+  //         setIsScanning(false);
+  //         console.log("🔄 NFC data changed:", data);
+  //       }
+  //     });
+
+  //     return () => {
+  //       unsubscribe();
+  //       hasInitialized.current = false; // reset when unmounting
+  //     };
+  //   }
+  // }, [viewNFCModal]);
+
   useEffect(() => {
-    if (viewNFCModal) {
-      const nfcRef = ref(db, "nfcTagging");
-
-      const unsubscribe = onValue(nfcRef, (snapshot) => {
-        const data = snapshot.val();
-
-        if (!hasInitialized.current) {
-          hasInitialized.current = true; // Ignore initial load
-          return;
-        }
-
-        if (data) {
-          setNfcId(data);
-          setIsScanning(false);
-          console.log("🔄 NFC data changed:", data);
-        }
-      });
-
-      return () => {
-        unsubscribe();
-        hasInitialized.current = false; // reset when unmounting
+      const ws = new WebSocket("ws://localhost:8080");
+  
+      ws.onopen = () => {
+        console.log("Connected to WebSocket server");
       };
-    }
-  }, [viewNFCModal]);
+  
+      ws.onmessage = (event) => {
+        console.log("Received:", event.data);
+        setNfcId(event.data);
+        setIsScanning(false);
+        setMessages((prev) => [...prev, event.data]);
+      };
+  
+      ws.onclose = () => {
+        console.log("WebSocket closed");
+      };
+  
+      return () => ws.close();
+    }, []);
 
   useEffect(() => {
     const fetchHead = async () => {

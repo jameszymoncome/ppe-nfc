@@ -24,6 +24,22 @@ const Property_Assignment = () => {
   const [headData, setHeadData] = useState([]);
   const [currentHighIndex, setCurrentHighIndex] = useState(0);
   const [currentLowIndex, setCurrentLowIndex] = useState(0);
+
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [modalItem, setModalItem] = useState({
+    airNo: '',
+    airDate: '',
+    fund: '',
+    articleCode: '',
+    article: '',
+    description: '',
+    model: '',
+    serialNo: '',
+    unit: '',
+    unitCost: ''
+  });
+  const modalInputRef = useRef(null);
+  const [modalDropdownPosition, setModalDropdownPosition] = useState(null);
   
 
   useEffect(() => {
@@ -64,6 +80,48 @@ const Property_Assignment = () => {
     };
     fetchArticles();
   }, [articleSearchQuery]);
+
+  // Article auto-suggest for modal
+  useEffect(() => {
+    if (!modalItem.article) {
+      setArticleResults([]);
+      return;
+    }
+    const fetchArticles = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/getArticle.php`, {
+          params: { article: modalItem.article }
+        });
+        setArticleResults(response.data);
+      } catch (error) {
+        setArticleResults([]);
+      }
+    };
+    fetchArticles();
+  }, [modalItem.article, BASE_URL]);
+
+  const handleOpenItemModal = () => {
+    setModalItem({
+      airNo: '',
+      airDate: '',
+      fund: '',
+      articleCode: '',
+      article: '',
+      description: '',
+      model: '',
+      serialNo: '',
+      unit: '',
+      unitCost: ''
+    });
+    setShowItemModal(true);
+  };
+
+  const handleSaveItemModal = () => {
+    setItems([...items, { ...modalItem, id: Date.now() }]);
+    setShowItemModal(false);
+    setArticleResults([]);
+  };
+
 
   useEffect(() => {
     const fetchHead = async () => {
@@ -492,112 +550,15 @@ const Property_Assignment = () => {
                     <tbody>
                       {items.map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.airNo}
-                              onChange={(e) => handleItemChange(item.id, 'airNo', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="date"
-                              value={item.airDate}
-                              onChange={(e) => handleItemChange(item.id, 'airDate', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <select
-                              value={item.fund}
-                              onChange={(e) => handleItemChange(item.id, 'fund', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            >
-                              <option value="">-- Select Fund --</option>
-                              <option value="General Fund">General Fund</option>
-                              <option value="Special Education Fund">Special Education Fund</option>
-                              <option value="Trust Fund">Trust Fund</option>
-                            </select>
-                          </td>
-
-                          <td className="border border-gray-300 px-3 py-2 relative">
-                            <input
-                              ref={focusedItemId === item.id ? inputRef : null}
-                              type="text"
-                              value={item.article}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                handleItemChange(item.id, "article", value);
-                                setArticleSearchQuery(value);
-                                setFocusedItemId(item.id);
-
-                                // Calculate input position
-                                if (inputRef.current) {
-                                  const rect = inputRef.current.getBoundingClientRect();
-                                  setDropdownPosition({
-                                    top: rect.bottom + window.scrollY,
-                                    left: rect.left + window.scrollX,
-                                    width: rect.width
-                                  });
-                                }
-                              }}
-                              onFocus={() => {
-                                setFocusedItemId(item.id);
-                                if (inputRef.current) {
-                                  const rect = inputRef.current.getBoundingClientRect();
-                                  setDropdownPosition({
-                                    top: rect.bottom + window.scrollY,
-                                    left: rect.left + window.scrollX,
-                                    width: rect.width
-                                  });
-                                }
-                              }}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              autoComplete="off"
-                            />
-                          </td>
-
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.description}
-                              onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.model}
-                              onChange={(e) => handleItemChange(item.id, 'model', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.serialNo}
-                              onChange={(e) => handleItemChange(item.id, 'serialNo', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="text"
-                              value={item.unit}
-                              onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2">
-                            <input
-                              type="number"
-                              value={item.unitCost}
-                              onChange={(e) => handleItemChange(item.id, 'unitCost', e.target.value)}
-                              className="w-full px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </td>
+                          <td className="border border-gray-300 px-3 py-2">{item.airNo}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.airDate}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.fund}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.article}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.description}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.model}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.serialNo}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.unit}</td>
+                          <td className="border border-gray-300 px-3 py-2">{item.unitCost}</td>
                           <td className="border border-gray-300 px-3 py-2 text-center">
                             <button
                               onClick={() => handleRemoveItem(item.id)}
@@ -644,7 +605,7 @@ const Property_Assignment = () => {
                 {/* Add Item Button */}
                 <div className="mt-4">
                   <button
-                    onClick={handleAddItem}
+                    onClick={handleOpenItemModal}
                     className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
@@ -672,6 +633,175 @@ const Property_Assignment = () => {
           </div>
         </div>
       </div>
+
+      {showItemModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md md:max-w-lg p-4 md:p-6 relative overflow-y-auto max-h-[90vh]">
+              <button
+                onClick={() => setShowItemModal(false)}
+                className="absolute top-2 right-2 text-gray-600 hover:text-red-500 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              >
+                ×
+              </button>
+              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-blue-800">Add Accountable Item</h2>
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleSaveItemModal();
+                }}
+                className="space-y-2 md:space-y-3"
+              >
+                <div>
+                  <label className="block text-sm font-medium mb-1">AIR No.</label>
+                  <input
+                    type="text"
+                    value={modalItem.airNo}
+                    onChange={e => setModalItem({ ...modalItem, airNo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">AIR Date</label>
+                  <input
+                    type="date"
+                    value={modalItem.airDate}
+                    onChange={e => setModalItem({ ...modalItem, airDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Fund</label>
+                  <select
+                    value={modalItem.fund}
+                    onChange={e => setModalItem({ ...modalItem, fund: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  >
+                    <option value="">-- Select Fund --</option>
+                    <option value="General Fund">General Fund</option>
+                    <option value="Special Education Fund">Special Education Fund</option>
+                    <option value="Trust Fund">Trust Fund</option>
+                  </select>
+                </div>
+                <div className="relative">
+                  <label className="block text-sm font-medium mb-1">Article</label>
+                  <input
+                    ref={modalInputRef}
+                    type="text"
+                    value={modalItem.article}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setModalItem({ ...modalItem, article: value });
+                      // For auto-suggest
+                      if (modalInputRef.current) {
+                        const rect = modalInputRef.current.getBoundingClientRect();
+                        setModalDropdownPosition({
+                          top: rect.bottom + window.scrollY,
+                          left: rect.left + window.scrollX,
+                          width: rect.width
+                        });
+                      }
+                    }}
+                    onFocus={() => {
+                      if (modalInputRef.current) {
+                        const rect = modalInputRef.current.getBoundingClientRect();
+                        setModalDropdownPosition({
+                          top: rect.bottom + window.scrollY,
+                          left: rect.left + window.scrollX,
+                          width: rect.width
+                        });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                    autoComplete="off"
+                  />
+                  {articleResults.length > 0 && modalItem.article && (
+                    <ul
+                      className="absolute left-0 top-full bg-white border border-gray-200 rounded shadow z-10 w-full max-h-40 overflow-y-auto text-xs mt-1"
+                      style={modalDropdownPosition ? { minWidth: modalDropdownPosition.width } : {}}
+                    >
+                      {articleResults.map(article => (
+                        <li
+                          key={article.articleCode || article.categoryID}
+                          className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                          onClick={() => {
+                            setModalItem({
+                              ...modalItem,
+                              article: article.article || article.categoryName,
+                              articleCode: article.articleCode || article.categoryID
+                            });
+                            setArticleResults([]);
+                          }}
+                        >
+                          {article.article || article.categoryName}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={modalItem.description}
+                    onChange={e => setModalItem({ ...modalItem, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Model</label>
+                  <input
+                    type="text"
+                    value={modalItem.model}
+                    onChange={e => setModalItem({ ...modalItem, model: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Serial No.</label>
+                  <input
+                    type="text"
+                    value={modalItem.serialNo}
+                    onChange={e => setModalItem({ ...modalItem, serialNo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Unit</label>
+                  <input
+                    type="text"
+                    value={modalItem.unit}
+                    onChange={e => setModalItem({ ...modalItem, unit: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Unit Cost</label>
+                  <input
+                    type="number"
+                    value={modalItem.unitCost}
+                    onChange={e => setModalItem({ ...modalItem, unitCost: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end mt-3">
+                  <button
+                    type="submit"
+                    className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    Save Item
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       {showModalHigh && (
         <>
