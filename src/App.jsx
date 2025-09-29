@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import LandingPage from './components/LandingPage';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import Login from './pages/Login';
@@ -16,6 +16,9 @@ import Manual_Inspection from './pages/Manual_Inspection';
 import Reports from './pages/Reports';
 import Signup from './pages/Signup';
 import Notification from './pages/Notification';
+import AssetTransfer from './pages/AssetTransfer';
+import AssetTransfer2 from './pages/AssetTransfer2';
+import AssetTransfer3 from './pages/AssetTransfer3';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -30,6 +33,7 @@ import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
 import EM_Dashboard from './components/EM_Dashboard';
 import EM_Reports from './pages/employee_pages/EM_Reports';
+import EM_AssetTransfer from './pages/employee_pages/EM_AssetTransfer';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -41,8 +45,18 @@ import IC_Reports from './pages/inv_committee_pages/IC_Reports';
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
 
+import { connectWebSocket } from './components/websocket';
+import Scan from './pages/Scan';
+import ItemInfo from './pages/ItemInfo';
+
 
 const App = () => {
+  useEffect(() => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        connectWebSocket(); // reconnect if not connected
+      }
+  }, []);
   return (
     <BrowserRouter>
       <Routes>
@@ -82,6 +96,12 @@ const App = () => {
         <Route path="/notification" element={<Notification />} />
         <Route path="/ic-reports" element={<IC_Reports />} />
         <Route path="/em-reports" element={<EM_Reports />} />
+        <Route path="/asset-transfer" element={<AssetTransfer />} />
+        <Route path="/asset-transfer-2" element={<AssetTransfer2 />} />
+        <Route path="/asset-transfer-3" element={<AssetTransfer3 />} />
+        <Route path="/em-asset-transfer" element={<EM_AssetTransfer />} />
+        <Route path="/scan" element={<Scan />} />
+        <Route path="/item-info" element={<ItemInfo />} />
       </Routes>
     </BrowserRouter>
   );

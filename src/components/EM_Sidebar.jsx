@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone } from 'lucide-react';
+import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const EM_Sidebar = () => {
@@ -120,6 +120,17 @@ const EM_Sidebar = () => {
               >
                 <FileText className="w-5 h-5" />
                 <span className="text-sm font-medium">PAR/ICS</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/em-asset-transfer"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/em-asset-transfer') || pathname.startsWith('/em-asset-transfer3') ? activeClass : ''}`
+                }
+              >
+                <FolderSync className="w-5 h-5" />
+                <span className="text-sm font-medium">Asset Transfer</span>
               </NavLink>
             </li>
             <li>

@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import lgu_seal from '/assets/images/lgu_seal.png';
 import img_1 from '/assets/images/login_image1.png';
 import { BASE_URL } from '../utils/connection';
+import { connectWebSocket, sendMessage } from '../components/websocket';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -181,6 +182,8 @@ const Login = () => {
           toast: true,
           position: 'top-end'
         });
+
+        connectWebSocket(true);
 
         // Redirect based on access level
         const routes = {

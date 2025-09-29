@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Mail, FileText, Building, Wrench, Printer, Home, FileCheck, Eye, BarChart, Users, Settings } from 'lucide-react';
+import { Search, Mail, FileText, Building, Wrench, Printer, Home, FileCheck, Eye, BarChart, Users, Settings, Scan } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const firstName = localStorage.getItem("firstName");
   const lastName = localStorage.getItem("lastname");
 
@@ -27,11 +29,12 @@ const Dashboard = () => {
   ];
 
   const quickLinks = [
-    { name: 'Property Assignment', icon: Mail, color: 'bg-blue-800' },
-    { name: 'PAR and ICS', icon: FileText, color: 'bg-blue-800' },
-    { name: 'Building and Structures', icon: Building, color: 'bg-blue-800' },
-    { name: 'Log Repair / Lost Item', icon: Wrench, color: 'bg-blue-800' },
-    { name: 'Generate Reports', icon: Printer, color: 'bg-blue-800' }
+    { name: 'Property Assignment', icon: Mail, page: 'property-assignment', color: 'bg-blue-800' },
+    { name: 'PAR and ICS', icon: FileText, page: 'par-ics', color: 'bg-blue-800' },
+    { name: 'Building and Structures', icon: Building, page: 'building-and-structures', color: 'bg-blue-800' },
+    { name: 'Log Repair / Lost Item', icon: Wrench, page: 'log-repair-lost-item', color: 'bg-blue-800' },
+    { name: 'Generate Reports', icon: Printer, page: '', color: 'bg-blue-800' },
+    { name: 'Search Items', icon: Scan, page: 'scan', color: 'bg-blue-800' }
   ];
 
   const recentActivity = [
@@ -42,6 +45,11 @@ const Dashboard = () => {
       activity: 'Description'
     }
   ];
+
+  const goToPage = (page) => {
+    console.log(`Navigating to ${page}`);
+    navigate(`/${page}`);
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -72,9 +80,11 @@ const Dashboard = () => {
         {/* Quick Links */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Links</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {quickLinks.map((link, index) => (
-              <div key={index} className={`${link.color} rounded-lg p-6 text-white cursor-pointer hover:opacity-90 transition-opacity`}>
+              <div key={index} className={`${link.color} rounded-lg p-6 text-white cursor-pointer hover:opacity-90 transition-opacity`}
+                onClick={() => goToPage(link.page)}
+              >
                 <div className="flex flex-col items-center text-center">
                   <link.icon className="h-8 w-8 mb-3" />
                   <span className="text-sm font-medium">{link.name}</span>

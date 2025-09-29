@@ -3,9 +3,10 @@ import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import {
   MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3,
   Users, Menu, X, Building2, UserRoundPen, Folder,
-  ChevronDown, ChevronRight, Smartphone, Bell
+  ChevronDown, ChevronRight, Smartphone, Bell, FolderSync 
 } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png';
+import { sendMessage, onMessage, connectWebSocket } from './websocket';
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
@@ -102,6 +103,14 @@ const Sidebar = () => {
     }
   }, [accessLevel]);
 
+  const logOutSocket = () => {
+    const usersID = localStorage.getItem('userId');
+    sendMessage({
+      type: "logout",
+      userID: usersID
+    });
+  }
+
   // Format time (e.g., "2m ago")
   const formatTime = (time) => {
     const diff = (new Date() - new Date(time)) / 1000; // seconds
@@ -135,6 +144,45 @@ const Sidebar = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showNotifDropdown]);
+
+  // WebSocket for SUPER ADMIN
+  useEffect(() => {
+    if (accessLevel === 'SUPER ADMIN') {
+      const unsubscribe = onMessage((rawMessage) => {
+        try {
+          const data = JSON.parse(rawMessage);
+
+          if (data.type === "signup") {
+            setNotifications((prev) => {
+              const exists = prev.some(
+                (n) =>
+                  n.message ===
+                  `New user signed up: ${data.fullName} (${data.department})`
+              );
+              if (exists) return prev;
+
+              return [
+                {
+                  id: Date.now(),
+                  message: `New user signed up: ${data.fullName} (${data.department})`,
+                  time: new Date().toISOString(),
+                  read: false,
+                  target: "/accounts", // for navigation
+                },
+                ...prev,
+              ];
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
+      });
+
+      // Cleanup when component unmounts
+      return () => unsubscribe();
+    }
+  }, [accessLevel]);
+
 
   return (
     <>
@@ -289,6 +337,18 @@ const Sidebar = () => {
 
             <li>
               <NavLink
+                to="/asset-transfer"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/asset-transfer') || pathname.startsWith('/asset-transfer-3') ? activeClass : ''}`
+                }
+              >
+                <FolderSync className="w-5 h-5" />
+                <span className="text-sm font-medium">Asset Transfer</span>
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink
                 to="/reports"
                 className={({ isActive }) =>
                   `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
@@ -375,6 +435,7 @@ const Sidebar = () => {
             <li>
               <button
                 onClick={() => {
+                  logOutSocket();
                   localStorage.clear();
                   window.location.href = '/login';
                 }}
