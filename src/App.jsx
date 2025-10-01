@@ -19,6 +19,7 @@ import Notification from './pages/Notification';
 import AssetTransfer from './pages/AssetTransfer';
 import AssetTransfer2 from './pages/AssetTransfer2';
 import AssetTransfer3 from './pages/AssetTransfer3';
+import Assets from './pages/Assets';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -102,6 +103,7 @@ const App = () => {
         <Route path="/notification" element={<Notification />} />
         <Route path="/ic-reports" element={<IC_Reports />} />
         <Route path="/em-reports" element={<EM_Reports />} />
+        <Route path="/assets" element={<Assets />} />
         <Route path="/asset-transfer" element={<AssetTransfer />} />
         <Route path="/asset-transfer-2" element={<AssetTransfer2 />} />
         <Route path="/asset-transfer-3" element={<AssetTransfer3 />} />
