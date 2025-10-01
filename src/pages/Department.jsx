@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
-import { Search } from 'lucide-react';
+import { Search, Eye, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { BASE_URL } from '../utils/connection';
 import Swal from 'sweetalert2';
@@ -11,6 +11,7 @@ const Department = () => {
   const [showModal, setShowModal] = useState(false);
   const [newDepartment, setNewDepartment] = useState('');
   const [newAddress, setNewAddress] = useState('');
+  const [dept_id, setDeptId] = useState('');
   const [message, setMessage] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -65,13 +66,14 @@ const Department = () => {
   };
 
   const handleAddDepartment = async () => {
-    if (!newDepartment.trim() || !newAddress.trim()) {
-      setMessage('Both fields are required.');
+    if (!newDepartment.trim() || !newAddress.trim() || !dept_id.trim()) {
+      setMessage('All fields are required.');
       return;
     }
 
     try {
       const res = await axios.post(`${BASE_URL}/addDepartment.php`, {
+        dept_id: dept_id,
         name: newDepartment,
         address: newAddress
       });
@@ -162,14 +164,16 @@ const Department = () => {
                           setShowViewModal(true);
                         }}
                         className="text-blue-600 hover:text-blue-800 text-sm"
+                        title='View Details'
                       >
-                        View
+                        <Eye className='inline-block w-5 h-5' /> View
                       </button>
                       <button
                         onClick={() => handleDelete(dep.id)}
                         className="text-red-600 hover:text-red-800 text-sm ml-4"
+                        title='Delete Department'
                       >
-                        Delete
+                        <Trash2 className='inline-block w-5 h-5' /> Delete
                       </button>
                     </td>
                   </tr>
@@ -188,6 +192,13 @@ const Department = () => {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
             <h2 className="text-lg font-semibold mb-4 text-blue-800">Add New Department</h2>
+            <input
+              type="text"
+              value={dept_id}
+              onChange={(e) => setDeptId(e.target.value)}
+              placeholder="Enter department ID"
+              className="w-full mb-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
             <input
               type="text"
               value={newDepartment}

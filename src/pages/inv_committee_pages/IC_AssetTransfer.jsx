@@ -15,14 +15,14 @@ import {
   CheckCircle,
   Trash2
 } from 'lucide-react';
-import EM_Sidebar from '../../components/EM_Sidebar';
+import IC_Sidebar from '../../components/IC_Sidebar';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../../utils/connection';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Swal from 'sweetalert2';
 
-const EM_AssetTransfer = () => {
+const IC_AssetTransfer = () => {
   const [transferData, setTransferData] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +61,6 @@ const handleAccept = async (transfer, file) => {
   }
 };
 
-
 const handleDelete = async (ptr_no) => {
   Swal.fire({
     title: "Are you sure?",
@@ -95,7 +94,6 @@ const handleDelete = async (ptr_no) => {
     }
   });
 };
-
 
 
     const fetchTransfers = async () => {
@@ -571,7 +569,7 @@ const HiddenTransferReport = ({ transfer1 }) => {
 
   const handleDownload = async (item) => {
   // 1. Fetch items and create a complete data object
-  const items = await fetchTransferItems(item.from_officerID);
+  const items = await fetchTransferItems(item.ptr_no);
   const dataForDownload = { ...item, items };
 
   // 2. Set the state to trigger the hidden component render and the useEffect
@@ -619,7 +617,7 @@ useEffect(() => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <EM_Sidebar/>
+      <IC_Sidebar/>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -757,7 +755,7 @@ useEffect(() => {
                         <button
                         className="text-green-400 hover:text-green-600"
                         onClick={async () => {
-                            const items = await fetchTransferItems(item.from_officerID);
+                            const items = await fetchTransferItems(item.ptr_no);
                             await handleDownload({ ...item, items });
                         }}
                         title='Download PDF'
@@ -888,4 +886,4 @@ useEffect(() => {
   );
 };
 
-export default EM_AssetTransfer;
+export default IC_AssetTransfer;

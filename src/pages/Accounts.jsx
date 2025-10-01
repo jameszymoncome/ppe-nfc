@@ -281,6 +281,7 @@ const Accounts = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -301,10 +302,10 @@ const Accounts = () => {
                           ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                           {user.role}
                         </span>
-                        <span className={`ml-2 text-xs ${user.acc_status === 'Pending' ? 'text-yellow-500' : 'text-green-600'}`}>
-                          ({user.acc_status})
-                        </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span className={`ml-2 text-xs ${user.acc_status === 'Pending' ? 'text-yellow-500' : 'text-green-600'}`}>
+                          ({user.acc_status})
+                        </span></td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex gap-3 flex-wrap">
                           <button
@@ -340,7 +341,8 @@ const Accounts = () => {
                               <span>Approve</span>
                             </button>
                           )}
-                          <button
+                          {user.acc_status === 'Active' && (
+                            <button
                             onClick={() => {
                               setUserToReplace(user);
                               setShowReplaceModal(true);
@@ -352,6 +354,7 @@ const Accounts = () => {
                             <Replace size={14} />
                             <span>Replace</span>
                           </button>
+                          )}
                         </div>
                       </td>
 

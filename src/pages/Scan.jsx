@@ -21,25 +21,25 @@ const Scan = () => {
     const [deviceStatus, setDeviceStatus] = useState({});
     const [selectedDevice, setSelectedDevice] = useState('');
     // Mock database of item histories
-    const itemHistoryDatabase = {
-        'ITM-001': [
-            { id: 1, action: 'Item Created', scanTime: '2024-09-20 10:00', condition: 'Excellent', location: 'Warehouse A', user: 'Admin' },
-            { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-22 14:30', condition: 'Excellent', location: 'Warehouse A', user: 'John Doe' },
-            { id: 3, action: 'Condition Updated', scanTime: '2024-09-22 14:32', condition: 'Good', previousCondition: 'Excellent', location: 'Warehouse A', user: 'John Doe', remarks: 'Minor scratches observed' },
-            { id: 4, action: 'NFC Tag Scanned', scanTime: '2024-09-25 11:15', condition: 'Good', location: 'Office B', user: 'Jane Smith' },
-            { id: 5, action: 'Condition Updated', scanTime: '2024-09-25 11:17', condition: 'Fair', previousCondition: 'Good', location: 'Office B', user: 'Jane Smith', remarks: 'Wear and tear visible' }
-        ],
-        'ITM-002': [
-            { id: 1, action: 'Item Created', scanTime: '2024-09-18 09:00', condition: 'Excellent', location: 'Office B', user: 'Admin' },
-            { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-23 16:20', condition: 'Excellent', location: 'Office B', user: 'Mike Johnson' },
-            { id: 3, action: 'Condition Updated', scanTime: '2024-09-24 10:45', condition: 'Good', previousCondition: 'Excellent', location: 'Office B', user: 'Sarah Wilson' },
-            { id: 4, action: 'Reported as damaged', scanTime: '2024-09-26 14:15', condition: 'Poor', location: 'Office B', user: 'Sarah Wilson', reportType: 'damaged' }
-        ],
-        'ITM-003': [
-            { id: 1, action: 'Item Created', scanTime: '2024-09-19 11:30', condition: 'Excellent', location: 'Storage Room', user: 'Admin' },
-            { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-26 14:20', condition: 'Excellent', location: 'Storage Room', user: 'Tom Brown' }
-        ]
-    };
+    // const itemHistoryDatabase = {
+    //     'ITM-001': [
+    //         { id: 1, action: 'Item Created', scanTime: '2024-09-20 10:00', condition: 'Excellent', location: 'Warehouse A', user: 'Admin' },
+    //         { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-22 14:30', condition: 'Excellent', location: 'Warehouse A', user: 'John Doe' },
+    //         { id: 3, action: 'Condition Updated', scanTime: '2024-09-22 14:32', condition: 'Good', previousCondition: 'Excellent', location: 'Warehouse A', user: 'John Doe', remarks: 'Minor scratches observed' },
+    //         { id: 4, action: 'NFC Tag Scanned', scanTime: '2024-09-25 11:15', condition: 'Good', location: 'Office B', user: 'Jane Smith' },
+    //         { id: 5, action: 'Condition Updated', scanTime: '2024-09-25 11:17', condition: 'Fair', previousCondition: 'Good', location: 'Office B', user: 'Jane Smith', remarks: 'Wear and tear visible' }
+    //     ],
+    //     'ITM-002': [
+    //         { id: 1, action: 'Item Created', scanTime: '2024-09-18 09:00', condition: 'Excellent', location: 'Office B', user: 'Admin' },
+    //         { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-23 16:20', condition: 'Excellent', location: 'Office B', user: 'Mike Johnson' },
+    //         { id: 3, action: 'Condition Updated', scanTime: '2024-09-24 10:45', condition: 'Good', previousCondition: 'Excellent', location: 'Office B', user: 'Sarah Wilson' },
+    //         { id: 4, action: 'Reported as damaged', scanTime: '2024-09-26 14:15', condition: 'Poor', location: 'Office B', user: 'Sarah Wilson', reportType: 'damaged' }
+    //     ],
+    //     'ITM-003': [
+    //         { id: 1, action: 'Item Created', scanTime: '2024-09-19 11:30', condition: 'Excellent', location: 'Storage Room', user: 'Admin' },
+    //         { id: 2, action: 'NFC Tag Scanned', scanTime: '2024-09-26 14:20', condition: 'Excellent', location: 'Storage Room', user: 'Tom Brown' }
+    //     ]
+    // };
 
     const [currentItemHistory, setCurrentItemHistory] = useState([]);
 
@@ -122,7 +122,7 @@ const Scan = () => {
         try {
             const response = await axios.get(`${BASE_URL}/getItemTag.php`, {
                 params: {
-                tag
+                    tag
                 }
             });
             // console.log(response.data.data);
@@ -135,7 +135,8 @@ const Scan = () => {
                     lastScanned: response.data.data[0].dateInspected,
                     category: response.data.data[0].category,
                     serialNumber: response.data.data[0].serialNo,
-                    nfcTagId: response.data.data[0].tagID
+                    nfcTagId: response.data.data[0].tagID,
+                    updates: response.data.data[0].updates,
                 }
                 setScannedItem(getDatas);
                 setSelectedCondition(response.data.data[0].conditions);
@@ -143,6 +144,9 @@ const Scan = () => {
                 setNfcTagID(getDatas.nfcTagId);
                 itemHistory(tag);
                 setIsScanning(false);
+            }
+            else{
+                console.log("No item found");
             }
         } catch (error) {
             console.error('Error fetching item:', error);
@@ -219,7 +223,8 @@ const Scan = () => {
                     action: 'Item Scanned',
                     serialNumber: row.serialNo,
                     nfcTagId: row.tagID,
-                    remarks: row.remarks
+                    remarks: row.remarks,
+                    updates: row.updates
                 }));
 
                 setScanHistory(getDatas);
@@ -273,31 +278,6 @@ const Scan = () => {
         // }
     };
 
-    // const submitReport = () => {
-    //     if (scannedItem && reportType) {
-    //         const reportHistoryEntry = {
-    //             id: currentItemHistory.length + 1,
-    //             action: `Reported as ${reportType}`,
-    //             scanTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
-    //             condition: scannedItem.condition,
-    //             location: scannedItem.location,
-    //             user: 'Current User',
-    //             nfcTagId: scannedItem.nfcTagId,
-    //             reportType: reportType
-    //         };
-            
-    //         const updatedHistory = [...currentItemHistory, reportHistoryEntry];
-    //         setCurrentItemHistory(updatedHistory);
-            
-    //         // Update database
-    //         itemHistoryDatabase[scannedItem.id] = updatedHistory;
-            
-    //         alert(`⚠️ Report submitted: ${scannedItem.name} reported as ${reportType}`);
-    //         setShowReportModal(false);
-    //         setReportType('');
-    //     }
-    // };
-
     const getConditionColor = (condition) => {
         switch (condition) {
             case 'Very Good': return 'text-green-600 bg-blue-100';
@@ -305,6 +285,7 @@ const Scan = () => {
             case 'Fair Condition': return 'text-yellow-600 bg-yellow-100';
             case 'Poor Condition': return 'text-red-600 bg-orange-100';
             case 'Scrap Condition': return 'text-red-600 bg-orange-100';
+            case 'Damaged': return 'text-red-600 bg-red-100';
             default: return 'text-gray-600 bg-gray-100';
         }
     };
@@ -331,11 +312,26 @@ const Scan = () => {
         return <WifiOff className="w-4 h-4 text-red-500" />;
     };
 
+    const submitReport = async (tagId, reportType) => {
+        console.log('Submitting report for tag:', tagId, 'with type:', reportType);
+        try {
+            const response = await axios.post(`${BASE_URL}/inspect.php`, {
+                nfcTagID: tagId,
+                selectedCondition: reportType,
+                mode: "report"
+            });
+            console.log(response.data);
+            // viewItem(); // Refresh item data after report submission
+        } catch (error) {
+            console.error('Error submitting report:', error);
+        }
+    }
+
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 overflow-hidden">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col overflow-hidden p-6">
+            <div className="flex-1 flex flex-col overflow-y-auto p-6">
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4">
                     <div>
@@ -361,9 +357,9 @@ const Scan = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-6">
+                <div className="flex flex-col xl:flex-row gap-4">
                     {/* Left Panel - Scanner & Item Details */}
-                    <div className="space-y-6">
+                    <div className="xl:flex-1 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
                         {/* Scanning Status */}
                         {isScanning && (
                             <div className="bg-white rounded-lg shadow-md p-6">
@@ -460,8 +456,8 @@ const Scan = () => {
                                             rows="2"
                                         />
                                         <div className="mt-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                                            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getConditionColor(currentCondition)}`}>
-                                                Current: {currentCondition}
+                                            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getConditionColor(currentCondition || scannedItem.updates)}`}>
+                                                Current: {currentCondition || scannedItem.updates}
                                             </span>
                                             <button
                                                 onClick={updateCondition}
@@ -474,29 +470,29 @@ const Scan = () => {
                                 </div>
 
                                 {/* Report Buttons */}
-                                {/* <div className="mt-6 pt-6 border-t">
-                                    <h4 className="font-semibold mb-3 text-red-700">Report Issues</h4>
+                                <div className="mt-6 pt-6 border-t">
+                                    <h4 className="font-semibold mb-3 text-red-700">Report</h4>
                                     <div className="flex flex-col sm:flex-row gap-2">
                                         <button
-                                            onClick={() => {setShowReportModal(true); setReportType('missing');}}
+                                            onClick={() => {setShowReportModal(true)}}
                                             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex-1"
                                         >
-                                            Report Missing
+                                            Report Issues and Updates
                                         </button>
-                                        <button
+                                        {/* <button
                                             onClick={() => {setShowReportModal(true); setReportType('damaged');}}
                                             className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex-1"
                                         >
                                             Report Damage
-                                        </button>
+                                        </button> */}
                                     </div>
-                                </div> */}
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* Right Panel - History */}
-                    <div className="bg-white rounded-lg shadow-md p-6 w-max">
+                    <div className="bg-white rounded-lg shadow-md p-6 xl:w-96 flex flex-col">
                         <h3 className="text-lg font-semibold mb-4 flex items-center">
                             <History className="mr-2 text-purple-600" size={20} />
                             Item History
@@ -520,8 +516,8 @@ const Scan = () => {
                                             )}
                                         </div>
                                         <div className="text-right">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(item.condition)}`}>
-                                                {item.condition}
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(item.condition || item.updates)}`}>
+                                                {item.condition || item.updates}
                                             </span>
                                             {item.action === 'Condition Updated' && (
                                                 <p className="text-xs text-orange-600 mt-1">
@@ -558,7 +554,7 @@ const Scan = () => {
                 </div>
 
                 {/* Report Modal */}
-                {/* {showReportModal && (
+                {showReportModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg p-6 w-full max-w-md">
                             <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -580,10 +576,12 @@ const Scan = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                                 >
                                     <option value="">Select issue type</option>
-                                    <option value="missing">Missing</option>
-                                    <option value="damaged">Damaged</option>
-                                    <option value="misplaced">Misplaced</option>
-                                    <option value="malfunctioning">Malfunctioning</option>
+                                    <option value="Missing">Missing</option>
+                                    <option value="Damaged">Damaged</option>
+                                    <option value="Misplaced">Misplaced</option>
+                                    <option value="Malfunctioning">Malfunctioning</option>
+                                    <option value="Repaired">Repaired</option>
+                                    <option value="Maintenance">Maintenance</option>
                                     <option value="other">Other</option>
                                 </select>
                             </div>
@@ -596,7 +594,13 @@ const Scan = () => {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={submitReport}
+                                    onClick={() => {
+                                        // Handle report submission logic here
+                                        console.log('Report submitted:', scannedItem?.nfcTagId, reportType);
+                                        submitReport(scannedItem?.nfcTagId, reportType);
+                                        setShowReportModal(false);
+                                        setReportType('');
+                                    }}
                                     disabled={!reportType}
                                     className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md transition-colors"
                                 >
@@ -605,7 +609,7 @@ const Scan = () => {
                             </div>
                         </div>
                     </div>
-                )} */}
+                )}
             </div>
 
             <DeviceListModal

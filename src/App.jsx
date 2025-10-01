@@ -28,12 +28,16 @@ import AD_ManualInspection from './pages/admin_pages/AD_Manual_Inspection';
 import AD_Reports from './pages/admin_pages/AD_Reports';
 import AD_Accounts from './pages/admin_pages/AD_Accounts';
 import AD_Profile from './pages/admin_pages/AD_Profile';
+import AD_AssetTransfer from './pages/admin_pages/AD_AssetTransfer';
+import AD_AssetTransfer2 from './pages/admin_pages/AD_AssetTransfer2';
+import AD_AssetTransfer3 from './pages/admin_pages/AD_AssetTransfer3';
 //Employee Routes
 import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
 import EM_Dashboard from './components/EM_Dashboard';
 import EM_Reports from './pages/employee_pages/EM_Reports';
 import EM_AssetTransfer from './pages/employee_pages/EM_AssetTransfer';
+import EM_AssetTransfer3 from './pages/employee_pages/EM_AssetTransfer3';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -41,6 +45,8 @@ import IC_Nfc_Tagged from './pages/inv_committee_pages/IC_Nfc_Tagged';
 import IC_Profile from './pages/inv_committee_pages/IC_Profile';
 import IC_ManualInspection from './pages/inv_committee_pages/IC_Manual_Inspection';
 import IC_Reports from './pages/inv_committee_pages/IC_Reports';
+import IC_AssetTransfer from './pages/inv_committee_pages/IC_AssetTransfer';
+import IC_AssetTransfer3 from './pages/inv_committee_pages/IC_AssetTransfer3';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
@@ -100,6 +106,12 @@ const App = () => {
         <Route path="/asset-transfer-2" element={<AssetTransfer2 />} />
         <Route path="/asset-transfer-3" element={<AssetTransfer3 />} />
         <Route path="/em-asset-transfer" element={<EM_AssetTransfer />} />
+        <Route path="/em-asset-transfer-3" element={<EM_AssetTransfer3 />} />
+        <Route path="/ic-asset-transfer" element={<IC_AssetTransfer />} />
+        <Route path="/ic-asset-transfer-3" element={<IC_AssetTransfer3 />} />
+        <Route path="/ad-asset-transfer" element={<AD_AssetTransfer />} />
+        <Route path="/ad-asset-transfer-2" element={<AD_AssetTransfer2 />} />
+        <Route path="/ad-asset-transfer-3" element={<AD_AssetTransfer3 />} />
         <Route path="/scan" element={<Scan />} />
         <Route path="/item-info" element={<ItemInfo />} />
       </Routes>

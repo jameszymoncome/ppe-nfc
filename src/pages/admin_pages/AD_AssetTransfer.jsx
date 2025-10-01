@@ -15,14 +15,14 @@ import {
   CheckCircle,
   Trash2
 } from 'lucide-react';
-import EM_Sidebar from '../../components/EM_Sidebar';
+import AD_Sidebar from '../../components/AD_Sidebar';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../../utils/connection';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Swal from 'sweetalert2';
 
-const EM_AssetTransfer = () => {
+const AD_AssetTransfer = () => {
   const [transferData, setTransferData] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -619,7 +619,7 @@ useEffect(() => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <EM_Sidebar/>
+      <AD_Sidebar/>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -632,7 +632,7 @@ useEffect(() => {
                 Reassign or relocate assets to a different employee, department, or location.
               </p>
             </div>
-            <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2" onClick={() => navigate('/em-asset-transfer-3')}>
+            <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2" onClick={() => navigate('/ad-asset-transfer-2')}>
               <Upload className="w-4 h-4" />
               <span>Transfer</span>
             </button>
@@ -888,4 +888,4 @@ useEffect(() => {
   );
 };
 
-export default EM_AssetTransfer;
+export default AD_AssetTransfer;

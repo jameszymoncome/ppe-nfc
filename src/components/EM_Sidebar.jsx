@@ -126,7 +126,7 @@ const EM_Sidebar = () => {
               <NavLink
                 to="/em-asset-transfer"
                 className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/em-asset-transfer') || pathname.startsWith('/em-asset-transfer3') ? activeClass : ''}`
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/em-asset-transfer') || pathname.startsWith('/em-asset-transfer-3') ? activeClass : ''}`
                 }
               >
                 <FolderSync className="w-5 h-5" />

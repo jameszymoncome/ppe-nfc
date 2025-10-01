@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, QrCode, FileText, X, Eye } from 'lucide-react';
+import React, { useState, useEffect, useRef, use } from 'react';
+import { Search, QrCode, FileText, X, Eye, Wifi, WifiOff, Activity } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { BASE_URL } from '../utils/connection';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import DeviceListModal from '../components/DeviceListModal';
+import { onMessage, sendMessage } from '../components/websocket';
+import { check } from 'prettier';
 
 const Nfc_Tagged = () => {
   const navigate = useNavigate();
@@ -12,7 +15,6 @@ const Nfc_Tagged = () => {
   const [yearFilter, setYearFilter] = useState('Year');
   const [showScanningModal, setShowScanningModal] = useState(false);
   const [showScannedModal, setShowScannedModal] = useState(false);
-  const [scanningTag, setScanningTag] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState('');
   const [remarks, setRemarks] = useState('');
   const [nfcTagID, setNfcTagID] = useState('');
@@ -31,11 +33,11 @@ const Nfc_Tagged = () => {
   const [ws, setWs] = useState(null);
   const [messages, setMessages] = useState('');
   const [wsStatus, setWsStatus] = useState("❌ Disconnected");
-
-  const hasInitialized = useRef(false);
-
+  const [deviceListModal, setDeviceListModal] = useState(false);
+  const [deviceList, setDeviceList] = useState([]);
+  const [deviceStatus, setDeviceStatus] = useState({});
+  const [selectedDevice, setSelectedDevice] = useState('');
   const [formData, setFormData] = useState([]);
-
   const conditions = [
     { label: 'Very Good', color: 'bg-blue-600 hover:bg-blue-700' },
     { label: 'Good Condition', color: 'bg-green-500 hover:bg-green-600' },
@@ -44,27 +46,13 @@ const Nfc_Tagged = () => {
     { label: 'Scrap Condition', color: 'bg-red-500 hover:bg-red-600' }
   ];
 
-  // useEffect(() => {
-  //   if (scanningTag) {
-  //     const nfcRef = ref(db, "inspection");
-  //     const unsubscribe = onValue(nfcRef, (snapshot) => {
-  //       const data = snapshot.val();
+  useEffect(() => {
+    if (selectedDevice) {
+      setDeviceListModal(false);
+      setShowScanningModal(true);
+    }
 
-  //       if (!hasInitialized.current) {
-  //         hasInitialized.current = true;
-  //         return;
-  //       }
-  //       if (data) {
-  //         checkScannedID(data);
-  //       }
-  //     });
-
-  //     return () => {
-  //       unsubscribe();
-  //       hasInitialized.current = false;
-  //     };
-  //   }
-  // }, [scanningTag]);
+  }, [selectedDevice])
 
   useEffect(() => {
     fetchInspect();
@@ -75,44 +63,71 @@ const Nfc_Tagged = () => {
   }, []);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080");
+    const unsubscribe = onMessage((raw) => {
+      try {
+        const data = JSON.parse(raw);
 
-    ws.onopen = () => {
-      console.log("Connected to WebSocket server");
-    };
+        if (data.type === "status" && data.ssid) {
+          setDeviceList((prev) =>
+            prev.map((device) =>
+              device.device_name === data.ssid
+                ? { ...device, status: data.status }
+                : device
+            )
+          );
+        }
 
-    ws.onmessage = (event) => {
-      console.log("Received:", event.data);
-      checkScannedID(event.data);
-      setMessages((prev) => [...prev, event.data]);
-    };
+      } catch (err) {
+        console.error("❌ Error parsing WS message:", err);
+      }
+    });
 
-    ws.onclose = () => {
-      console.log("WebSocket closed");
-    };
-
-    return () => ws.close();
+    return () => unsubscribe();
   }, []);
 
-  const websock = () => {
-    const ws = new WebSocket("ws://localhost:8080");
-
-    ws.onopen = () => {
-      console.log("Connected to WebSocket server");
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/deviceList.php`);
+        console.log(response.data.data);
+        setDeviceList(
+          response.data.data.map((device) => ({
+            ...device,
+            status: deviceStatus[device.device_name] || "offline", // overwrite with latest WS status
+          }))
+        );
+        // const deviceNames = response.data.data.map(item => item.device_name);
+        // console.log(deviceNames);
+      } catch (error) {
+        console.error('Error fetching end users:', error);
+      }
     };
 
-    ws.onmessage = (event) => {
-      console.log("Received:", event.data);
-      setMessages((prev) => [...prev, event.data]);
-    };
+    fetchDevices();
+  },[]);
 
-    ws.onclose = () => {
-      console.log("WebSocket closed");
-    };
+  useEffect(() => {
+    const unsubscribe = onMessage((raw) => {
+      try {
+        const data = JSON.parse(raw);
+        if (data.type === "deviceConnection" && data.message === "Connected") {
+          setShowScanningModal(true);
+        }
+        if (data.type === "deviceConnection" && data.message === "Not connected") {
+          console.log("No Connection");
+          setDeviceListModal(true);
+        }
+        if (data.type === "nfcEvent") {
+          console.log("NFC Event:", data.uid);
+          checkScannedID(data.uid);
+        }
+      } catch (err) {
+        console.error("❌ Error parsing WS message:", err);
+      }
+    });
 
-    return () => ws.close();
-  }
-
+    return () => unsubscribe();
+  }, [])
 
   const getData = async () => {
     try {
@@ -252,6 +267,32 @@ const Nfc_Tagged = () => {
     
   };
 
+  const getStatusColor = (status) => {
+    return status === 'online' ? 'text-green-600' : 'text-red-500';
+  };
+
+  const getStatusBg = (status) => {
+    return status === 'online' ? 'bg-green-100' : 'bg-red-100';
+  };
+
+  const StatusIcon = ({ status }) => {
+    if (status === 'online') {
+      return <Wifi className="w-4 h-4 text-green-600" />;
+    }
+    return <WifiOff className="w-4 h-4 text-red-500" />;
+  };
+
+  const checkConnection = () => {
+    setNfcTagID('');
+    setSelectedCondition('');
+    setRemarks('');
+    navigate(`/scan`);
+    // sendMessage({
+    //   type: "connection",
+    //   userID: localStorage.getItem("userId")
+    // });
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar placeholder - replace with actual Sidebar component */}
@@ -266,11 +307,12 @@ const Nfc_Tagged = () => {
           </div>
           <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
             onClick={() => {
-              setShowScanningModal(true)
-              setScanningTag(true)
-              setNfcTagID('');
-              setSelectedCondition('');
-              setRemarks('');
+              checkConnection();
+              // setDeviceListModal(true);
+              // setShowScanningModal(true)
+              // setNfcTagID('');
+              // setSelectedCondition('');
+              // setRemarks('');
               
             }}
           >
@@ -327,7 +369,7 @@ const Nfc_Tagged = () => {
           {/* Last Inspection Date */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Last Inspection Date</h3>
-            <div className="text-3xl font-bold text-gray-800 mb-1">{lastInspectedDate}</div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">{lastInspectedDate || "MM/DD/YYYY"}</div>
             <p className="text-sm text-gray-600">Most recent inspection recorded this year</p>
           </div>
         </div>
@@ -441,6 +483,16 @@ const Nfc_Tagged = () => {
         </div>
       </div>
 
+      <DeviceListModal
+        deviceList={deviceList}
+        deviceListModal={deviceListModal}
+        setDeviceListModal={setDeviceListModal}
+        setSelectedDevice={setSelectedDevice}
+        StatusIcon={StatusIcon}
+        getStatusBg={getStatusBg}
+        getStatusColor={getStatusColor}
+      />
+
       {showScanningModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[450px] overflow-hidden flex flex-col items-center">
@@ -471,9 +523,7 @@ const Nfc_Tagged = () => {
             <div className="pb-4 pt-4">
               <button
                 onClick={() => {
-                  setShowScanningModal(false)
-                  setScanningTag(false)
-                  
+                  setShowScanningModal(false)                  
                 }}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 px-9 rounded-lg font-medium hover:bg-gray-300 transition-colors"
               >

@@ -1,6 +1,6 @@
 // DeviceListModal.js
 import React from "react";
-import { X, Activity } from "lucide-react"; // assuming you use lucide-react icons
+import { X, Activity, MonitorX, MonitorOff } from "lucide-react"; // assuming you use lucide-react icons
 import { sendMessage } from "./websocket";
 
 // Example: You can pass StatusIcon, getStatusBg, getStatusColor from parent or import them here
@@ -44,48 +44,55 @@ export default function DeviceListModal({
         {/* Device List */}
         <div className="flex-1 max-h-[400px] overflow-y-auto">
           <div className="p-4 space-y-3">
-            {deviceList.map((item) => (
-              <div 
-                key={item.device_name}
-                className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors border border-gray-200"
-                onClick={() => {
-                  setSelectedDevice(item.device_name);
+            {deviceList.length > 0 ? (
+              deviceList.map((item) => (
+                <div 
+                  key={item.device_name}
+                  className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors border border-gray-200"
+                  onClick={() => {
+                    setSelectedDevice(item.device_name);
 
-                  sendMessage({
-                    type: "deviceSelected",
-                    deviceName: item.device_name,
-                    userID: localStorage.getItem("userId"), // include user if needed
-                  });
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <StatusIcon status={item.status} />
-                      <div>
-                        <h3 className="font-medium text-gray-900 text-sm">
-                          {item.device_name}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Last seen: {item.last_seen}
-                        </p>
+                    sendMessage({
+                      type: "deviceSelected",
+                      deviceName: item.device_name,
+                      userID: localStorage.getItem("userId"), // include user if needed
+                    });
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <StatusIcon status={item.status} />
+                        <div>
+                          <h3 className="font-medium text-gray-900 text-sm">
+                            {item.device_name}
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Last seen: {item.last_seen}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <span 
-                      className={`
-                        px-3 py-1 rounded-full text-xs font-medium capitalize
-                        ${getStatusBg(item.status)} ${getStatusColor(item.status)}
-                      `}
-                    >
-                      {item.status}
-                    </span>
+                    
+                    <div className="flex items-center">
+                      <span 
+                        className={`
+                          px-3 py-1 rounded-full text-xs font-medium capitalize
+                          ${getStatusBg(item.status)} ${getStatusColor(item.status)}
+                        `}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center text-gray-400 py-10">
+                <MonitorX className="w-12 h-12 mb-3" />
+                <p className="text-sm font-medium">No devices registered</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

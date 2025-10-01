@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png';
 import { sendMessage, onMessage, connectWebSocket } from './websocket';
+import NotificationBell from '../pages/NotificationBell';
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
@@ -220,11 +221,16 @@ const Sidebar = () => {
 
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <img src={lgu_seal} alt="LGU Seal" className="w-14 h-14 object-cover mx-auto mb-0" />
-            <div>
-              <h1 className="text-sm font-semibold text-gray-800">Property, Plant & Equipment</h1>
-              <p className="text-xs text-gray-600">Management System</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <img src={lgu_seal} alt="LGU Seal" className="w-12 h-12 object-cover flex-shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-sm font-semibold text-gray-800 leading-tight">Property, Plant & Equipment</h1>
+                <p className="text-xs text-gray-600">Management System</p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 pt-1">
+              <NotificationBell/>
             </div>
           </div>
         </div>
@@ -407,7 +413,7 @@ const Sidebar = () => {
             </li>
 
             {/* Notifications */}
-            <li>
+            {/* <li>
               <div className="relative notification-dropdown">
                 <button
                   className={
@@ -429,7 +435,7 @@ const Sidebar = () => {
                   )}
                 </button>
               </div>
-            </li>
+            </li> */}
 
             {/* Logout */}
             <li>

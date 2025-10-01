@@ -220,7 +220,7 @@ const Category = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {cat.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => {
