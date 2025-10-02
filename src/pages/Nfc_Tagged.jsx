@@ -60,6 +60,7 @@ const Nfc_Tagged = () => {
 
   useEffect(() => {
     getData();
+    getTotalData();
   }, []);
 
   useEffect(() => {
@@ -132,11 +133,19 @@ const Nfc_Tagged = () => {
   const getData = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/getTagData.php`);
-      setTotalTagItems(response.data.tagItems.totalTag); // Save to state
-      setTotalItemsLastYear(response.data.tagItems.sinceLastYear); // Save to state
       setTotalInspectedItems(response.data.tagItems.inspectionCount); // Save to state
       console.log(response.data.tagItems.formatted_date);
       setLastInspectedDate(response.data.tagItems.formatted_date); // Save to state
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
+  }
+
+  const getTotalData = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/getTotalTag.php`);
+      setTotalTagItems(response.data.tagItems.totalTag); // Save to state
+      setTotalItemsLastYear(response.data.tagItems.sinceLastYear); // Save to state
     } catch (error) {
       console.error('Error fetching end users:', error);
     }

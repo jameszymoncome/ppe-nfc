@@ -20,6 +20,8 @@ import AssetTransfer from './pages/AssetTransfer';
 import AssetTransfer2 from './pages/AssetTransfer2';
 import AssetTransfer3 from './pages/AssetTransfer3';
 import Assets from './pages/Assets';
+import WasteDisposal from './pages/WasteDisposal';
+import ReportIssue from './pages/ReportIssue';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -32,6 +34,7 @@ import AD_Profile from './pages/admin_pages/AD_Profile';
 import AD_AssetTransfer from './pages/admin_pages/AD_AssetTransfer';
 import AD_AssetTransfer2 from './pages/admin_pages/AD_AssetTransfer2';
 import AD_AssetTransfer3 from './pages/admin_pages/AD_AssetTransfer3';
+import AD_Assets from './pages/admin_pages/AD_Assets';
 //Employee Routes
 import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
@@ -114,8 +117,11 @@ const App = () => {
         <Route path="/ad-asset-transfer" element={<AD_AssetTransfer />} />
         <Route path="/ad-asset-transfer-2" element={<AD_AssetTransfer2 />} />
         <Route path="/ad-asset-transfer-3" element={<AD_AssetTransfer3 />} />
+        <Route path="/ad-assets" element={<AD_Assets />} />
         <Route path="/scan" element={<Scan />} />
         <Route path="/item-info" element={<ItemInfo />} />
+        <Route path="/waste-disposal" element={<WasteDisposal />} />
+        <Route path="/report-issue" element={<ReportIssue />} />
       </Routes>
     </BrowserRouter>
   );

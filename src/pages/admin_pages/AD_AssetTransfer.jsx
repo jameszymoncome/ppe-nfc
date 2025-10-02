@@ -723,7 +723,17 @@ useEffect(() => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item, index) => (
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-4 text-center text-sm text-gray-500"
+                  >
+                    No Asset Transfer Yet
+                  </td>
+                </tr>
+              ) :
+                (filteredData.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {item.ptr_no}
@@ -801,7 +811,7 @@ useEffect(() => {
                     </div>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

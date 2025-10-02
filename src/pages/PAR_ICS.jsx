@@ -857,6 +857,7 @@ const PAR_ICS = () => {
   };
 
   const downloadDocs = async () => {
+    console.log("Downloading file for ID:", selectedAirNo);
     try {
       const response = await axios.get(`${BASE_URL}/downloadFile.php`, {
         params: { air_no: selectedAirNo },
@@ -865,7 +866,7 @@ const PAR_ICS = () => {
 
       const fileName = response.headers['content-disposition']
         ?.split('filename=')[1]
-        ?.replace(/["']/g, '') || `${airNo}.pdf`;
+        ?.replace(/["']/g, '') || `${selectedAirNo}.pdf`;
 
       saveAs(new Blob([response.data], { type: 'application/pdf' }), fileName);
     } catch (error) {

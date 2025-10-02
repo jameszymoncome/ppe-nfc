@@ -3,7 +3,7 @@ import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import {
   MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3,
   Users, Menu, X, Building2, UserRoundPen, Folder,
-  ChevronDown, ChevronRight, Smartphone, Bell, FolderSync 
+  ChevronDown, ChevronRight, Smartphone, Bell, FolderSync, Shredder, MessageCircleWarning   
 } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png';
 import { sendMessage, onMessage, connectWebSocket } from './websocket';
@@ -353,7 +353,7 @@ const Sidebar = () => {
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/asset-transfer') || pathname.startsWith('/assets') ? activeClass : ''}`}
+                    ${pathname.startsWith('/asset-transfer') || pathname.startsWith('/assets') || pathname.startsWith('/waste-disposal') || pathname.startsWith('/report-issue') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -361,7 +361,7 @@ const Sidebar = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <FolderSync className="w-5 h-5" />
-                    <span className="text-sm font-medium">Asset Transfer</span>
+                    <span className="text-sm font-medium">Asset Management</span>
                   </div>
                   {isTransferOpen ? (
                     <ChevronDown className="w-4 h-4" />
@@ -396,6 +396,32 @@ const Sidebar = () => {
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         <span className="text-sm">Assets</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/waste-disposal"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <Shredder className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Waste Disposal</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/report-issue"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <MessageCircleWarning className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Report Issue</span>
                       </NavLink>
                     </li>
                   </ul>

@@ -191,52 +191,50 @@ const Assets = () => {
           </div>
 
           {/* Assets Table */}
-          <div className="bg-white rounded-xl shadow overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="w-full">
               <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item No.</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Article</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Serial No.</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Document Type</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Document No.</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Inspection Status</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date Acquired</th>
-              </tr>
-            </thead>
-              <tbody>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Article</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial No.</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document No.</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Acquired</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
-                    <tr>
-                    <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
-                        Loading...
-                    </td>
-                    </tr>
+                  <tr>
+                    <td colSpan={10} className="px-6 py-4 text-center text-gray-500">Loading...</td>
+                  </tr>
                 ) : assets.length === 0 ? (
-                    <tr>
-                    <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
-                        No assets found.
-                    </td>
-                    </tr>
+                  <tr>
+                    <td colSpan={10} className="px-6 py-4 text-center text-gray-500">No assets found.</td>
+                  </tr>
                 ) : (
-                    assets.map((asset, idx) => (
-                    <tr key={idx}>
-                        <td className="px-4 py-2">{asset.item_no}</td>
-                        <td className="px-4 py-2">{asset.article}</td>
-                        <td className="px-4 py-2">{asset.description}</td>
-                        <td className="px-4 py-2">{asset.model}</td>
-                        <td className="px-4 py-2">{asset.serial_no}</td>
-                        <td className="px-4 py-2">{asset.document_type}</td>
-                        <td className="px-4 py-2">{asset.document_no}</td>
-                        <td className="px-4 py-2">{asset.inspection_status}</td>
-                        <td className="px-4 py-2">{asset.status}</td>
-                        <td className="px-4 py-2">{asset.date_acquired}</td>
+                  assets.map((asset, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.item_no}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.article}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.description}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.model}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.serial_no}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.document_type}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.document_no}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.inspection_status}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={asset.status} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{asset.date_acquired}</td>
                     </tr>
-                    ))
+                  ))
                 )}
-                </tbody>
+              </tbody>
             </table>
           </div>
         </div>

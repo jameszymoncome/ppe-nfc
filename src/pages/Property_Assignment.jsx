@@ -36,7 +36,8 @@ const Property_Assignment = () => {
     model: '',
     serialNo: '',
     unit: '',
-    unitCost: ''
+    unitCost: '',
+    usefulness: '' 
   });
   const modalInputRef = useRef(null);
   const [modalDropdownPosition, setModalDropdownPosition] = useState(null);
@@ -93,7 +94,8 @@ const Property_Assignment = () => {
       model: '',
       serialNo: '',
       unit: '',
-      unitCost: ''
+      unitCost: '',
+      usefulness: '' 
     });
     setShowItemModal(true);
   };
@@ -713,7 +715,8 @@ const Property_Assignment = () => {
                             setModalItem({
                               ...modalItem,
                               article: article.article || article.categoryName,
-                              articleCode: article.articleCode || article.categoryID
+                              articleCode: article.articleCode || article.categoryID,
+                              usefulness: article.usefulness
                             });
                             setArticleResults([]);
                           }}
@@ -1034,7 +1037,7 @@ const Property_Assignment = () => {
                             ).join('\n')}
                           </div>
                           <div className="p-2 border-r border-black italic text-gray-500">{'--Generated After Saving--'}</div>
-                          <div className="p-2">{firstItem.estimatedLife || '-'}</div>
+                          <div className="p-2">{firstItem.usefulness || '-'}</div>
                         </div>
                       );
                     })}
