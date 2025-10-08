@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync } from 'lucide-react';
+import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync, Shredder, MessageCircleWarning } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const AD_Sidebar = () => {
@@ -15,6 +15,7 @@ const AD_Sidebar = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
   const accessLevel = localStorage.getItem('accessLevel') || '';
+  const position = localStorage.getItem('position') || '';
 
   const toggleTransfer = () => {
     setIsTransferOpen(!isTransferOpen);
@@ -98,7 +99,7 @@ const AD_Sidebar = () => {
                     : 'User'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {accessLevel || 'Role'}
+                  {position || 'Position not set'}
                 </p>
               </div>
             </div>
@@ -133,13 +134,13 @@ const AD_Sidebar = () => {
                 <span className="text-sm font-medium">PAR/ICS</span>
               </NavLink>
             </li>
-            {/* Asset Transfer dropdown */}
+            {/* Asset Management dropdown */}
             <li>
               <div>
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/ad-asset-transfer') || pathname.startsWith('/ad-assets') ? activeClass : ''}`}
+                    ${pathname.startsWith('/ad-asset-transfer') || pathname.startsWith('/ad-assets') || pathname.startsWith('/ad-waste-disposal') || pathname.startsWith('/ad-report-issue') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -147,7 +148,7 @@ const AD_Sidebar = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <FolderSync className="w-5 h-5" />
-                    <span className="text-sm font-medium">Asset Transfer</span>
+                    <span className="text-sm font-medium">Asset Management</span>
                   </div>
                   {isTransferOpen ? (
                     <ChevronDown className="w-4 h-4" />
@@ -184,14 +185,41 @@ const AD_Sidebar = () => {
                         <span className="text-sm">Assets</span>
                       </NavLink>
                     </li>
+                    <li>
+                      <NavLink
+                        to="/ad-waste-disposal"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <Shredder className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Waste Disposal</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/ad-report-issue"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <MessageCircleWarning className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Report Issue</span>
+                      </NavLink>
+                    </li>
                   </ul>
                 )}
               </div>
             </li>
-            <li>
-              <div>
+
+            {/* <li>
+              <div> */}
                 {/* Main Inspection Item */}
-                <a 
+                {/* <a 
                   href="#" 
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
                   onClick={(e) => {
@@ -208,10 +236,10 @@ const AD_Sidebar = () => {
                   ) : (
                     <ChevronRight className="w-4 h-4" />
                   )}
-                </a>
+                </a> */}
 
                 {/* Sub-menu Items */}
-                {isInspectionOpen && (
+                {/* {isInspectionOpen && (
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
@@ -236,9 +264,9 @@ const AD_Sidebar = () => {
                       </NavLink>
                     </li>
                   </ul>
-                )}
-              </div>
-            </li>
+                )} */}
+              {/* </div>
+            </li> */}
             <li>
               <NavLink
                 to="/ad-reports"

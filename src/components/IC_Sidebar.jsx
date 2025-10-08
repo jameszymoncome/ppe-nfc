@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync } from 'lucide-react';
+import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync, Shredder, MessageCircleWarning } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const IC_Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const location = useLocation();
   const pathname = location.pathname;
@@ -14,6 +15,11 @@ const IC_Sidebar = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
   const accessLevel = localStorage.getItem('accessLevel') || '';
+  const position = localStorage.getItem('position') || '';
+
+  const toggleTransfer = () => {
+    setIsTransferOpen(!isTransferOpen);
+  };
 
   const navLinkClass =
     'flex items-center space-x-3 text-gray-700 p-3 rounded-lg transition-colors';
@@ -93,7 +99,7 @@ const IC_Sidebar = () => {
                     : 'User'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {accessLevel || 'Role'}
+                  {position || 'Position not set'}
                 </p>
               </div>
             </div>
@@ -128,16 +134,86 @@ const IC_Sidebar = () => {
                 <span className="text-sm font-medium">PAR/ICS</span>
               </NavLink>
             </li>
+            {/* Asset Management dropdown */}
             <li>
-              <NavLink
-                to="/ic-asset-transfer"
-                className={({ isActive }) =>
-                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/ic-asset-transfer') || pathname.startsWith('/ic-asset-transfer-3') ? activeClass : ''}`
-                }
-              >
-                <FolderSync className="w-5 h-5" />
-                <span className="text-sm font-medium">Asset Transfer</span>
-              </NavLink>
+              <div>
+                <a
+                  href="#"
+                  className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
+                    ${pathname.startsWith('/ic-asset-transfer') || pathname.startsWith('/ic-assets') || pathname.startsWith('/ic-waste-disposal') || pathname.startsWith('/ic-report-issue') ? activeClass : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleTransfer();
+                  }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <FolderSync className="w-5 h-5" />
+                    <span className="text-sm font-medium">Asset Management</span>
+                  </div>
+                  {isTransferOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </a>
+
+                {isTransferOpen && (
+                  <ul className="ml-6 mt-2 space-y-1">
+                    <li>
+                      <NavLink
+                        to="/ic-asset-transfer"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <FolderSync className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Transfer</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/ic-assets"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Assets</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/ic-waste-disposal"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <Shredder className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Waste Disposal</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/ic-report-issue"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <MessageCircleWarning className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Report Issue</span>
+                      </NavLink>
+                    </li>
+                  </ul>
+                )}
+              </div>
             </li>
             <li>
                           <div>

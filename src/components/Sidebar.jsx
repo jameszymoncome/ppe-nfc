@@ -27,6 +27,7 @@ const Sidebar = () => {
   const firstName = localStorage.getItem('firstName') || '';
   const lastName = localStorage.getItem('lastname') || '';
   const accessLevel = localStorage.getItem('accessLevel') || '';
+  const position = localStorage.getItem('position') || '';
 
   const toggleTransfer = () => {
   setIsTransferOpen(!isTransferOpen);
@@ -259,7 +260,7 @@ const Sidebar = () => {
                     : 'User'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {accessLevel || 'Role'}
+                  {position || 'Position not set'}
                 </p>
               </div>
             </div>
@@ -347,7 +348,7 @@ const Sidebar = () => {
               </div>
             </li>
 
-            {/* Asset Transfer dropdown */}
+            {/* Asset Management dropdown */}
             <li>
               <div>
                 <a

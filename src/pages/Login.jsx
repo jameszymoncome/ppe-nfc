@@ -157,6 +157,7 @@ const Login = () => {
           firstName: data.firstName,
           lastname: data.lastname,
           accessLevel: data.accessLevel,
+          position: data.position,
           userId: data.userId,
           department: data.department,
           email: data.email,
