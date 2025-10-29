@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, use } from 'react';
 import { Search, QrCode, FileText, X, Eye, Wifi, WifiOff, Activity } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { BASE_URL } from '../utils/connection';
+import EM_Sidebar from '../../components/EM_Sidebar';
+import { BASE_URL } from '../../utils/connection';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import DeviceListModal from '../components/DeviceListModal';
-import { onMessage, sendMessage } from '../components/websocket';
+import DeviceListModal from '../../components/DeviceListModal';
+import { onMessage } from '../../components/websocket';
 import { check } from 'prettier';
 
-const Nfc_Tagged = () => {
+const EM_Nfc_Tagged = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
@@ -139,9 +139,9 @@ const Nfc_Tagged = () => {
           departments: localStorage.getItem("department")
         }
       });
-      setTotalInspectedItems(response.data.tagItems.inspectionCount); // Save to state
+      setTotalInspectedItems(response.data.tagItems.inspectionCount);
       console.log(response.data.tagItems.formatted_date);
-      setLastInspectedDate(response.data.tagItems.formatted_date); // Save to state
+      setLastInspectedDate(response.data.tagItems.formatted_date);
     } catch (error) {
       console.error('Error fetching end users:', error);
     }
@@ -149,7 +149,13 @@ const Nfc_Tagged = () => {
 
   const getTotalData = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/getTotalTag.php`);
+      const response = await axios.get(`${BASE_URL}/getTotalTag.php`, {
+        params: {
+          role: localStorage.getItem("accessLevel"),
+          usersID: localStorage.getItem("userId"),
+          departments: localStorage.getItem("department")
+        }
+      });
       setTotalTagItems(response.data.tagItems.totalTag); // Save to state
       setTotalItemsLastYear(response.data.tagItems.sinceLastYear); // Save to state
     } catch (error) {
@@ -159,7 +165,13 @@ const Nfc_Tagged = () => {
 
   const fetchInspect = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/getInspects.php`);
+      const response = await axios.get(`${BASE_URL}/getInspects.php`, {
+        params: {
+          role: localStorage.getItem("accessLevel"),
+          usersID: localStorage.getItem("userId"),
+          departments: localStorage.getItem("department")
+        }
+      });
       if (response.data.items && response.data.items.length > 0) {
         setTaggedItems(response.data.items.map((item, index) => ({
           id: index + 1,
@@ -312,7 +324,7 @@ const Nfc_Tagged = () => {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar placeholder - replace with actual Sidebar component */}
-      <Sidebar />
+      <EM_Sidebar />
       
       <div className="flex-1 p-6">
         {/* Header */}
@@ -321,14 +333,14 @@ const Nfc_Tagged = () => {
             <h1 className="text-2xl font-bold text-blue-800">NFC - Tagged Items</h1>
             <p className="text-gray-600">Scan & Inspect items with assigned NFC tags</p>
           </div>
-          <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          {/* <button className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
             onClick={() => {
               checkConnection();   
             }}
           >
             <QrCode size={20} />
             Scan NFC Tag to Inspect
-          </button>
+          </button> */}
         </div>
 
         {/* Stats Cards */}
@@ -795,4 +807,4 @@ const Nfc_Tagged = () => {
   );
 };
 
-export default Nfc_Tagged;
+export default EM_Nfc_Tagged;

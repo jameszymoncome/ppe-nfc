@@ -10,7 +10,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import AD_Sidebar from "../../components/AD_Sidebar";
+import EM_Sidebar from "../../components/EM_Sidebar";
 import axios from "axios";
 import {BASE_URL} from '../../utils/connection';
 import jsPDF from "jspdf";
@@ -18,7 +18,7 @@ import html2canvas from "html2canvas";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-const AD_Assets = () => {
+const EM_Assets = () => {
   const [assets, setAssets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -49,7 +49,7 @@ useEffect(() => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/AD_getAssets.php?user_id=${userId}`);
+      const res = await fetch(`${BASE_URL}/EM_getAssets.php?user_id=${userId}`);
       const data = await res.json();
 
       if (data.success) {
@@ -303,7 +303,7 @@ useEffect(() => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <AD_Sidebar />
+      <EM_Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -510,7 +510,7 @@ useEffect(() => {
                   className="hover:bg-blue-50 cursor-pointer border-b border-gray-200"
                   onClick={() => {
                     navigate(
-                      `/assets/ad-document/${encodeURIComponent(group.document_no)}?user_id=${group.user_id}&from_officer=${encodeURIComponent(group.assigned_to)}&department=${encodeURIComponent(group.department)}`,
+                      `/assets/em-document/${encodeURIComponent(group.document_no)}?user_id=${group.user_id}&from_officer=${encodeURIComponent(group.assigned_to)}&department=${encodeURIComponent(group.department)}`,
                       { state: { items: group.items } }
                     );
                   }}
@@ -1172,4 +1172,4 @@ useEffect(() => {
   );
 };
 
-export default AD_Assets;
+export default EM_Assets;

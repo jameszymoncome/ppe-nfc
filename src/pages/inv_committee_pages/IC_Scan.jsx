@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, Camera, History, AlertTriangle, Tag, CheckCircle, Search, AlertCircle, XCircle, Clock, Package, Edit3, Wifi, WifiOff } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { BASE_URL } from '../utils/connection';
+import IC_Sidebar from '../../components/IC_Sidebar';
+import { BASE_URL } from '../../utils/connection';
 import axios from 'axios';
-import DeviceListModal from '../components/DeviceListModal';
-import { onMessage, sendMessage } from '../components/websocket';
+import DeviceListModal from '../../components/DeviceListModal';
+import { onMessage, sendMessage } from '../../components/websocket';
 import Swal from "sweetalert2";
 
-const Scan = () => {
+const IC_Scan = () => {
     const [isScanning, setIsScanning] = useState(false);
     const [remarks, setRemarks] = useState('');
     const [scannedItem, setScannedItem] = useState(null);
@@ -28,7 +28,6 @@ const Scan = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [searchData, setSearchData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [viewNFCModal, setViewNFCModal] = useState(false);
 
     useEffect(() => {
         console.log('Selected Device:', selectedDevice);
@@ -487,7 +486,7 @@ const Scan = () => {
 
     return (
         <div className="flex h-screen bg-gray-100 overflow-hidden">
-            <Sidebar />
+            <IC_Sidebar />
 
             <div className="flex-1 flex flex-col overflow-y-auto p-6">
                 {/* Header */}
@@ -500,6 +499,19 @@ const Scan = () => {
                     <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-end">
                         {/* Manual Inspect Button */}
                         <div className="flex flex-wrap items-center gap-3 relative w-full lg:w-auto">
+                            <button
+                                onClick={() => {
+                                setShowManual(!showManual);
+                                setIsScanning(false);
+                                setManualCode('');
+                                setSearchResults([]);
+                                }}
+                                className="bg-blue-800 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all hover:shadow-md font-medium w-full sm:w-auto justify-center"
+                            >
+                                <QrCode size={20} />
+                                {showManual ? 'Cancel' : 'Manual Inspect NFC Tag'}
+                            </button>
+
                             {/* Input and Search Section */}
                             {showManual && (
                                 <div className="relative flex-1 w-full lg:w-[700px] max-w-6xl transition-all">
@@ -565,18 +577,6 @@ const Scan = () => {
                                 )}
                                 </div>
                             )}
-                            <button
-                                onClick={() => {
-                                setShowManual(!showManual);
-                                setIsScanning(false);
-                                setManualCode('');
-                                setSearchResults([]);
-                                }}
-                                className="bg-blue-800 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all hover:shadow-md font-medium w-full sm:w-auto justify-center"
-                            >
-                                <QrCode size={20} />
-                                {showManual ? 'Cancel' : 'Manual Inspect NFC Tag'}
-                            </button>
                         </div>
 
                         {/* Scan NFC Button */}
@@ -822,12 +822,13 @@ const Scan = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                                 >
                                     <option value="">Select issue type</option>
-                                    <option value="NFC Tag Lost/Damaged">NFC Tag Lost/Damaged</option>
                                     <option value="Missing">Missing</option>
                                     <option value="Damaged">Damaged</option>
                                     <option value="Misplaced">Misplaced</option>
+                                    <option value="Malfunctioning">Malfunctioning</option>
                                     <option value="Repaired">Repaired</option>
-                                    <option value="Maintenance">For Maintenance</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             
@@ -876,4 +877,4 @@ const Scan = () => {
     );
 };
 
-export default Scan;
+export default IC_Scan;

@@ -36,6 +36,12 @@ const IC_Sidebar = () => {
     }
   }, [location]);
 
+    useEffect(() => {
+      if (location.pathname.startsWith('/assets')) {
+        setIsTransferOpen(true);
+      }
+    }, [location]);
+
   return (
     <>
       {/* Mobile menu button - only show when sidebar is closed */}
@@ -85,10 +91,10 @@ const IC_Sidebar = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
+              <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
                   {firstName && lastName
-                    ? `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase()
+                    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
                     : 'U'}
                 </span>
               </div>
@@ -140,7 +146,7 @@ const IC_Sidebar = () => {
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/ic-asset-transfer') || pathname.startsWith('/ic-assets') || pathname.startsWith('/ic-waste-disposal') || pathname.startsWith('/ic-report-issue') ? activeClass : ''}`}
+                    ${pathname.startsWith('/assets') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -161,7 +167,7 @@ const IC_Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/ic-asset-transfer"
+                        to="/assets/ic-asset-transfer"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -174,7 +180,7 @@ const IC_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ic-assets"
+                        to="/assets/ic-assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -187,7 +193,7 @@ const IC_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ic-waste-disposal"
+                        to="/assets/ic-waste-disposal"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -200,7 +206,7 @@ const IC_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ic-report-issue"
+                        to="/assets/ic-report-issue"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''

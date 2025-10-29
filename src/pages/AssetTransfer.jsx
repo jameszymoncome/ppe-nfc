@@ -63,6 +63,28 @@ const handleAccept = async (transfer, file) => {
   }
 };
 
+  // add helper to update status (used by Accept button)
+  const updateTransferStatus = async (ptr_no, status) => {
+    try {
+      const form = new FormData();
+      form.append('ptr_no', ptr_no);
+      form.append('status', status);
+      const res = await fetch(`${BASE_URL}/updateTransferStatus.php`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (data.success) {
+        fetchTransfers();
+        return true;
+      } else {
+        Swal.fire('Error', data.message || 'Failed to update status', 'error');
+        return false;
+      }
+    } catch (err) {
+      console.error('updateTransferStatus error', err);
+      Swal.fire('Error', 'Network error', 'error');
+      return false;
+    }
+  };
+
   const handleApprove = async (transfer) => {
   // SweetAlert with file input
   // const { value: file } = await Swal.fire({
@@ -740,125 +762,228 @@ useEffect(() => {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Transfer No.
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Name of Recipient
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Department
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.ptr_no}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.to_officer_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.department}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.transfer_date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {/* Determine the status to display based on the officer */}
-                    <StatusBadge status={item.status === "Pending" && item.to_officerID === localStorage.getItem("userId") ? "Request" : item.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center space-x-2">
-                        <button
-                        onClick={async () => {
-                            const items = await fetchTransferItems(item.from_officerID);
-                            setSelectedTransfer({ ...item, items });
-                            setShowTransferForm(true);
-                        }}
-                        title='View Details'
-                        className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-                        >
-                        <Eye size={16} />
-                        </button>
-                        <button
-                        className="text-green-400 hover:text-green-600"
-                        onClick={async () => {
-                            const items = await fetchTransferItems(item.from_officerID);
-                            await handleDownload({ ...item, items });
-                        }}
-                        title='Download PDF'
-                        >
-                        <Download className="w-4 h-4" />
-                        </button>
-                        {/* Accept Button → Only if logged-in user is from_officer */}
-                        {item.to_officerID === current_user && item.status === "Pending" && (
-                            <button
-                                onClick={() => {
-                                setSelectedTransfer(item);
-                                setShowModal(true);
-                                }}
-                                className="text-yellow-500 hover:text-yellow-600"
-                                title="Accept"
-                            >
-                                <CheckCircle className="w-4 h-4" />
-                            </button>
-                            )}
-                        {/* If signed_doc exists → show view PDF link */}
-                        {item.signed_doc && (
-                        <a
-                            href={`${BASE_URL}/${item.signed_doc}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800"
-                            title='View Signed Document'
-                        >
-                            <FileText className="w-4 h-4" />
-                        </a>
-                        )}
-                        {(user_role === "ADMIN" || user_role === "SUPER ADMIN") &&
-                          item.status === "Accepted - Awaiting for Approval" && (
-                            <button
-                              onClick={() => handleApprove(item)} // ✅ call approve flow
-                              className="text-green-600 hover:text-green-800"
-                              title="Approve Transfer"
-                            >
-                              <FileCheck className="w-4 h-4" />
-                            </button>
-                        )}
-                        {(user_role === "ADMIN" || user_role === "SUPER ADMIN") &&
-                          item.status === "Approved - Awaiting for Signed Document" && (
-                            <button
-                              onClick={() => handleApprove2(item)} // ✅ call approve flow
-                              className="text-green-600 hover:text-green-800"
-                              title="Complete Transfer"
-                            >
-                              <FileCheck className="w-4 h-4" />
-                            </button>
-                        )}
 
-                    </div>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.length > 0 ? (
+                  filteredData.map((item, index) => (
+                    <tr
+                      key={index}
+                      onClick={() =>
+                        navigate(`/assets/asset-transfer-progress/${item.ptr_no}`, { state: { item } })
+                      }
+                      className="cursor-pointer hover:bg-slate-50 transition-colors duration-150"
+                    >
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                        {item.ptr_no}
+                      </td>
+
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-white">
+                              {(() => {
+                                if (!item.to_officer_name) return '?';
+                                const parts = item.to_officer_name.trim().split(' ');
+                                if (parts.length === 1) return parts[0][0].toUpperCase();
+                                return (
+                                  parts[0][0].toUpperCase() + parts[parts.length - 1][0].toUpperCase()
+                                );
+                              })()}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {item.to_officer_name || 'Unassigned'}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">
+                        {item.department}
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">
+                        {item.transfer_date}
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <StatusBadge
+                          status={
+                            item.status === 'Pending' && item.to_officerID === current_user
+                              ? 'Request'
+                              : item.status
+                          }
+                        />
+                      </td>
+
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-2">
+                          {/* View Button */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const items = await fetchTransferItems(item.from_officerID);
+                              setSelectedTransfer({ ...item, items });
+                              setShowTransferForm(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150"
+                            title="View Details"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </button>
+
+                          {/* Download Button */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const items = await fetchTransferItems(item.from_officerID);
+                              await handleDownload({ ...item, items });
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors duration-150"
+                            title="Download PDF"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>PDF</span>
+                          </button>
+
+                          {/* Accept Button */}
+                          {item.to_officerID === current_user && item.status === 'Pending' && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const ok = await updateTransferStatus(item.ptr_no, 'Accepted - Awaiting for Approval');
+                                if (ok) {
+                                  Swal.fire('Accepted', 'You accepted the transfer request.', 'success');
+                                }
+                              }}
+                              className="inline-flex items-center justify-center p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors duration-150"
+                              title="Accept"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Signed Document */}
+                          {item.signed_doc && (
+                            <a
+                              href={`${BASE_URL}/${item.signed_doc}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors duration-150"
+                              title="View Signed Document"
+                            >
+                              <FileCheck className="w-3.5 h-3.5" />
+                              <span>Signed</span>
+                            </a>
+                          )}
+
+                          {/* Admin Buttons */}
+                          {(user_role === 'ADMIN' || user_role === 'SUPER ADMIN') && (
+                            <>
+                              {item.status === 'Accepted - Awaiting for Approval' && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const result = await Swal.fire({
+                                    title: 'Approve this transfer?',
+                                    text: "This action will approve the asset transfer request.",
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#16a34a',
+                                    cancelButtonColor: '#d33',
+                                    confirmButtonText: 'Yes, approve it',
+                                  });
+
+                                  if (result.isConfirmed) {
+                                    handleApprove(item);
+                                    Swal.fire({
+                                      icon: 'success',
+                                      title: 'Approved!',
+                                      text: 'The transfer has been approved.',
+                                      timer: 1500,
+                                      showConfirmButton: false,
+                                    });
+                                  }
+                                }}
+                                className="inline-flex items-center justify-center p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-150"
+                                title="Approve Transfer"
+                              >
+                                <FileCheck className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {item.status === 'Approved - Awaiting for Signed Document' && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const result = await Swal.fire({
+                                    title: 'Complete this transfer?',
+                                    text: "This will mark the transfer as completed and finalize the records.",
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#16a34a',
+                                    cancelButtonColor: '#d33',
+                                    confirmButtonText: 'Yes, complete it',
+                                  });
+
+                                  if (result.isConfirmed) {
+                                    handleApprove2(item);
+                                  }
+                                }}
+                                className="inline-flex items-center justify-center p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-150"
+                                title="Complete Transfer"
+                              >
+                                <FileCheck className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // ✅ No data message
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="px-6 py-10 text-center text-sm text-gray-500"
+                    >
+                      No assets are currently being transferred.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
+
+
         </div>
       </div>
 

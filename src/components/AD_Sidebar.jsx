@@ -36,6 +36,12 @@ const AD_Sidebar = () => {
   }
 }, [location]);
 
+  useEffect(() => {
+    if (location.pathname.startsWith('/assets')) {
+      setIsTransferOpen(true);
+    }
+  }, [location]);
+
   return (
     <>
       {/* Mobile menu button - only show when sidebar is closed */}
@@ -85,10 +91,10 @@ const AD_Sidebar = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
+              <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
                   {firstName && lastName
-                    ? `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase()
+                    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
                     : 'U'}
                 </span>
               </div>
@@ -140,7 +146,7 @@ const AD_Sidebar = () => {
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/ad-asset-transfer') || pathname.startsWith('/ad-assets') || pathname.startsWith('/ad-waste-disposal') || pathname.startsWith('/ad-report-issue') ? activeClass : ''}`}
+                    ${pathname.startsWith('/assets') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -161,7 +167,7 @@ const AD_Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/ad-asset-transfer"
+                        to="/assets/ad-asset-transfer"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -174,7 +180,7 @@ const AD_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ad-assets"
+                        to="/assets/ad-assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -187,7 +193,7 @@ const AD_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ad-waste-disposal"
+                        to="/assets/ad-waste-disposal"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -200,7 +206,7 @@ const AD_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/ad-report-issue"
+                        to="/assets/ad-report-issue"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -216,57 +222,58 @@ const AD_Sidebar = () => {
               </div>
             </li>
 
-            {/* <li>
-              <div> */}
-                {/* Main Inspection Item */}
-                {/* <a 
-                  href="#" 
-                  className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleInspection();
-                  }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <ClipboardCheck className="w-5 h-5" />
-                    <span className="text-sm font-medium">Inspection</span>
-                  </div>
-                  {isInspectionOpen ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </a> */}
+            <li>
+            <div>
+              {/* Main Inspection Item */}
+              <a 
+                href="#" 
+                className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleInspection();
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <ClipboardCheck className="w-5 h-5" />
+                  <span className="text-sm font-medium">Inspection</span>
+                </div>
+                {isInspectionOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </a>
 
-                {/* Sub-menu Items */}
-                {/* {isInspectionOpen && (
-                  <ul className="ml-6 mt-2 space-y-1">
-                    <li>
-                      <NavLink
-                        to="/inspection/ad-nfc-tagged"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
-                        }
-                      >
-                        <Smartphone className="w-4 h-4 mr-2" />
-                        <span className="text-sm">NFC-Tagged Items</span>
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
-                        to="/inspection/ad-manual-untagged"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
-                        }
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        <span className="text-sm">Manual Inspection (Untagged)</span>
-                      </NavLink>
-                    </li>
-                  </ul>
-                )} */}
-              {/* </div>
-            </li> */}
+              {/* Sub-menu Items */}
+              {isInspectionOpen && (
+                <ul className="ml-6 mt-2 space-y-1">
+                  <li>
+                    <NavLink
+                      to="/inspection/ad-nfc-tagged"
+                      className={({ isActive }) =>
+                        `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                      }
+                    >
+                      <Smartphone className="w-4 h-4 mr-2" />
+                      <span className="text-sm">NFC-Tagged Items</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/inspection/ad-manual-untagged"
+                      className={({ isActive }) =>
+                        `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                      }
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      <span className="text-sm">Manual Inspection (Untagged)</span>
+                    </NavLink>
+                  </li>
+                </ul>
+              )}
+            </div>
+          </li>
+
             <li>
               <NavLink
                 to="/ad-reports"

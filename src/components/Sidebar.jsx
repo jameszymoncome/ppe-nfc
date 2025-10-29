@@ -49,6 +49,14 @@ const Sidebar = () => {
     }
   }, [location]);
 
+  useEffect(() => {
+    if (location.pathname.startsWith('/assets')) {
+      setIsTransferOpen(true);
+    }
+  }, [location]);
+
+
+
   // Restore notifications from localStorage
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("notifications")) || [];
@@ -246,8 +254,8 @@ const Sidebar = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
+              <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
                   {firstName && lastName
                     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
                     : 'U'}
@@ -354,7 +362,7 @@ const Sidebar = () => {
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/asset-transfer') || pathname.startsWith('/assets') || pathname.startsWith('/waste-disposal') || pathname.startsWith('/report-issue') ? activeClass : ''}`}
+                    ${pathname.startsWith('/assets') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -375,7 +383,7 @@ const Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/asset-transfer"
+                        to="/assets/asset-transfer"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -388,7 +396,7 @@ const Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/assets"
+                        to="/assets/assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -401,7 +409,7 @@ const Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/waste-disposal"
+                        to="/assets/waste-disposal"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -414,7 +422,7 @@ const Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/report-issue"
+                        to="/assets/report-issue"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''

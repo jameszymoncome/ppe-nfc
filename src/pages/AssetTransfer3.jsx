@@ -238,11 +238,6 @@ const handleSubmit = async () => {
   }
 };
 
-
-
-
-
-
   // Get user_id from query string
   const params = new URLSearchParams(location.search);
   const user_id = params.get('user_id');

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
-import { FileText, Search, AlertTriangle, WifiOff, Wifi, CheckCircle, X, AlertCircle  } from "lucide-react";
-import { BASE_URL } from '../utils/connection';
-import DeviceListModal from "../components/DeviceListModal";
+import IC_Sidebar from "../../components/IC_Sidebar";
+import { FileText, Search, AlertTriangle, CheckCircle, X, AlertCircle  } from "lucide-react";
+import { BASE_URL } from "../../utils/connection";
 import axios from 'axios';
-import { sendMessage, onMessage } from '../components/websocket';
 import Swal from "sweetalert2";
 
 
-const ReportIssue = () => {
+const IC_ReportIssue = () => {
     const [activeTab, setActiveTab] = useState("Report Issue");
     const [searchTerm, setSearchTerm] = useState("");
     const [fundFilter, setFundFilter] = useState("All Funds");
@@ -18,19 +16,6 @@ const ReportIssue = () => {
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportType, setReportType] = useState('');
     const [selectedItem, setSelectedItem] = useState(null);
-    const [deviceListModal, setDeviceListModal] = useState(false);
-    const [selectedDevice, setSelectedDevice] = useState('');
-    const [deviceList, setDeviceList] = useState([]);
-    const [connected, setConnected] = useState('');
-    const [deviceStatus, setDeviceStatus] = useState({});
-    const [isAvailable, setIsAvailable] = useState(false);
-    const [viewNFCModal, setViewNFCModal] = useState(false);
-    const [propertyNo, setPropertyNo] = useState('');
-    const [description, setDescription] = useState('');
-    const [nfcId, setNfcId] = useState('');
-    const [isScanning, setIsScanning] = useState(true);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [tableType, setTableType] = useState('');
 
     const tableHeaders = ["Item No", "Description", "Model", "Serial No", "Department", "Condition"];
     const dataKeys = ["itemNo", "description", "model", "serialNo", "department", "conditions"];
@@ -60,94 +45,6 @@ const ReportIssue = () => {
         getReportItems();
     }, []);
 
-    useEffect(() => {
-        console.log('Selected Device:', selectedDevice);
-        console.log('Is Available:', isAvailable);
-        if (selectedDevice && isAvailable) {
-            setDeviceListModal(false);
-            setViewNFCModal(true);
-        }
-    }, [selectedDevice, isAvailable]);
-
-    useEffect(() => {
-        const unsubscribe = onMessage((raw) => {
-            try {
-                const data = JSON.parse(raw);
-                if (data.type === "deviceConnection" && data.message === "Connected") {
-                    console.log("Connections");
-                    setConnected("connect");
-                    setViewNFCModal(true);
-                }
-                if (data.type === "deviceConnection" && data.message === "Not connected") {
-                    console.log("No Connections");
-                    setConnected("not connect");
-                    setDeviceListModal(true);
-                }
-                if (data.type === "nfcEvent") {
-                    console.log("NFC Event:", data.uid);
-                    checkScannedID(data.uid);
-                    // checkScannedID(data.uid);
-                }
-    
-                if (data.type === "status" && data.ssid) {
-                    setDeviceList((prev) =>
-                        prev.map((device) =>
-                        device.device_name === data.ssid
-                            ? { ...device, status: data.status }
-                            : device
-                        )
-                    );
-                }
-
-                if (data.type === "deviceStatus"){
-                    setIsAvailable(false);
-                    Swal.fire({
-                        title: "Device Already in Use",
-                        text: "This device is still active. Please wait until the current session is finished.",
-                        icon: "warning",
-                        confirmButtonText: "OK",
-                        customClass: {
-                            popup: "rounded-2xl",
-                            confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
-                        },
-                        buttonsStyling: false,
-                    }).then(() => {
-                        return;
-                    });
-                }
-
-                if (data.type === "command"){
-                    setIsAvailable(true);
-                }
-            } catch (err) {
-                console.error("❌ Error parsing WS message:", err);
-            }
-        });
-    
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const fetchDevices = async () => {
-            try {
-                const response = await axios.get(`${BASE_URL}/deviceList.php`);
-                console.log(response.data.data);
-                setDeviceList(
-                response.data.data.map((device) => ({
-                    ...device,
-                    status: deviceStatus[device.device_name] || "offline", // overwrite with latest WS status
-                }))
-                );
-                // const deviceNames = response.data.data.map(item => item.device_name);
-                // console.log(deviceNames);
-            } catch (error) {
-                console.error('Error fetching end users:', error);
-            }
-        };
-
-        fetchDevices();
-    },[]);
-
     // 🔹 Pick data based on activeTab
     const currentData = activeTab === "Report Issue" ? reportIssue : updateData;
 
@@ -160,7 +57,7 @@ const ReportIssue = () => {
     });
 
     const handleCheckboxChange = (item) => {
-        if (selectedItem?.tagID === item.tagID) {
+        if (selectedItem?.itemNo === item.itemNo) {
             setSelectedItem(null);
         } else {
             setSelectedItem(item); // Replace the previous selection
@@ -168,80 +65,10 @@ const ReportIssue = () => {
         
     };
 
-    const checkConnection = () => {
-        sendMessage({
-            type: "connection",
-            userID: localStorage.getItem("userId")
-        });
-    };
-
-    const checkScannedID = async (uid) => {
-        setIsScanning(false);
-        try {
-        const response = await axios.get(`${BASE_URL}/checkTagScanned.php`, {
-            params: {
-            nfcId: uid,
-            }
-        });
-        if (response.data.exists) {
-            console.log('False: ',response.data.message);
-            setErrorMessage(response.data.message);
-            setNfcId(uid);
-
-            setTimeout(() => {
-            console.log('Reset scanning state');
-            setIsScanning(true);
-            setErrorMessage("");
-            setNfcId('');
-            }, 2000);
-        } else {
-            setNfcId(uid);
-            setErrorMessage(response.data.message);
-            console.log('Not found: ', response.data.message);
-        }
-
-        } catch (error) {
-        console.error('❌ Error checking tag ID:', error);
-        setErrorMessage("Something went wrong while scanning.");
-        setIsScanning(false);
-        }
-    }
-
-    const handleSave = async () => {
-        console.log(nfcId);
-        try {
-            const response = await axios.get(`${BASE_URL}/checkTagID.php`, {
-                params: {
-                    nfcId,
-                    propertyNo,
-                    tableType
-                }
-            });
-            console.log(response.data);
-            if (response.data.success) {
-                setErrorMessage("");
-                setIsScanning(true);
-                setNfcId('');
-                setViewNFCModal(false);
-            } else {
-                setErrorMessage(response.data.message);
-                setTimeout(() => {
-                setIsScanning(true);
-                setErrorMessage("");
-                }, 2000);
-            }
-
-        } catch (error) {
-            console.error('❌ Error checking tag ID:', error);
-            setErrorMessage("Something went wrong while saving.");
-            setIsScanning(false);
-        }
-    };
-
     const handleButtonClick = () => {
         if (!selectedItem){
             Swal.fire({
-                title: "Please select one Item",
+                title: "Please select one Iitem",
                 icon: "warning",
                 confirmButtonText: "OK",
                 customClass: {
@@ -252,18 +79,8 @@ const ReportIssue = () => {
             })
             return;
         }
-        if (selectedItem.conditions === 'NFC Tag Lost/Damaged'){
-            console.log('hihihi');
-            setPropertyNo(selectedItem.itemNo);
-            setDescription(selectedItem.description);
-            setTableType(selectedItem.type);
-            checkConnection();
-        }
-        else{
-            console.log("Generate Issue Report clicked", selectedItem);
-            setShowReportModal(true);
-        }
-        
+        console.log("Generate Issue Report clicked", selectedItem);
+        setShowReportModal(true);
     };
 
     const getSubtitle = () => {
@@ -274,18 +91,11 @@ const ReportIssue = () => {
 
     const handleConfirm = async () => {
         console.log(selectedItem.tagID);
-        let modes = '';
-        if (selectedDevice.conditions === 'NFC Tag Lost/Damaged'){
-            modes = 'reportLost'
-        }
-        else {
-            modes = 'report'
-        }
         try {
             const response = await axios.post(`${BASE_URL}/inspect.php`, {
                 nfcTagID: selectedItem.tagID,
                 selectedCondition: 'Repaired',
-                mode: modes
+                mode: "report"
             });
             console.log(response.data);
             window.location.reload();
@@ -295,24 +105,9 @@ const ReportIssue = () => {
         }
     }
 
-    const StatusIcon = ({ status }) => {
-        if (status === 'online') {
-            return <Wifi className="w-4 h-4 text-green-600" />;
-        }
-        return <WifiOff className="w-4 h-4 text-red-500" />;
-    };
-
-    const getStatusBg = (status) => {
-        return status === 'online' ? 'bg-green-100' : 'bg-red-100';
-    };
-
-    const getStatusColors = (status) => {
-        return status === 'online' ? 'text-green-600' : 'text-red-500';
-    };
-
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Sidebar />
+            <IC_Sidebar />
             <div className="flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-hidden">
                 
                 {/* Header */}
@@ -326,7 +121,7 @@ const ReportIssue = () => {
                     onClick={handleButtonClick}
                 >
                     <FileText size={18} />
-                    <span>Update Issued Report</span>
+                    <span>Update Issue Report</span>
                 </button>
                 </div>
 
@@ -393,7 +188,7 @@ const ReportIssue = () => {
                                     <td className="py-3 px-4 text-center">
                                         <input
                                             type="checkbox"
-                                            checked={selectedItem?.tagID === item.tagID}
+                                            checked={selectedItem?.itemNo === item.itemNo}
                                             onChange={() => handleCheckboxChange(item)}
                                         />
                                     </td>
@@ -422,10 +217,10 @@ const ReportIssue = () => {
                         <div className="flex items-center gap-2 mb-3 pb-3 border-b">
                         <input
                             type="checkbox"
-                            checked={selectedItem?.tagID === item.tagID}
+                            checked={selectedItem?.itemNo === item.itemNo}
                             onChange={() => handleCheckboxChange(item)}
                         />
-                        <span className="text-sm font-medium">{item.tagID}</span>
+                        <span className="text-sm font-medium">{item.itemNo}</span>
                         </div>
                         <div className="space-y-2">
                         {dataKeys.map((key, keyIdx) => (
@@ -534,109 +329,8 @@ const ReportIssue = () => {
                 </div>
                 </div>
             )}
-
-            <DeviceListModal
-                deviceList={deviceList}
-                deviceListModal={deviceListModal}
-                setDeviceListModal={setDeviceListModal}
-                setSelectedDevice={setSelectedDevice}
-                StatusIcon={StatusIcon}
-                getStatusBg={getStatusBg}
-                getStatusColor={getStatusColors}
-            />
-
-            {viewNFCModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                            <h2 className="text-white text-lg font-semibold">
-                                Tag Item with NFC and Property Sticker
-                            </h2>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-6 space-y-6">
-                            {/* Property Number */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                Property No. :
-                                </label>
-                                <input
-                                type="text"
-                                value={propertyNo}
-                                onChange={(e) => setPropertyNo(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="XXXX-XX-XXX-XXXX-XX"
-                                readOnly
-                                />
-                            </div>
-
-                            {/* Description */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                Description :
-                                </label>
-                                <input
-                                type="text"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Description"
-                                readOnly
-                                />
-                            </div>
-
-                            {/* NFC ID Section */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                NFC ID :
-                                </label>
-                                <div className="relative">
-                                    <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                        {isScanning ? (
-                                        <div className="flex flex-col items-center space-y-3">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                            <p className="text-gray-600 text-sm">Scanning NFC tag...</p>
-                                        </div>
-                                        ) : (
-                                        <div className="flex flex-col items-center space-y-2">
-                                            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                            {nfcId}
-                                            </div>
-                                            {errorMessage ? (
-                                            <p className="text-red-600 text-sm">{errorMessage}</p>
-                                            ) : (
-                                            <p className="text-gray-600 text-sm">NFC tag detected</p>
-                                            )}
-                                        </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-3 p-6 pt-0">
-                            <button
-                                onClick={() => setViewNFCModal(false)}
-                                className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={!nfcId}
-                                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
 
-export default ReportIssue;
+export default IC_ReportIssue;

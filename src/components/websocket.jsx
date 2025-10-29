@@ -8,7 +8,7 @@ export function connectWebSocket(force = false) {
     socket.close(); // cleanup before reconnect
   }
 
-  socket = new WebSocket("ws://localhost:8080");
+  socket = new WebSocket("wss://ppe-backends.onrender.com");
 
   socket.onopen = () => {
     console.log("✅ WebSocket connected");

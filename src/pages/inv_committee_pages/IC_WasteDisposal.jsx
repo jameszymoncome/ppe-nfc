@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, X, Printer } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { BASE_URL } from '../utils/connection';
+import IC_Sidebar from '../../components/IC_Sidebar';
+import { BASE_URL } from '../../utils/connection';
 import axios from 'axios';
 import Swal from "sweetalert2";
 
-const WasteDisposal = () => {
+const IC_WasteDisposal = () => {
     const [activeTab, setActiveTab] = useState('For Disposal');
     const [searchTerm, setSearchTerm] = useState('');
     const [fundFilter, setFundFilter] = useState('All Funds');
@@ -187,7 +187,7 @@ const WasteDisposal = () => {
         // if clicked again, uncheck (toggle off)
     };
 
-    const disposedItem = async () => {
+    const disposeItem = async () => {
         const allItems = groupedItems.flat().map(item => ({
             tagID: item.tagID,
             type: item.type
@@ -225,7 +225,7 @@ const WasteDisposal = () => {
         if (currentGroupIndex < groupedItems.length - 1) {
             setCurrentGroupIndex((prev) => prev + 1);
         } else {
-            disposedItem();
+            disposeItem();
             // Swal.fire({
             //     title: "All groups processed!",
             //     icon: "success",
@@ -242,7 +242,7 @@ const WasteDisposal = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Sidebar />
+            <IC_Sidebar />
             <div className="flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-y-auto">
 
                 {/* Header */}
@@ -391,7 +391,7 @@ const WasteDisposal = () => {
                             <h2 className="text-xl font-bold text-gray-800">Waste Materials Report</h2>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={disposedItem}
+                                    // onClick={disposedItem}
                                     className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                     title="Print"
                                 >
@@ -629,4 +629,4 @@ const WasteDisposal = () => {
     );
 };
 
-export default WasteDisposal;
+export default IC_WasteDisposal;

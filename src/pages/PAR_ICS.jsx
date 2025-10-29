@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Trash, Radio, Calendar, Activity, Sticker, CloudUpload, Download, WifiOff, Wifi, Eye, FileText, ChevronDown, Home, FileCheck, ClipboardList, BarChart, Users, Settings, Upload } from 'lucide-react';
+import { Search, X, Trash, Radio, Calendar, MoreVertical, Tag, Activity, Sticker, CloudUpload, Download, WifiOff, Wifi, Eye, FileText, ChevronDown, Home, FileCheck, ClipboardList, BarChart, Users, Settings, Upload } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from '../utils/connection';
-import { ref, onValue, set } from "firebase/database";
-import { db } from '../utils/firebase';
 import html2pdf from 'html2pdf.js';
 import { saveAs } from 'file-saver';
 import { onMessage, sendMessage } from '../components/websocket';
@@ -14,6 +12,12 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { check } from 'prettier';
 
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 const PAR_ICS = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +56,17 @@ const PAR_ICS = () => {
   const [selectedAirNo, setSelectedAirNo] = useState('');
   const [stickerData, setStickerData] = useState([]);
   const [connected, setConnected] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [numPages, setNumPages] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [idsSelected, setIdsSelected] = useState('');
+  const [highlightBTN, setHighlightBTN] = useState('');
+  const [formType, setFormType] = useState('');
+  const [highlightBTNDocType, setHighlightBTNDocType] = useState('');
+  const [highlightBTNDocsNO, setHighlightBTNDocsNO] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRefs = useRef({});
+  const buttonRefs = useRef({});
 
   const [office, setOffice] = useState('');
   const [items, setItems] = useState([
@@ -59,24 +74,55 @@ const PAR_ICS = () => {
   ]);
 
   useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!openMenuId) return;
+
+      const menuEl = menuRefs.current[openMenuId];
+      const buttonEl = buttonRefs.current[openMenuId];
+
+      // Check if click is inside menu OR button
+      if (
+        (menuEl && menuEl.contains(e.target)) ||
+        (buttonEl && buttonEl.contains(e.target))
+      ) {
+        return;
+      }
+
+      // Otherwise close it
+      setOpenMenuId(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
+
+  useEffect(() => {
     fetchItems();
   }, []);
 
   const fetchItems = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/getItems.php`);
+      const response = await axios.get(`${BASE_URL}/getItems.php`, {
+        params: {
+          role: localStorage.getItem("accessLevel"),
+          usersID: localStorage.getItem("userId"),
+          departments: localStorage.getItem("department")
+        }
+      });
       console.log(response.data);
 
       const formatted = response.data.items.map((item, index) => ({
         id: index + 1,
         air_no: item.air_no,
         documentNo: item.documentNo,
+        tagID: item.tagID,
         type: item.type,
         user: item.user,
         office: item.office,
         dateIssued: item.dateIssued,
         items: item.items,
-        status: item.status || 'N/A'
+        status: item.status || 'N/A',
+        downloadedForm: item.downloadedForm,
       }));
 
       setParIcsItem(formatted);
@@ -175,6 +221,8 @@ const PAR_ICS = () => {
     };
     fetchHead();
   }, []);
+
+  const handleLoadSuccess = ({ numPages }) => setNumPages(numPages);
 
   const checkScannedID = async (uid) => {
     setIsScanning(false);
@@ -282,9 +330,12 @@ const PAR_ICS = () => {
     }
   }
 
-  const printDocs = async (docsNo, typess, dept) => {
+  const printDocs = async (docsNo, typess, dept, downloadedForm) => {
+    setHighlightBTNDocsNO(docsNo);
+    setHighlightBTNDocType(typess);
+    setHighlightBTN(downloadedForm);
     setDepartments(dept);
-    console.log(typess);
+    console.log('Types: ', downloadedForm);
     if(typess === 'PAR'){
       setDocsPrint('par');
     } else{
@@ -562,7 +613,28 @@ const PAR_ICS = () => {
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    }).from(element).save();
+    })
+    .from(element)
+    .save()
+    .catch((error) => {
+      console.error("❌ Error generating PDF:", error);
+    });
+  }
+
+  const updateHighlight = async () => {
+    console.log('Updating highlight for:', highlightBTNDocsNO, highlightBTNDocType);
+    try {
+      const response = await axios.post(`${BASE_URL}/updateHighlight.php`, {
+        docsNo: highlightBTNDocsNO,
+        types: highlightBTNDocType
+      });
+      console.log(response.data);
+      fetchItems();
+      // setGetDocsPrint(response.data);
+      
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
   }
 
   const handlePrintPDF = () => {
@@ -798,6 +870,7 @@ const PAR_ICS = () => {
     formData.append("file", fileToUpload);
     formData.append("docNos", docNos);
     formData.append("docTypes", docTypes);
+    formData.append("tagIds", idsSelected);
 
     try {
       setUploading(true);
@@ -812,7 +885,6 @@ const PAR_ICS = () => {
       });
 
       console.log(response.data);
-      fetchItems();
 
     } catch (error) {
       console.error("Upload failed", error);
@@ -835,9 +907,10 @@ const PAR_ICS = () => {
     }
   };
 
-  const handleDownload = (airNo) => {
+  const handleDownload = (airNo, typeofDocs) => {
     setSelectedAirNo(airNo);
     fetchStickerData(airNo);
+    setFormType(typeofDocs);
     setDownloadModal(true);
     // try {
     //   const response = await axios.get(`${BASE_URL}/downloadFile.php`, {
@@ -860,7 +933,7 @@ const PAR_ICS = () => {
     console.log("Downloading file for ID:", selectedAirNo);
     try {
       const response = await axios.get(`${BASE_URL}/downloadFile.php`, {
-        params: { air_no: selectedAirNo },
+        params: { air_no: selectedAirNo, formType: formType },
         responseType: 'blob',
       });
 
@@ -873,7 +946,27 @@ const PAR_ICS = () => {
       console.error('Download error:', error);
       alert('File download failed.');
     }
-  }
+  };
+
+  const downloadViewDocs = async (airNo, typest) => {
+    if (!airNo) return alert("Please enter AIR No first.");
+    console.log("Viewing PDF for AIR No:", airNo);
+
+    try {
+      const response = await axios.get(`${BASE_URL}/viewPDFFile.php`, {
+        params: { airNo: airNo, formType: typest },
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error fetching PDF:", error);
+      alert("Failed to load PDF file.");
+    }
+  };
 
   const downloadSticker = () => {
     console.log("Printing stickers for IDs:", selectedAirNo);
@@ -1189,13 +1282,12 @@ const PAR_ICS = () => {
     return <WifiOff className="w-4 h-4 text-red-500" />;
   };
 
-  const goToViewItem = (airs, type) => {
+  const goToViewItem = (airs, type, airnos) => {
     console.log("View item:", airs, type);
-    navigate("/item-info", {
-      state: { air_no: airs, type: type }
+    navigate("/progress-item", {
+      state: { air_no: airs, type: type, airnos: airnos }
     });
   }
-
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -1296,73 +1388,120 @@ const PAR_ICS = () => {
                         {doc.status}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
-                      {doc.status === 'For Tagging' ? (
-                        <div className="flex gap-2">
-                          <button
-                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
-                            onClick={async () => {
-                              await viewData(doc.user, doc.office, doc.documentNo, doc.type, doc.status);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors"
-                            onClick={() => {
-                              printDocs(doc.documentNo, doc.type, doc.office);
-                            }}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </button>
+                    <td className="relative text-center">
+                      <button
+                        ref={(el) => (buttonRefs.current[doc.id] = el)}
+                        onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}
+                        className="p-1 rounded hover:bg-gray-100 transition"
+                      >
+                        <MoreVertical className="w-5 h-5 text-gray-700" />
+                      </button>
+
+                      {openMenuId === doc.id && (
+                        <div
+                          ref={(el) => (menuRefs.current[doc.id] = el)}
+                          className="absolute right-0 mt-2 w-[200px] bg-white border border-gray-200 rounded-lg shadow-lg z-20 text-left"
+                        >
+                          {doc.status === "For Tagging" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  goToViewItem(doc.documentNo, doc.type, doc.air_no);
+                                  // viewData(doc.user, doc.office, doc.documentNo, doc.type, doc.status);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                              >
+                                <Tag className="h-4 w-4 text-blue-600" />
+                                <span>For Tagging</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  printDocs(doc.documentNo, doc.type, doc.office, doc.downloadedForm);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                                <span>View</span>
+                              </button>
+                            </>
+                          )}
+
+                          {doc.status === "Upload Scanned Copy" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  goToViewItem(doc.documentNo, doc.type, doc.air_no);
+                                  // viewData(doc.user, doc.office, doc.documentNo, doc.type, doc.status);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                                <span>Upload Scanned Copy</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  printDocs(doc.documentNo, doc.type, doc.office, doc.downloadedForm);
+                                  setOpenMenuId(null);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 w-full
+                                  ${doc.downloadedForm === 'Not Done' ? "bg-blue-500 text-white" : "text-gray-700"} 
+                                  hover:bg-blue-600 hover:text-white transition`}
+                              >
+                                <FileText className="h-4 w-4 text-gray-600" />
+                                <span>Download Form</span>
+                              </button>
+
+                              {/* <button
+                                onClick={() => {
+                                  setDocNos(doc.air_no);
+                                  setDocTypes(doc.type);
+                                  setIdsSelected(doc.tagID);
+                                  setUploadScannedModal(true);
+                                  setOpenMenuId(null);
+                                }}
+                                // className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                                className={`flex items-center gap-2 px-4 py-2 w-full rounded-md border 
+                                  ${doc.downloadedForm === 'Upload Scanned Form' ? "bg-blue-500 text-white" : "text-gray-700"} 
+                                  hover:bg-blue-600 hover:text-white transition text-sm`}
+                                
+                              >
+                                <Upload className="h-4 w-4 text-green-600" />
+                                <span>Upload Scanned Form</span>
+                              </button> */}
+                            </>
+                          )}
+
+                          {doc.status === "Assigned" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  downloadViewDocs(doc.air_no, doc.type);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                                <span>View</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  handleDownload(doc.air_no, doc.type);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
+                              >
+                                <Download className="h-4 w-4 text-orange-600" />
+                                <span>Download</span>
+                              </button>
+                            </>
+                          )}
                         </div>
-                      ) : doc.status === 'Upload Scanned Copy' ? (
-                        <div className="flex gap-2">
-                          <button
-                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
-                            onClick={async () => {
-                              await viewData(doc.user, doc.office, doc.documentNo, doc.type, doc.status);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50 transition-colors"
-                            onClick={() => {
-                              printDocs(doc.documentNo, doc.type, doc.office);
-                            }}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </button>
-                          <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
-                            onClick={() => {
-                              setDocNos(doc.air_no);
-                              setDocTypes(doc.type);
-                              setUploadScannedModal(true);
-                            }}
-                          >
-                            <Upload className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : doc.status === 'Assigned' ? (
-                        <div className="flex gap-2">
-                          <button
-                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
-                            onClick={async () => {
-                              goToViewItem(doc.air_no, doc.type);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button className="text-orange-600 hover:text-orange-800 p-1 rounded hover:bg-orange-50 transition-colors"
-                            onClick={async () => {
-                              await handleDownload(doc.air_no);
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : null}
+                      )}
                     </td>
 
                   </tr>
@@ -1381,7 +1520,6 @@ const PAR_ICS = () => {
           </div>
         </div>
       </div>
-
 
       {viewModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1642,8 +1780,8 @@ const PAR_ICS = () => {
                   <label className="text-sm font-medium whitespace-nowrap">PAR No.:</label>
                   <input
                     type="text"
-                    value={'Generated After Saving'}
-                    className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm italic text-gray-500 "
+                    value={getDocPrint[0]?.docsNo || ''}
+                    className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm"
                     placeholder="Enter PAR Number"
                     readOnly
                   />
@@ -1677,9 +1815,16 @@ const PAR_ICS = () => {
                             {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
                           </td>
                           <td className="border border-black px-2 py-2 text-xs whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</td>
-                          <td className="border border-black px-2 py-2 text-xs">{firstItem.airDate}</td>
+                          <td className="border border-black px-2 py-2 text-xs italic text-gray-500">Generate after</td>
                           <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">
-                            {group.map(item => parseFloat(firstItem.unitCost).toFixed(2)).join('\n')}
+                            {group
+                              .map(item => 
+                                `₱${new Intl.NumberFormat('en-PH', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                }).format(parseFloat(item.unitCost) || 0)}`
+                              )
+                              .join('\n')}
                           </td>
                         </tr>
                       );
@@ -1797,8 +1942,8 @@ const PAR_ICS = () => {
                     <label className="text-sm font-medium whitespace-nowrap">ICS No.:</label>
                     <input
                       type="text"
-                      value={'Generated After Saving'}
-                      className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm italic text-gray-500 "
+                      value={getDocPrint[0]?.docsNo || ''}
+                      className="flex-1 border-0 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-1 text-sm"
                       placeholder="Enter PAR Number"
                       readOnly
                     />
@@ -1832,15 +1977,27 @@ const PAR_ICS = () => {
                       <div className="p-2 border-r border-black">{firstItem.unit || '-'}</div>
                       <div className="border-r border-black">
                         <div className="grid grid-cols-2 h-full">
-                          <div className="p-2 border-r border-black">{firstItem.unitCost || '-'}</div>
-                          <div className="p-2">{parseFloat(firstItem.unitCost) * quantity || '-'}</div>
+                          <div className="p-2 border-r border-black">{firstItem.unitCost
+                            ? `₱${new Intl.NumberFormat('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              }).format(firstItem.unitCost)}`
+                            : '-'}
+                          </div>
+                          <div className="p-2">{firstItem.unitCost && quantity
+                            ? `₱${new Intl.NumberFormat('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              }).format(parseFloat(firstItem.unitCost) * quantity)}`
+                            : '-'}
+                          </div>
                         </div>
                       </div>
                       <div className="p-2 border-r border-black whitespace-pre-line">
                         {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
                       </div>
                       <div className="p-2 border-r border-black whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</div>
-                      <div className="p-2">{firstItem.estimatedLife || '-'}</div>
+                      <div className="p-2">{firstItem.usefulness ? `${firstItem.usefulness} ${firstItem.usefulness > 1 ? 'years' : 'year'}` : '-'}</div>
                     </div>
                   );
                 })}
@@ -2003,9 +2160,23 @@ const PAR_ICS = () => {
               {!uploading && uploadProgress === 100 && (
                 <div className="text-green-600 mt-2 font-medium">Upload complete</div>
               )}
-              {!uploading && uploadProgress === 0 && droppedFile && droppedFile.length === 0 && (
-                <div className="text-red-600 mt-2 font-medium">Error: PDF or image files only (max 50MB).</div>
+              {!uploading && uploadProgress === 0 && droppedFile.length === 0 && (
+                <div className="mt-2 font-medium">PDF or image files only (max 50MB).</div>
               )}
+            </div>
+            <div className="p-4 flex justify-end border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setUploadScannedModal(false);
+                  setDroppedFile([]);
+                  setUploading(false);
+                  setUploadProgress(0);
+                  fetchItems();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
@@ -2064,6 +2235,39 @@ const PAR_ICS = () => {
         getStatusBg={getStatusBg}
         getStatusColor={getStatusColors}
       />
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-1/2 h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center px-4 py-2 border-b">
+              <h2 className="text-lg font-semibold">Preview PDF</h2>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  URL.revokeObjectURL(pdfUrl);
+                  setPdfUrl(null);
+                }}
+                className="text-gray-600 hover:text-red-600 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  title="PDF Preview"
+                  className="w-full h-full"
+                />
+              ) : (
+                <p className="text-center mt-10 text-gray-500">
+                  Loading PDF...
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

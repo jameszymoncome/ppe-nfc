@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync, Shredder, MessageCircleWarning } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
@@ -29,6 +29,18 @@ const EM_Sidebar = () => {
   const toggleInspection = () => {
     setIsInspectionOpen(!isInspectionOpen);
   };
+
+    useEffect(() => {
+      if (location.pathname.startsWith('/assets')) {
+        setIsTransferOpen(true);
+      }
+    }, [location]);
+
+    useEffect(() => {
+      if (location.pathname.startsWith('/inspection')) {
+        setIsInspectionOpen(true);
+      }
+    }, [location]);
 
   return (
     <>
@@ -79,10 +91,10 @@ const EM_Sidebar = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">
+              <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-white">
                   {firstName && lastName
-                    ? `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase()
+                    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
                     : 'U'}
                 </span>
               </div>
@@ -134,7 +146,7 @@ const EM_Sidebar = () => {
                 <a
                   href="#"
                   className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between 
-                    ${pathname.startsWith('/em-asset-transfer') || pathname.startsWith('/em-assets') || pathname.startsWith('/em-waste-disposal') || pathname.startsWith('/em-report-issue') ? activeClass : ''}`}
+                    ${pathname.startsWith('/assets') ? activeClass : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
                     toggleTransfer();
@@ -155,7 +167,7 @@ const EM_Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/em-asset-transfer"
+                        to="/assets/em-asset-transfer"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -168,7 +180,7 @@ const EM_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/em-assets"
+                        to="/assets/em-assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -181,7 +193,7 @@ const EM_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/em-waste-disposal"
+                        to="/assets/em-waste-disposal"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -194,7 +206,7 @@ const EM_Sidebar = () => {
                     </li>
                     <li>
                       <NavLink
-                        to="/em-report-issue"
+                        to="/assets/em-report-issue"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
                             isActive ? 'bg-blue-100 text-blue-700' : ''
@@ -209,6 +221,57 @@ const EM_Sidebar = () => {
                 )}
               </div>
             </li>
+            <li>
+                                      <div>
+                                        {/* Main Inspection Item */}
+                                        <a 
+                                          href="#" 
+                                          className={`${navLinkClass} hover:bg-gray-100 flex items-center justify-between ${pathname.startsWith('/inspection') ? activeClass : ''}`}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            toggleInspection();
+                                          }}
+                                        >
+                                          <div className="flex items-center space-x-3">
+                                            <ClipboardCheck className="w-5 h-5" />
+                                            <span className="text-sm font-medium">Inspection</span>
+                                          </div>
+                                          {isInspectionOpen ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                          ) : (
+                                            <ChevronRight className="w-4 h-4" />
+                                          )}
+                                        </a>
+                        
+                                        {/* Sub-menu Items */}
+                                        {isInspectionOpen && (
+                                          <ul className="ml-6 mt-2 space-y-1">
+                                            <li>
+                                              <NavLink
+                                                to="/inspection/em-nfc-tagged"
+                                                className={({ isActive }) =>
+                                                  `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                                                }
+                                              >
+                                                <Smartphone className="w-4 h-4 mr-2" />
+                                                <span className="text-sm">NFC-Tagged Items</span>
+                                              </NavLink>
+                                            </li>
+                                            <li>
+                                              <NavLink
+                                                to="/inspection/em-manual-untagged"
+                                                className={({ isActive }) =>
+                                                  `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${isActive ? 'bg-blue-100 text-blue-700' : ''}`
+                                                }
+                                              >
+                                                <FileText className="w-4 h-4 mr-2" />
+                                                <span className="text-sm">Manual Inspection (Untagged)</span>
+                                              </NavLink>
+                                            </li>
+                                          </ul>
+                                        )}
+                                      </div>
+                                    </li>
             <li>
               <NavLink
                 to="/em-reports"

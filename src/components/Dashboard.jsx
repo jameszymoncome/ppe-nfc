@@ -30,6 +30,7 @@ import {
   YAxis,
   Legend,
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 
 const calcTrend = (current, previous) => {
   if (previous === 0) return 0;
@@ -63,6 +64,9 @@ const Dashboard = () => {
   const assignedThisMonth = docsThisMonth.filter(d => d.status === "Assigned").length;
   const assignedLastMonth = docsLastMonth.filter(d => d.status === "Assigned").length;
   const assignedTrend = calcTrend(assignedThisMonth, assignedLastMonth);
+
+  const navigate = useNavigate();
+  const userRole = localStorage.getItem("accessLevel");
 
   useEffect(() => {
     const fetchDocuments = async () => {

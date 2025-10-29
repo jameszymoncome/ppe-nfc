@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, FileText, X, Printer } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { BASE_URL } from '../utils/connection';
+import EM_Sidebar from '../../components/EM_Sidebar';
+import { BASE_URL } from '../../utils/connection';
 import axios from 'axios';
 import Swal from "sweetalert2";
 
-const WasteDisposal = () => {
+const EM_WasteDisposal = () => {
     const [activeTab, setActiveTab] = useState('For Disposal');
     const [searchTerm, setSearchTerm] = useState('');
     const [fundFilter, setFundFilter] = useState('All Funds');
@@ -187,7 +187,7 @@ const WasteDisposal = () => {
         // if clicked again, uncheck (toggle off)
     };
 
-    const disposedItem = async () => {
+    const disposeItem = async () => {
         const allItems = groupedItems.flat().map(item => ({
             tagID: item.tagID,
             type: item.type
@@ -225,7 +225,7 @@ const WasteDisposal = () => {
         if (currentGroupIndex < groupedItems.length - 1) {
             setCurrentGroupIndex((prev) => prev + 1);
         } else {
-            disposedItem();
+            disposeItem();
             // Swal.fire({
             //     title: "All groups processed!",
             //     icon: "success",
@@ -242,7 +242,7 @@ const WasteDisposal = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Sidebar />
+            <EM_Sidebar />
             <div className="flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-y-auto">
 
                 {/* Header */}
@@ -252,7 +252,7 @@ const WasteDisposal = () => {
                             <h1 className="text-xl md:text-2xl font-bold text-blue-900">Waste Management</h1>
                             <p className="text-sm text-gray-600 mt-1">{getSubtitle()}</p>
                         </div>
-                        {activeTab === 'For Disposal' && (
+                        {activeTab === 'For Disposal' && localStorage.getItem("accessLevel") === 'EMPLOYEE' && localStorage.getItem("department") === 'GSO' && (
                             <button
                                 className="bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center gap-2 justify-center whitespace-nowrap"
                                 onClick={handleButtonClick}
@@ -330,12 +330,14 @@ const WasteDisposal = () => {
                                     filteredData.map((item, idx) => (
                                         <tr key={idx} className="border-b hover:bg-gray-50">
                                             <td className="py-3 px-4 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedItems.some((i) => i.tagID === item.tagID)}
-                                                    onChange={() => handleCheckboxChange(item)}
-                                                    className="cursor-pointer"
-                                                />
+                                                {localStorage.getItem("accessLevel") === 'EMPLOYEE' && localStorage.getItem("department") === 'GSO' && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedItems.some((i) => i.tagID === item.tagID)}
+                                                        onChange={() => handleCheckboxChange(item)}
+                                                        className="cursor-pointer"
+                                                    />
+                                                )}
                                             </td>
                                             {dataKeys.map((key, keyIdx) => (
                                                 <td key={keyIdx} className="py-3 px-4 text-sm text-gray-800">
@@ -391,7 +393,7 @@ const WasteDisposal = () => {
                             <h2 className="text-xl font-bold text-gray-800">Waste Materials Report</h2>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={disposedItem}
+                                    // onClick={disposedItem}
                                     className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                                     title="Print"
                                 >
@@ -629,4 +631,4 @@ const WasteDisposal = () => {
     );
 };
 
-export default WasteDisposal;
+export default EM_WasteDisposal;
