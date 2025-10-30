@@ -129,6 +129,17 @@ const EM_Sidebar = () => {
                 <span className="text-sm font-medium">Dashboard</span>
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/em-par-ics"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${pathname.startsWith('/em-par-ics') || pathname.startsWith('/property-assignment') ? activeClass : ''}`
+                }
+              >
+                <FileText className="w-5 h-5" />
+                <span className="text-sm font-medium">PAR/ICS</span>
+              </NavLink>
+            </li>
             {/* <li>
               <NavLink
                 to="/em-par-ics"

@@ -54,6 +54,7 @@ import EM_Nfc_Tagged from './pages/employee_pages/EM_Nfc_Tagged';
 import EM_ReportIssue from './pages/employee_pages/EM_ReportIssue';
 import EM_WasteDisposal from './pages/employee_pages/EM_WasteDisposal';
 import EM_DocumentItems from './pages/employee_pages/EM_DocumentItems';
+import EM_Property_Assignment from './pages/employee_pages/EM_Property_Assignment';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -303,6 +304,9 @@ const App = () => {
             </ProtectedRoute>} />
         <Route path="/assets/ic-document/:document_no" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
               <IC_DocumentItems />
+            </ProtectedRoute>} />
+        <Route path="/em-property-assignment" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <EM_Property_Assignment />
             </ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

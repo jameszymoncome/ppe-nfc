@@ -11,6 +11,7 @@ import DeviceListModal from '../../components/DeviceListModal';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { check } from 'prettier';
+import { PDFDocument } from "pdf-lib";
 
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -357,20 +358,33 @@ const IC_PAR_ICS = () => {
   }
 
   const getGroupedItems = () => {
-    const validItems = getDocPrint.filter(item =>
-      item.air_no &&
-      item.air_date &&
-      item.fund &&
-      item.article &&
-      item.description &&
-      item.model &&
-      item.unit
-    );
+    const checkModel = getDocPrint.some(item => item.model && item.model.trim() !== "");
+    const validItems = checkModel
+      ? getDocPrint.filter(item =>
+          item.air_no &&
+          item.air_date &&
+          item.fund &&
+          item.article &&
+          item.description &&
+          item.model &&
+          item.unit
+        )
+      : getDocPrint.filter(item =>
+          item.air_no &&
+          item.air_date &&
+          item.fund &&
+          item.article &&
+          item.description &&
+          item.unit
+        );
 
     const grouped = {};
 
     validItems.forEach(item => {
-      const key = `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}|${item.unitCost}`;
+      const key = item.model && item.model.trim() !== ""
+        ? `${item.fund}|${item.article}|${item.description}|${item.model}|${item.unit}`
+        : `${item.fund}|${item.article}|${item.description}|${item.unit}`;
+
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
@@ -484,19 +498,30 @@ const IC_PAR_ICS = () => {
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })).join('<br>')
+                  }
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost * group.length).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }))
+                    .join('<br>')
+                  }
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                  ${group.map(item => `${item.description} ${item.model || ''} ${item.serialNo || ''}`).join('<br>')}
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
                   ${group.map(item => `${item.itemNOs}`).join('<br>')}
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => `${item.usefulness} ${item.usefulness > 1 ? 'years' : 'year'}`).join('<br>')}
                 </td>
               </tr>`).join('')}
           </tbody>
@@ -562,14 +587,19 @@ const IC_PAR_ICS = () => {
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                  ${group.map(item => `${item.description} ${item.model || ''} ${item.serialNo || ''}`).join('<br>')}
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
                   ${group.map(item => `${item.itemNOs}`).join('<br>')}
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })).join('<br>')
+                  }
                 </td>
               </tr>`).join('')}
           </tbody>
@@ -674,10 +704,21 @@ const IC_PAR_ICS = () => {
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })).join('<br>')
+                  }
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost * group.length).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }))
+                    .join('<br>')
+                  }
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
                   ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
@@ -686,7 +727,7 @@ const IC_PAR_ICS = () => {
                   ${group.map(item => `${item.itemNOs}`).join('<br>')}
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => `${item.usefulness} ${item.usefulness > 1 ? 'years' : 'year'}`).join('<br>')}
                 </td>
               </tr>`).join('')}
           </tbody>
@@ -759,7 +800,12 @@ const IC_PAR_ICS = () => {
                 </td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
+                  ${group.map(item => 
+                    '₱' + (item.unitCost).toLocaleString('en-PH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })).join('<br>')
+                  }
                 </td>
               </tr>`).join('')}
           </tbody>
@@ -931,20 +977,55 @@ const IC_PAR_ICS = () => {
 
   const downloadDocs = async () => {
     console.log("Downloading file for ID:", selectedAirNo);
+    if (!selectedAirNo) return alert("Please enter AIR No first.");
+    console.log("Downloading merged PDF for:", selectedAirNo);
+
     try {
       const response = await axios.get(`${BASE_URL}/downloadFile.php`, {
-        params: { air_no: selectedAirNo, formType: formType },
-        responseType: 'blob',
+        params: { airNo: selectedAirNo, formType: formType },
       });
 
-      const fileName = response.headers['content-disposition']
-        ?.split('filename=')[1]
-        ?.replace(/["']/g, '') || `${selectedAirNo}.pdf`;
+      const { files } = response.data;
+      if (!files || files.length === 0) {
+        alert("No files found for this AIR No.");
+        return;
+      }
 
-      saveAs(new Blob([response.data], { type: 'application/pdf' }), fileName);
+      const mergedPdf = await PDFDocument.create();
+
+      for (const file of files) {
+        const binary = atob(file.fileData);
+        const bytes = new Uint8Array([...binary].map((c) => c.charCodeAt(0)));
+
+        if (file.fileType === "application/pdf") {
+          const pdfToMerge = await PDFDocument.load(bytes);
+          const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+          copiedPages.forEach((p) => mergedPdf.addPage(p));
+        } else if (file.fileType.startsWith("image/")) {
+          let img;
+          if (file.fileType === "image/jpeg") img = await mergedPdf.embedJpg(bytes);
+          else img = await mergedPdf.embedPng(bytes);
+
+          const { width, height } = img.scale(1);
+          const page = mergedPdf.addPage([width, height]);
+          page.drawImage(img, { x: 0, y: 0, width, height });
+        }
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      const blob = new Blob([mergedBytes], { type: "application/pdf" });
+
+      // ✅ Download directly
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${selectedAirNo}_merged.pdf`;
+      link.click();
+
+      // Clean up
+      URL.revokeObjectURL(link.href);
     } catch (error) {
-      console.error('Download error:', error);
-      alert('File download failed.');
+      console.error("Error merging/downloading PDF:", error);
+      alert("Failed to download file.");
     }
   };
 
@@ -955,13 +1036,44 @@ const IC_PAR_ICS = () => {
     try {
       const response = await axios.get(`${BASE_URL}/viewPDFFile.php`, {
         params: { airNo: airNo, formType: typest },
-        responseType: "blob",
       });
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-      setShowModal(true);
+      const { files } = response.data;
+      if (!files || files.length === 0) {
+        console.error("No files found for this airNo.");
+        return;
+      }
+
+      const mergedPdf = await PDFDocument.create();
+      for (const file of files) {
+        const binary = atob(file.fileData);
+        const bytes = new Uint8Array([...binary].map(c => c.charCodeAt(0)));
+
+        if (file.fileType === "application/pdf") {
+          const pdfToMerge = await PDFDocument.load(bytes);
+          const copiedPages = await mergedPdf.copyPages(
+            pdfToMerge,
+            pdfToMerge.getPageIndices()
+          );
+          copiedPages.forEach(p => mergedPdf.addPage(p));
+        } else if (file.fileType.startsWith("image/")) {
+          let img;
+          if (file.fileType === "image/jpeg") {
+            img = await mergedPdf.embedJpg(bytes);
+          } else {
+            img = await mergedPdf.embedPng(bytes);
+          }
+          const { width, height } = img.scale(1);
+          const page = mergedPdf.addPage([width, height]);
+          page.drawImage(img, { x: 0, y: 0, width, height });
+        }
+
+        const mergedBytes = await mergedPdf.save();
+        const blob = new Blob([mergedBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+        setShowModal(true);
+      }
     } catch (error) {
       console.error("Error fetching PDF:", error);
       alert("Failed to load PDF file.");
@@ -1812,7 +1924,7 @@ const IC_PAR_ICS = () => {
                           <td className="border border-black px-2 py-2 text-xs text-center">{quantity}</td>
                           <td className="border border-black px-2 py-2 text-xs text-center">{firstItem.unit}</td>
                           <td className="border border-black px-2 py-2 text-xs whitespace-pre-line">
-                            {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
+                            {group.map(item => `${item.description} ${item.model || ''} ${item.serialNo || ''}`).join('\n')}
                           </td>
                           <td className="border border-black px-2 py-2 text-xs whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</td>
                           <td className="border border-black px-2 py-2 text-xs italic text-gray-500">Generate after</td>
@@ -1994,7 +2106,7 @@ const IC_PAR_ICS = () => {
                         </div>
                       </div>
                       <div className="p-2 border-r border-black whitespace-pre-line">
-                        {group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('\n')}
+                        {group.map(item => `${item.description} ${item.model || ''} ${item.serialNo || ''}`).join('\n')}
                       </div>
                       <div className="p-2 border-r border-black whitespace-pre-line text-center">{group.map(item => `${item.itemNOs}`).join('\n')}</div>
                       <div className="p-2">{firstItem.usefulness ? `${firstItem.usefulness} ${firstItem.usefulness > 1 ? 'years' : 'year'}` : '-'}</div>

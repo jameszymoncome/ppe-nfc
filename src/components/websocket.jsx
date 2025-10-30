@@ -11,7 +11,7 @@ export function connectWebSocket(force = false) {
   socket = new WebSocket("wss://ppe-backends.onrender.com");
 
   socket.onopen = () => {
-    console.log("✅ WebSocket connected");
+    console.log("✅ WebSocket connected borat");
     const userID = localStorage.getItem("userId"); // consistent key name
     if (userID) {
       socket.send(JSON.stringify({ type: "accStatus", userID }));

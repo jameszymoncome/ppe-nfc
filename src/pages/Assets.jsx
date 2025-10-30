@@ -495,7 +495,7 @@ const Assets = () => {
               ) : (
                 groupedArray.map((group, index) => (
                   <tr
-                  key={group.user_id}
+                  key={`${group.user_id}-${group.document_no}`}
                   className="hover:bg-blue-50 cursor-pointer border-b border-gray-200"
                   onClick={() => {
                     navigate(

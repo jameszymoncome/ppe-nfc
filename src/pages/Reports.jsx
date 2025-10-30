@@ -24,6 +24,7 @@ const Reports = () => {
   const [departmentSummary, setDepartmentSummary] = useState([]);
   const [employeesByDepartment, setEmployeesByDepartment] = useState([]);
   const [itemDetails, setItemDetails] = useState(null);
+  const [showPaperView, setShowPaperView] = useState(false);
 
 
   useEffect(() => {
@@ -54,9 +55,9 @@ const Reports = () => {
       try {
         const response = await axios.get(`${BASE_URL}/getInspects.php`);
         if (response.data.items && response.data.items.length > 0) {
-          setInspectionData(response.data.items)
+          setInspectionData(response.data.items);
         }
-        console.log(response.data);
+        console.log('inspect',response.data);
       } catch (error) {
         console.error('Error fetching end users:', error);
       }
@@ -321,13 +322,16 @@ const Reports = () => {
       'Pending': 'bg-amber-100 text-amber-700 border border-amber-200',
       'Serviceable': 'bg-emerald-100 text-emerald-700 border border-emerald-200',
       'Completed': 'bg-blue-100 text-blue-700 border border-blue-200',
+      '' : 'bg-green-100 text-white-700 border border-blue-200'
     };
     return styles[status] || 'bg-slate-100 text-slate-700 border border-slate-200';
   };
 
   const filteredAssets = allAssets.filter(asset => {
-    const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         asset.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const name = String(asset.name || '').toLowerCase();
+    const id = String(asset.id || '').toLowerCase();
+    const search = searchQuery.toLowerCase();
+    const matchesSearch = name.includes(search) || id.includes(search);
     const matchesDepartment = selectedDepartment ? asset.department === selectedDepartment : true;
     const matchesEmployee = selectedEmployee ? asset.employee === selectedEmployee.name : true;
     return matchesSearch && matchesDepartment && matchesEmployee;
@@ -345,6 +349,111 @@ const Reports = () => {
       setViewMode('all');
     }
   };
+
+  const inventoryItems = [
+    {
+      article: '1',
+      description: 'Desktop Computer',
+      propertyNo: 'PC-2024-001',
+      cost: '₱35,000.00',
+      location: 'IT Department',
+      condition: 'Good',
+      remarks: 'Working condition'
+    },
+    {
+      article: '2',
+      description: 'Office Chair',
+      propertyNo: 'FC-2024-015',
+      cost: '₱5,500.00',
+      location: 'Admin Office',
+      condition: 'Good',
+      remarks: 'Ergonomic chair'
+    },
+    {
+      article: '3',
+      description: 'Air Conditioning Unit',
+      propertyNo: 'AC-2024-003',
+      cost: '₱28,000.00',
+      location: 'Conference Room',
+      condition: 'Excellent',
+      remarks: '1.5HP inverter type'
+    },
+    {
+      article: '4',
+      description: 'Printer (Laser)',
+      propertyNo: 'PR-2024-008',
+      cost: '₱15,000.00',
+      location: 'Records Section',
+      condition: 'Good',
+      remarks: 'Monochrome laser printer'
+    },
+    {
+      article: '5',
+      description: 'Office Table',
+      propertyNo: 'FT-2024-022',
+      cost: '₱8,500.00',
+      location: 'Director\'s Office',
+      condition: 'Excellent',
+      remarks: 'Executive table'
+    },
+    {
+      article: '6',
+      description: 'Filing Cabinet',
+      propertyNo: 'FC-2024-018',
+      cost: '₱6,200.00',
+      location: 'Records Section',
+      condition: 'Good',
+      remarks: '4-drawer steel cabinet'
+    },
+    {
+      article: '7',
+      description: 'Projector',
+      propertyNo: 'PJ-2024-002',
+      cost: '₱22,000.00',
+      location: 'Training Room',
+      condition: 'Good',
+      remarks: 'LCD projector'
+    },
+    {
+      article: '8',
+      description: 'Laptop Computer',
+      propertyNo: 'LC-2024-012',
+      cost: '₱42,000.00',
+      location: 'Finance Department',
+      condition: 'Excellent',
+      remarks: 'Business laptop'
+    }
+  ];
+
+  const signatures = {
+    certified: 'Maria Santos',
+    certifiedPosition: 'Inventory Committee Chair',
+    approved: 'Roberto Garcia',
+    approvedPosition: 'City Administrator',
+    verified: 'Ana Reyes',
+    verifiedPosition: 'COA Auditor'
+  };
+
+  const reportData = {
+    date: '2025-10-29',
+    fund: 'General Fund',
+    accountableOfficer: 'Juan Dela Cruz',
+    officialDesignation: 'Property Custodian',
+    lgu: 'Calamba City',
+    dateOfAssumption: '2024-01-15'
+  };
+
+  const handleDownloadHistory = () => {
+    setShowPaperView(true);
+  }
+
+  const groupedData = inspectionData.reduce((acc, item) => {
+    if (!acc[item.user_id]) {
+      acc[item.user_id] = [];
+    }
+    acc[item.user_id].push(item);
+    return acc;
+  }, {});
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -689,6 +798,7 @@ const Reports = () => {
                           <div 
                             key={idx}
                             onClick={() => {
+                              console.log('Typesss', asset.type)
                               setSelectedItem(asset.item_no);
                               getSelectedItem(asset.item_no, asset.type);
                             }}
@@ -719,11 +829,15 @@ const Reports = () => {
                                 </div> */}
                                 <div className="text-right">
                                   <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${getStatusBadge(asset.conditions)}`}>
-                                    {asset.conditions}
+                                    {asset.conditions || 'New added item'}
                                   </span>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-lg font-bold text-blue-600">{asset.unitCost}</div>
+                                  <div className="text-lg font-bold text-blue-600">₱{Number(asset.unitCost).toLocaleString('en-PH', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2
+                                    })}
+                                  </div>
                                 </div>
                                 <ChevronRight className="text-slate-400 group-hover:text-blue-600 transition" size={24} />
                               </div>
@@ -873,9 +987,22 @@ const Reports = () => {
                 {/* Inspection History Tab */}
                 {activeTab === 'inspection' && (
                   <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <Calendar className="text-blue-600" size={24} />
-                      <h2 className="text-xl font-bold text-slate-800">Inspection Records - {selectedYear}</h2>
+                    <div className="flex items-center justify-between mb-6">
+                      {/* Left side: icon + title */}
+                      <div className="flex items-center gap-3">
+                        <Calendar className="text-blue-600" size={24} />
+                        <h2 className="text-xl font-bold text-slate-800">
+                          Inspection Records - {selectedYear}
+                        </h2>
+                      </div>
+
+                      {/* Right side: button */}
+                      <button
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        onClick={handleDownloadHistory}
+                      >
+                        Download History
+                      </button>
                     </div>
                     <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
                       <div className="overflow-x-auto">
@@ -1036,7 +1163,7 @@ const Reports = () => {
                                       </div>
                                       <div>
                                         <div className="text-xs text-slate-500 mb-2 font-semibold uppercase">To</div>
-                                        <div className="bg-white p-3 rounded-lg border border-purple-200">
+                                        <div className="bg-white p-3 rounded-lg border-2 border-purple-200">
                                           <div className="font-bold text-purple-700">{transfer.toEmployee}</div>
                                           <div className="text-sm text-slate-600">{transfer.toPosition}</div>
                                           <div className="text-xs text-slate-500 mt-1">{transfer.toDept}</div>
@@ -1143,6 +1270,188 @@ const Reports = () => {
         </div>
 
       </div>
+
+      {showPaperView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-y-auto flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50 sticky top-0 z-10">
+              <h2 className="text-xl font-bold text-gray-800">PPE Inventory Reports</h2>
+              <div className="flex gap-2">
+                <button
+                  // onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  title="Print"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </button>
+                <button
+                  onClick={() => setShowPaperView(false)}
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Close"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-16">
+              <div className="space-y-4">
+                {Object.entries(groupedData).map(([user_id, items], tableIndex) => (
+                  <div key={user_id} className="border-2 border-gray-300 rounded-lg shadow-sm p-6 bg-white">
+                    {/* Title Section */}
+                    <div className="text-center mb-6">
+                      <h1 className="text-lg font-bold uppercase">
+                        Report on the Physical Count of Equipment, Furnitures and Fixtures, and Other PPE
+                      </h1>
+                      <p className="text-sm text-gray-600 mt-2">
+                        (Type of Equipment, furniture and fixtures, other PPE)
+                      </p>
+                      <p className="text-sm mt-2">
+                        As at{' '}
+                        <span className="font-semibold">
+                          {new Date(reportData.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Fund Info */}
+                    <div className="text-sm">
+                      <span className="font-semibold">Fund:</span>{' '}
+                      <span className="underline">{reportData.fund}</span>
+                    </div>
+
+                    {/* Accountability Info */}
+                    <div className="text-sm mb-4">
+                      <p>
+                        For which{' '}
+                        <span className="font-semibold underline">{reportData.accountableOfficer}</span>,{' '}
+                        <span className="font-semibold underline">
+                          {reportData.officialDesignation}
+                        </span>
+                        ,{' '}
+                        <span className="font-semibold underline">{reportData.lgu}</span> is accountable,
+                        having affirmed such accountability on{' '}
+                        <span className="font-semibold underline">
+                          {new Date(reportData.dateOfAssumption).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto border-2 border-gray-400">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">ARTICLE</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">DESCRIPTION</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">PROPERTY No.</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">COST</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">LOCATION</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">CONDITION</th>
+                            <th className="border border-gray-400 px-3 py-2 font-bold text-left">REMARKS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="border border-gray-400 px-3 py-2 text-center">
+                                {item.articleCode}
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                {item.description}  {item.model}
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">{item.docNo}</td>
+                              <td className="border border-gray-400 px-3 py-2 text-right">{item.unitCost
+                                ? `₱${new Intl.NumberFormat('en-PH', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                  }).format(item.unitCost)}`
+                                : '-'}
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">{item.department}</td>
+                              <td className="border border-gray-400 px-3 py-2 text-center">{item.conditions}</td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                {item.remarks || 'No Remarks'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Signature Section */}
+                    <div className="grid grid-cols-3 gap-8 mt-12 pt-6 items-start">
+                      <div>
+                        <p className="text-sm font-semibold mb-10">Certified Correct by:</p>
+                        <div className="pt-4 border-t border-gray-400 text-center">
+                          <p className="text-sm font-bold">{signatures.certified}</p>
+                          <p className="text-xs text-gray-600 mt-1">Signature over Printed Name</p>
+                          <p className="text-xs text-gray-600 mt-2">{signatures.certifiedPosition}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold mb-10">Approved by:</p>
+                        <div className="pt-4 border-t border-gray-400 text-center">
+                          <p className="text-sm font-bold">{signatures.approved}</p>
+                          <p className="text-xs text-gray-600 mt-1">Signature over Printed Name</p>
+                          <p className="text-xs text-gray-600 mt-2">{signatures.approvedPosition}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold mb-10">Verified by:</p>
+                        <div className="pt-4 border-t border-gray-400 text-center">
+                          <p className="text-sm font-bold">{signatures.verified}</p>
+                          <p className="text-xs text-gray-600 mt-1">Signature over Printed Name</p>
+                          <p className="text-xs text-gray-600 mt-2">{signatures.verifiedPosition}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .fixed .bg-white, .fixed .bg-white * {
+            visibility: visible;
+          }
+          .fixed {
+            position: absolute;
+            left: 0;
+            top: 0;
+          }
+          @page {
+            size: landscape;
+            margin: 0.5cm;
+          }
+        }
+      `}</style>
+
+      
     </div>
   );
 }

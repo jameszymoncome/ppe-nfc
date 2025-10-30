@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef} from 'react';
 import { Plus, Eye, X, Minus, Search, FileCheck, ClipboardList, BarChart, Users, Settings, FileText } from 'lucide-react';
-import Sidebar from '../components/Sidebar'; // Adjust the path if needed
+import EM_Sidebar from '../../components/EM_Sidebar';
 import axios from 'axios';
-import { BASE_URL } from '../utils/connection';
+import { BASE_URL } from '../../utils/connection';
 import Swal from "sweetalert2";
 
-const Property_Assignment = () => {
+const EM_Property_Assignment = () => {
   const [endUser, setEndUser] = useState('');
   const [endUserId, setEndUserId] = useState('');
   const [endUserResults, setEndUserResults] = useState([]);
@@ -568,7 +568,7 @@ const Property_Assignment = () => {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
 
-      <Sidebar />
+      <EM_Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
@@ -1605,4 +1605,4 @@ const Property_Assignment = () => {
   );
 };
 
-export default Property_Assignment;
+export default EM_Property_Assignment;

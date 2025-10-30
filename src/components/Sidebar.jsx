@@ -69,55 +69,55 @@ const Sidebar = () => {
   }, [notifications]);
 
   // WebSocket for SUPER ADMIN
-  useEffect(() => {
-    if (accessLevel === 'SUPER ADMIN') {
-      const ws = new WebSocket('ws://localhost:8080'); // change to server
+  // useEffect(() => {
+  //   if (accessLevel === 'SUPER ADMIN') {
+  //     const ws = new WebSocket('ws://localhost:8080'); // change to server
 
-      ws.onopen = () => {
-        console.log('WebSocket connected');
-      };
+  //     ws.onopen = () => {
+  //       console.log('WebSocket connected');
+  //     };
 
-      ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'signup') {
-          setNotifications(prev => {
-            const exists = prev.some(
-              n => n.message === `New user signed up: ${data.fullName} (${data.department})`
-            );
-            if (exists) return prev;
-            return [
-              {
-                id: Date.now(),
-                message: `New user signed up: ${data.fullName} (${data.department})`,
-                time: new Date().toISOString(),
-                read: false,
-                target: '/accounts', // <-- add this property for navigation
-              },
-              ...prev,
-            ];
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
+  //     ws.onmessage = (event) => {
+  //     try {
+  //       const data = JSON.parse(event.data);
+  //       if (data.type === 'signup') {
+  //         setNotifications(prev => {
+  //           const exists = prev.some(
+  //             n => n.message === `New user signed up: ${data.fullName} (${data.department})`
+  //           );
+  //           if (exists) return prev;
+  //           return [
+  //             {
+  //               id: Date.now(),
+  //               message: `New user signed up: ${data.fullName} (${data.department})`,
+  //               time: new Date().toISOString(),
+  //               read: false,
+  //               target: '/accounts', // <-- add this property for navigation
+  //             },
+  //             ...prev,
+  //           ];
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error parsing WebSocket message:', error);
+  //     }
+  //   };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
+  //     ws.onerror = (error) => {
+  //       console.error('WebSocket error:', error);
+  //     };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-      };
+  //     ws.onclose = () => {
+  //       console.log('WebSocket disconnected');
+  //     };
 
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
-      };
-    }
-  }, [accessLevel]);
+  //     return () => {
+  //       if (ws.readyState === WebSocket.OPEN) {
+  //         ws.close();
+  //       }
+  //     };
+  //   }
+  // }, [accessLevel]);
 
   const logOutSocket = () => {
     const usersID = localStorage.getItem('userId');
@@ -162,42 +162,42 @@ const Sidebar = () => {
   }, [showNotifDropdown]);
 
   // WebSocket for SUPER ADMIN
-  useEffect(() => {
-    if (accessLevel === 'SUPER ADMIN') {
-      const unsubscribe = onMessage((rawMessage) => {
-        try {
-          const data = JSON.parse(rawMessage);
+  // useEffect(() => {
+  //   if (accessLevel === 'SUPER ADMIN') {
+  //     const unsubscribe = onMessage((rawMessage) => {
+  //       try {
+  //         const data = JSON.parse(rawMessage);
 
-          if (data.type === "signup") {
-            setNotifications((prev) => {
-              const exists = prev.some(
-                (n) =>
-                  n.message ===
-                  `New user signed up: ${data.fullName} (${data.department})`
-              );
-              if (exists) return prev;
+  //         if (data.type === "signup") {
+  //           setNotifications((prev) => {
+  //             const exists = prev.some(
+  //               (n) =>
+  //                 n.message ===
+  //                 `New user signed up: ${data.fullName} (${data.department})`
+  //             );
+  //             if (exists) return prev;
 
-              return [
-                {
-                  id: Date.now(),
-                  message: `New user signed up: ${data.fullName} (${data.department})`,
-                  time: new Date().toISOString(),
-                  read: false,
-                  target: "/accounts", // for navigation
-                },
-                ...prev,
-              ];
-            });
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      });
+  //             return [
+  //               {
+  //                 id: Date.now(),
+  //                 message: `New user signed up: ${data.fullName} (${data.department})`,
+  //                 time: new Date().toISOString(),
+  //                 read: false,
+  //                 target: "/accounts", // for navigation
+  //               },
+  //               ...prev,
+  //             ];
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error("Error parsing WebSocket message:", error);
+  //       }
+  //     });
 
-      // Cleanup when component unmounts
-      return () => unsubscribe();
-    }
-  }, [accessLevel]);
+  //     // Cleanup when component unmounts
+  //     return () => unsubscribe();
+  //   }
+  // }, [accessLevel]);
 
 
   return (
