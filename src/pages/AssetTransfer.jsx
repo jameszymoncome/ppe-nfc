@@ -37,6 +37,10 @@ const AssetTransfer = () => {
   const [showModal, setShowModal] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
 
+    // Add state for history
+  const [showHistory, setShowHistory] = useState(false);
+  const [transferHistory, setTransferHistory] = useState([]);
+
   const current_user = localStorage.getItem('userId');
   const user_role = localStorage.getItem('accessLevel');
   const [officer_from, setOfficerFrom] = useState('');
@@ -63,6 +67,75 @@ const handleAccept = async (transfer, file) => {
     Swal.fire("Error", "Something went wrong", "error");
   }
 };
+
+  // Add fetch function
+  const fetchTransferHistory = async (item_no) => {
+    try {
+      const response = await fetch(`${BASE_URL}/getTransferHistory.php?item_no=${item_no}`);
+      const data = await response.json();
+      if (data.success) {
+        setTransferHistory(data.history);
+        setShowHistory(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+    }
+  };
+
+  // Add the history modal component
+  const TransferHistoryModal = ({ history, onClose }) => {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Transfer History</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Document</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type Change</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {history.map((record, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {new Date(record.transfer_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {record.document_no}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {record.from_user_id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {record.to_user_id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {record.from_type} → {record.to_type}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {record.remarks || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // add helper to update status (used by Accept button)
   const updateTransferStatus = async (ptr_no, status) => {
@@ -127,66 +200,71 @@ const handleAccept = async (transfer, file) => {
   }
 };
   const handleApprove2 = async (transfer) => {
-  // SweetAlert file picker
-  const { value: file } = await Swal.fire({
-    title: "Upload Signed Document",
-    input: "file",
-    inputAttributes: {
-      accept: "application/pdf,image/*",
-      "aria-label": "Upload your signed transfer document",
-    },
-    showCancelButton: true,
-    confirmButtonText: "Approve Transfer",
-  });
+    try {
+      // Show SweetAlert with file input
+      const result = await Swal.fire({
+        title: "Upload Signed Document",
+        input: "file",
+        inputAttributes: {
+          accept: "application/pdf,image/*",
+          "aria-label": "Upload your signed transfer document",
+        },
+        showCancelButton: true,
+        confirmButtonText: "Approve Transfer",
+        allowOutsideClick: () => !Swal.isLoading(),
+      });
 
-  if (!file) return; // cancelled
+      const file = result.value;
+      if (!file) return; // User cancelled or didn’t select a file
 
-  const formData = new FormData();
-  formData.append("ptr_no", transfer.ptr_no);
-  formData.append("signed_doc", file);
-  formData.append("status", "Completed");
+      // Prepare upload data
+      const formData = new FormData();
+      formData.append("ptr_no", transfer.ptr_no);
+      formData.append("signed_doc", file);
+      formData.append("status", "Completed");
 
-  // Show initial progress alert
-  Swal.fire({
-    title: "Uploading...",
-    html: `
-      <div id="progress-container" style="width: 100%; background: #eee; border-radius: 8px; height: 16px;">
-        <div id="progress-bar" style="width: 0%; height: 100%; background: #4CAF50; border-radius: 8px;"></div>
-      </div>
-      <p id="progress-text" style="margin-top: 10px;">0%</p>
-    `,
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
+      // Display custom progress UI
+      Swal.fire({
+        title: "Uploading...",
+        html: `
+          <div id="progress-container" style="width:100%;background:#eee;border-radius:8px;height:16px;">
+            <div id="progress-bar" style="width:0%;height:100%;background:#4CAF50;border-radius:8px;"></div>
+          </div>
+          <p id="progress-text" style="margin-top:10px;">0%</p>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
 
-  try {
-    const res = await axios.post(`${BASE_URL}/completeTransfer.php`, formData, {
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          const progressBar = document.getElementById("progress-bar");
-          const progressText = document.getElementById("progress-text");
-          if (progressBar) progressBar.style.width = `${percent}%`;
-          if (progressText) progressText.innerText = `${percent}%`;
-        }
-      },
-    });
+      // Send request
+      const response = await axios.post(`${BASE_URL}/completeTransfer.php`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            const progressBar = document.getElementById("progress-bar");
+            const progressText = document.getElementById("progress-text");
+            if (progressBar) progressBar.style.width = `${percent}%`;
+            if (progressText) progressText.innerText = `${percent}%`;
+          }
+        },
+      });
 
-    const result = res.data;
+      const resultData = response.data;
 
-    if (result.success) {
-      Swal.fire("Success!", "Transfer completed!", "success");
-      fetchTransfers(); // refresh list
-    } else {
-      Swal.fire("Error", result.message, "error");
+      if (resultData.success) {
+        Swal.fire("✅ Success", "Transfer completed successfully!", "success");
+        fetchTransfers(); // Refresh your list
+      } else {
+        Swal.fire("❌ Error", resultData.message || "Transfer failed.", "error");
+      }
+    } catch (error) {
+      console.error("Complete transfer error:", error);
+      Swal.fire("❌ Error", "Something went wrong while uploading.", "error");
     }
-  } catch (err) {
-    console.error("Approve error:", err);
-    Swal.fire("Error", "Something went wrong while uploading.", "error");
-  }
-};
+  };
+
 
 
 
@@ -988,6 +1066,19 @@ useEffect(() => {
                               <span>Complete</span>
                             </button>
                           )}
+                          {item.status === 'Completed' && (
+                            <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fetchTransferHistory(item.item_no);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-150"
+                            title="View Transfer History"
+                          >
+                            <BarChart className="w-3.5 h-3.5" />
+                            <span>History</span>
+                          </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -1033,6 +1124,12 @@ useEffect(() => {
           />
         )}
       </div>
+      {showHistory && (
+        <TransferHistoryModal 
+          history={transferHistory}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     {showModal && (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div className="bg-white p-6 rounded-lg shadow-lg w-96">

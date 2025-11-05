@@ -103,20 +103,45 @@ export default function DocumentItems() {
   };
 
   const handleTransfer = async () => {
-      if (selectedAssets.length === 0) {
-        alert('Please select at least one asset to transfer.');
-        return;
-      }
-      // Fetch users except the logged-in user
-      try {
-        const response = await fetch(`${BASE_URL}/getUsersExcept.php?exclude_id=${user_ids}`);
-        const data = await response.json();
-        setUserOptions(data.users || []);
-        setShowUserModal(true);
-      } catch (error) {
-        alert('Failed to fetch users.');
-      }
-    };
+  // Check if any selected assets have invalid status
+  const invalidStatuses = ['Missing', 'Damaged', 'Misplaced', 'For Maintenance'];
+  
+  const invalidItems = selectedAssets
+    .map(index => filteredItems[index])
+    .filter(item => invalidStatuses.includes(item.inspection_status));
+
+  if (invalidItems.length > 0) {
+    const itemList = invalidItems
+      .map(item => `${item.item_no || item.itemNo}: ${item.inspection_status}`)
+      .join('\n');
+
+    await Swal.fire({
+      icon: 'error',
+      title: 'Cannot Transfer Items',
+      html: `The following items cannot be transferred due to their current status:<br/><br/>
+        <div class="text-left text-sm">
+          ${itemList.replace(/\n/g, '<br/>')}
+        </div>`,
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+
+  if (selectedAssets.length === 0) {
+    alert('Please select at least one asset to transfer.');
+    return;
+  }
+
+  // Existing code - fetch users and open modal
+  try {
+    const response = await fetch(`${BASE_URL}/getUsersExcept.php?exclude_id=${user_ids}`);
+    const data = await response.json();
+    setUserOptions(data.users || []);
+    setShowUserModal(true);
+  } catch (error) {
+    alert('Failed to fetch users.');
+  }
+};
 
   // Toggle a single row
   const toggleRow = (index) => {
@@ -386,7 +411,7 @@ const handleUserSelect = async (user) => {
                   <th className="px-4 py-3 text-left">Item No.</th>
                   <th className="px-4 py-3 text-left">Description</th>
                   <th className="px-4 py-3 text-left">Model</th>
-                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Condition</th>
                   <th className="px-4 py-3 text-left">Date Acquired</th>
                 </tr>
               </thead>
@@ -419,18 +444,20 @@ const handleUserSelect = async (user) => {
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === "Available"
+                            (item.inspection_status || "").trim().toLowerCase() === "very good"
                               ? "bg-green-100 text-green-800"
-                              : item.status === "In Use"
+                              : (item.inspection_status || "").trim().toLowerCase() === "good"
                               ? "bg-blue-100 text-blue-800"
-                              : item.status === "Transferred"
+                              : (item.inspection_status || "").trim().toLowerCase() === "repaired"
                               ? "bg-purple-100 text-purple-800"
-                              : item.status === "Disposed"
+                              : ["damaged", "missing", "misplaced", "for maintenance"].includes(
+                                  (item.inspection_status || "").trim().toLowerCase()
+                                )
                               ? "bg-red-100 text-red-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {item.status}
+                          {item.inspection_status ? item.inspection_status : "Good"}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">{item.date_acquired}</td>

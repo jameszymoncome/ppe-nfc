@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MonitorX, Smartphone, Tablet, Laptop, Battery, User, Circle } from 'lucide-react';
+import { MonitorX, Smartphone, Tablet, Laptop, Battery, User, Circle, Wifi, WifiOff } from 'lucide-react';
 import Sidebar from "../components/Sidebar";
 import { BASE_URL } from '../utils/connection';
 import axios from 'axios';
 import { onMessage, sendMessage } from '../components/websocket';
+import Swal from "sweetalert2";
 
 // Mock data for devices
 const mockDevices = [
@@ -100,6 +101,7 @@ const DeviceMonitoring = () => {
         console.log('Selected Device:', selectedDevice);
         console.log('Is Available:', isAvailable);
         if (selectingDevice && isAvailable) {
+            console.log('isConnected')
             setSelectedDevice(selectingDevice);
             // setDeviceListModal(false);
             // setViewNFCModal(true);
@@ -125,11 +127,18 @@ const DeviceMonitoring = () => {
                 if (data.type === "status" && data.ssid) {
                     setDeviceList((prev) =>
                         prev.map((device) =>
-                            device.device_name === data.ssid
-                                ? { ...device, status: data.status }
-                                : device
+                        device.device_name === data.ssid
+                            ? { ...device, status: data.status, percentage: data.batteryPercentage }
+                            : device
                         )
                     );
+                    setSelectedDevice((prev) => {
+                        if (!prev) return prev; // no device selected yet
+                        if (prev.device_name === data.ssid) {
+                            return { ...prev, status: data.status, percentage: data.batteryPercentage };
+                        }
+                        return prev;
+                    });
                 }
                 if (data.type === "deviceStatus"){
                     setIsAvailable(false);
@@ -156,6 +165,7 @@ const DeviceMonitoring = () => {
                     });
                 }
                 if (data.type === "frontendStatus"){
+                    console.log('conneccted naaaaaaaaa');
                     checkConnection();
                 }
             } catch (err) {
@@ -174,6 +184,7 @@ const DeviceMonitoring = () => {
     };
 
     const getUsers = async (usersIDS, deviceName) => {
+        console.log("jsjfjsdhkfg");
         try {
             const response = await axios.get(`${BASE_URL}/getUsers.php`, {
                 params: {
@@ -181,17 +192,23 @@ const DeviceMonitoring = () => {
                 }
             });
             if(response.data.success){
-                const nameFromPHP = response.data.head.names;
+                const firstnameFromPHP = response.data.head.firstname;
+                const middlenameFromPHP = response.data.head.firstname;
+                const lastnameFromPHP = response.data.head.firstname;
+
+                const fullname = `${firstnameFromPHP} ${middlenameFromPHP} ${lastnameFromPHP}`.trim();
+                const flname = `${firstnameFromPHP[0].toUpperCase()}${lastnameFromPHP[0].toUpperCase()}`;
                 setDeviceList((prevList) => {
                 const updatedList = prevList.map((device) =>
                     device.device_name === deviceName
-                    ? { ...device, names: nameFromPHP } // ✅ Update matched device
+                    ? { ...device, names: fullname, shortName: flname } // ✅ Update matched device
                     : device
                 );
 
                 // ✅ Also set the selected device (the one that matched)
                 const updatedDevice = updatedList.find((d) => d.device_name === deviceName);
                 if (updatedDevice) {
+                    console.log('condssss');
                     setSelectedDevice(updatedDevice);
                 }
 
@@ -221,11 +238,16 @@ const DeviceMonitoring = () => {
                 }
             });
             if(response.data.success){
-                const nameFromPHP = response.data.head.names;
+                const firstnameFromPHP = response.data.head.firstname;
+                const middlenameFromPHP = response.data.head.firstname;
+                const lastnameFromPHP = response.data.head.firstname;
+
+                const fullname = `${firstnameFromPHP} ${middlenameFromPHP} ${lastnameFromPHP}`.trim();
+                const flname = `${firstnameFromPHP[0].toUpperCase()}${lastnameFromPHP[0].toUpperCase()}`;
                 setDeviceList((prevList) =>
                     prevList.map((device) =>
                     device.device_name === deviceName
-                        ? { ...device, names: nameFromPHP } // ✅ Update matched device
+                        ? { ...device, names: fullname, shortName: flname } // ✅ Update matched device
                         : device // keep others the same
                     )
                 );
@@ -248,16 +270,16 @@ const DeviceMonitoring = () => {
 
     const getDeviceIcon = (type) => {
         switch(type) {
-        case 'laptop': return <Laptop className="w-6 h-6" />;
-        case 'smartphone': return <Smartphone className="w-6 h-6" />;
+        case 'online': return <Wifi className="w-6 h-6" />;
+        case 'offline': return <WifiOff className="w-6 h-6" />;
         case 'tablet': return <Tablet className="w-6 h-6" />;
         default: return <MonitorX className="w-6 h-6" />;
         }
     };
 
     const getBatteryColor = (battery) => {
-        if (battery > 60) return 'text-green-500';
-        if (battery > 30) return 'text-yellow-500';
+        if (battery > 21) return 'text-green-500';
+        if (battery > 0) return 'text-red-500';
         return 'text-red-500';
     };
 
@@ -294,7 +316,7 @@ const DeviceMonitoring = () => {
         <div className="flex h-screen bg-gray-100 overflow-hidden">
             <Sidebar />
             <div className="flex-1 overflow-auto">
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-8">
+                <div className="min-h-screen text-gray-900 p-4 md:p-8">
                     <div className="max-w-7xl mx-auto">
                         {/* Header with small filter buttons */}
                         <div className="mb-8">
@@ -344,7 +366,7 @@ const DeviceMonitoring = () => {
                         {/* Content Layout - Changes based on selection */}
                         {!selectedDevice ? (
                         /* No device selected - Show only device list */
-                        <div className="bg-slate-800 rounded-xl p-6">
+                        <div className="bg-white rounded-xl p-6">
                             <h2 className="text-xl font-semibold mb-4">
                             {filter === 'all' ? 'All Devices' : filter === 'online' ? 'Online Devices' : 'Offline Devices'}
                             </h2>
@@ -368,7 +390,7 @@ const DeviceMonitoring = () => {
                                     <div className={`p-3 rounded-lg ${
                                         device.status === 'online' ? 'bg-green-600/20' : 'bg-slate-600/20'
                                     }`}>
-                                        {getDeviceIcon(device.type)}
+                                        {getDeviceIcon(device.status)}
                                     </div>
                                     
                                     <div className="flex-1 min-w-0">
@@ -393,9 +415,9 @@ const DeviceMonitoring = () => {
                                     </div>
                                     </div>
 
-                                    <div className={`flex items-center space-x-1 ml-4 ${getBatteryColor(device.battery)}`}>
+                                    <div className={`flex items-center space-x-1 ml-4 ${getBatteryColor(device.percentage)}`}>
                                     <Battery className="w-5 h-5 flex-shrink-0" />
-                                    <span className="text-sm font-medium">{device.battery}%</span>
+                                    <span className="text-sm font-medium">{device.percentage}%</span>
                                     </div>
                                 </div>
                                 </div>
@@ -407,15 +429,15 @@ const DeviceMonitoring = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                             {/* Left Panel - Selected Device Details (3/5 width) */}
                             <div className="lg:col-span-3">
-                            <div className="bg-slate-800 rounded-xl p-6">
+                            <div className="bg-white rounded-xl p-6">
                                 <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-semibold">Selected Device</h2>
-                                <button
+                                {/* <button
                                     onClick={() => setSelectedDevice(null)}
                                     className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-all"
                                 >
                                     Clear
-                                </button>
+                                </button> */}
                                 </div>
                                 
                                 <div className="space-y-6">
@@ -423,7 +445,7 @@ const DeviceMonitoring = () => {
                                     <div className={`p-6 rounded-xl ${
                                     selectedDevice.status === 'online' ? 'bg-green-600/20' : 'bg-slate-600/20'
                                     }`}>
-                                        {getDeviceIcon(selectedDevice.type)}
+                                        {getDeviceIcon(selectedDevice.status)}
                                     </div>
                                     
                                     <div className="flex-1">
@@ -443,7 +465,7 @@ const DeviceMonitoring = () => {
                                     <p className="text-sm text-slate-400 mb-2">Assigned To</p>
                                     <div className="flex items-center space-x-3">
                                         <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-lg font-semibold">
-                                            {selectedDevice.names}
+                                            {selectedDevice.shortName}
                                         </div>
                                         <div>
                                         <p className="font-medium text-lg">{selectedDevice.names}</p>
@@ -467,13 +489,13 @@ const DeviceMonitoring = () => {
                                     <div className="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden">
                                         <div 
                                         className={`h-full rounded-full transition-all ${
-                                            selectedDevice.battery > 60 ? 'bg-green-500' :
-                                            selectedDevice.battery > 30 ? 'bg-yellow-500' : 'bg-red-500'
+                                            selectedDevice.percentage > 21 ? 'bg-green-500' :
+                                            selectedDevice.percentage > 0 ? 'bg-yellow-500' : 'bg-red-500'
                                         }`}
-                                        style={{ width: `${selectedDevice.battery}%` }}
+                                        style={{ width: `${selectedDevice.percentage}%` }}
                                         />
                                     </div>
-                                    <span className="font-semibold text-xl w-16 text-right">{selectedDevice.battery}%</span>
+                                    <span className="font-semibold text-xl w-16 text-right">{selectedDevice.percentage}%</span>
                                     </div>
                                 </div>
                                 </div>
@@ -482,7 +504,7 @@ const DeviceMonitoring = () => {
 
                             {/* Right Panel - All Devices List (2/5 width) */}
                             <div className="lg:col-span-2">
-                            <div className="bg-slate-800 rounded-xl p-6">
+                            <div className="bg-white rounded-xl p-6">
                                 <h2 className="text-xl font-semibold mb-4">All Devices</h2>
                                 
                                 <div className="space-y-3">
@@ -501,7 +523,7 @@ const DeviceMonitoring = () => {
                                         <div className={`p-2 rounded-lg ${
                                             device.status === 'online' ? 'bg-green-600/20' : 'bg-slate-600/20'
                                         }`}>
-                                            {getDeviceIcon(device.type)}
+                                            {getDeviceIcon(device.status)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-2">
@@ -516,9 +538,9 @@ const DeviceMonitoring = () => {
                                     
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-slate-400 truncate">{device.names}</span>
-                                        <div className={`flex items-center space-x-1 ml-2 ${getBatteryColor(device.battery)}`}>
+                                        <div className={`flex items-center space-x-1 ml-2 ${getBatteryColor(device.percentage)}`}>
                                         <Battery className="w-4 h-4" />
-                                        <span>{device.battery}%</span>
+                                        <span>{device.percentage}%</span>
                                         </div>
                                     </div>
                                     </div>

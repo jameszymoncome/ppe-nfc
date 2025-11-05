@@ -23,8 +23,15 @@ const Reports = () => {
   const [inspectionData, setInspectionData] = useState([]);
   const [departmentSummary, setDepartmentSummary] = useState([]);
   const [employeesByDepartment, setEmployeesByDepartment] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [itemDetails, setItemDetails] = useState(null);
   const [showPaperView, setShowPaperView] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [employeeInspectionData, setEmployeeInspectionData] = useState([]);
+  const [transferData, setTransferData] = useState([]);
+  const [transferDetails, setTransferDetails] = useState([]);
 
 
   useEffect(() => {
@@ -65,7 +72,6 @@ const Reports = () => {
     fetchInspect();
   }, []);
 
-
   useEffect(() => {
     const fetchDeptAssetsTotal = async () => {
       try {
@@ -77,6 +83,19 @@ const Reports = () => {
       }
     }
     fetchDeptAssetsTotal();
+  }, []);
+
+  useEffect(() => {
+    const fetchTransferList = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/transferList.php`);
+        setTransferData(response.data.data);
+        console.log('Transfer: ', response.data.data);
+      } catch (error) {
+        console.error('Error fetching transfer list:', error);
+      }
+    }
+    fetchTransferList();
   }, []);
 
   const fetchUserList = async (depts) => {
@@ -116,6 +135,22 @@ const Reports = () => {
     } catch (error) {
         console.error('Error fetching item:', error);
     }
+  };
+
+  const getTransferDetail = async (selectedItems, selectedTypes) => {
+    console.log('hehhehkfs: ', selectedItems, selectedTypes)
+    try {
+        const response = await axios.get(`${BASE_URL}/transferDetails.php`, {
+            params: {
+                selectedItem: selectedItems,
+                selectedType: selectedTypes
+            }
+        });
+        console.log('Transfer Data Item: ', response.data.data);
+        setTransferDetails(response.data.data);
+    } catch (error) {
+        console.error('Error fetching Transfer Data:', error);
+    }
   }
 
   // const departmentSummary = [
@@ -141,153 +176,153 @@ const Reports = () => {
   //   { id: 'ITEM-004', name: 'Filing Cabinet', department: 'MPDO', employee: 'Jane Smith', lastInspection: '2025-06-05', status: 'Fail', inspector: 'Bob Wilson', nextDue: '2025-09-05' },
   // ];
 
-  const transferData = [
-    { 
-      id: 'TRF-001', 
-      itemId: 'ITEM-001',
-      itemName: 'Desktop Computer',
-      transferDate: '2025-10-15',
-      fromDept: 'MPDO',
-      toDept: 'GSO',
-      fromEmployee: 'Maria Garcia',
-      toEmployee: 'John Doe',
-      reason: 'Office Reallocation',
-      approvedBy: 'Admin Manager',
-      status: 'Completed'
-    },
-    { 
-      id: 'TRF-002', 
-      itemId: 'ITEM-005',
-      itemName: 'Laptop',
-      transferDate: '2025-09-20',
-      fromDept: 'GSO',
-      toDept: 'MPDO',
-      fromEmployee: 'Bob Wilson',
-      toEmployee: 'Jane Smith',
-      reason: 'Equipment Upgrade',
-      approvedBy: 'Admin Manager',
-      status: 'Completed'
-    },
-    { 
-      id: 'TRF-003', 
-      itemId: 'ITEM-002',
-      itemName: 'Office Printer',
-      transferDate: '2025-08-10',
-      fromDept: 'GSO',
-      toDept: 'MPDO',
-      fromEmployee: 'John Doe',
-      toEmployee: 'Maria Garcia',
-      reason: 'Department Needs',
-      approvedBy: 'Department Head',
-      status: 'Completed'
-    },
-    { 
-      id: 'TRF-004', 
-      itemId: 'ITEM-006',
-      itemName: 'Office Desk',
-      transferDate: '2025-10-25',
-      fromDept: 'GSO',
-      toDept: 'MPDO',
-      fromEmployee: 'Bob Wilson',
-      toEmployee: 'Maria Garcia',
-      reason: 'Office Reorganization',
-      approvedBy: '-',
-      status: 'Pending'
-    },
-  ];
+  // const transferData = [
+  //   { 
+  //     id: 'TRF-001', 
+  //     itemId: 'ITEM-001',
+  //     itemName: 'Desktop Computer',
+  //     transferDate: '2025-10-15',
+  //     fromDept: 'MPDO',
+  //     toDept: 'GSO',
+  //     fromEmployee: 'Maria Garcia',
+  //     toEmployee: 'John Doe',
+  //     reason: 'Office Reallocation',
+  //     approvedBy: 'Admin Manager',
+  //     status: 'Completed'
+  //   },
+  //   { 
+  //     id: 'TRF-002', 
+  //     itemId: 'ITEM-005',
+  //     itemName: 'Laptop',
+  //     transferDate: '2025-09-20',
+  //     fromDept: 'GSO',
+  //     toDept: 'MPDO',
+  //     fromEmployee: 'Bob Wilson',
+  //     toEmployee: 'Jane Smith',
+  //     reason: 'Equipment Upgrade',
+  //     approvedBy: 'Admin Manager',
+  //     status: 'Completed'
+  //   },
+  //   { 
+  //     id: 'TRF-003', 
+  //     itemId: 'ITEM-002',
+  //     itemName: 'Office Printer',
+  //     transferDate: '2025-08-10',
+  //     fromDept: 'GSO',
+  //     toDept: 'MPDO',
+  //     fromEmployee: 'John Doe',
+  //     toEmployee: 'Maria Garcia',
+  //     reason: 'Department Needs',
+  //     approvedBy: 'Department Head',
+  //     status: 'Completed'
+  //   },
+  //   { 
+  //     id: 'TRF-004', 
+  //     itemId: 'ITEM-006',
+  //     itemName: 'Office Desk',
+  //     transferDate: '2025-10-25',
+  //     fromDept: 'GSO',
+  //     toDept: 'MPDO',
+  //     fromEmployee: 'Bob Wilson',
+  //     toEmployee: 'Maria Garcia',
+  //     reason: 'Office Reorganization',
+  //     approvedBy: '-',
+  //     status: 'Pending'
+  //   },
+  // ];
 
-  const transferDetails = {
-    'TRF-001': {
-      itemId: 'ITEM-001',
-      itemName: 'Desktop Computer',
-      category: 'IT Equipment',
-      value: '₱35,000',
-      serialNumber: 'DC-2023-001',
-      currentOwner: {
-        name: 'John Doe',
-        department: 'GSO',
-        position: 'Admin Officer',
-        assignedDate: '2025-10-15'
-      },
-      transferHistory: [
-        {
-          date: '2025-10-15',
-          fromEmployee: 'Maria Garcia',
-          fromDept: 'MPDO',
-          fromPosition: 'Development Officer',
-          toEmployee: 'John Doe',
-          toDept: 'GSO',
-          toPosition: 'Admin Officer',
-          reason: 'Office Reallocation',
-          approvedBy: 'Admin Manager',
-          notes: 'Equipment in good condition at time of transfer'
-        },
-        {
-          date: '2024-05-10',
-          fromEmployee: 'Jane Smith',
-          fromDept: 'MPDO',
-          fromPosition: 'Planning Officer',
-          toEmployee: 'Maria Garcia',
-          toDept: 'MPDO',
-          toPosition: 'Development Officer',
-          reason: 'Internal Reassignment',
-          approvedBy: 'Department Head',
-          notes: 'Transferred within same department'
-        },
-        {
-          date: '2023-01-15',
-          fromEmployee: 'Initial Acquisition',
-          fromDept: '-',
-          fromPosition: '-',
-          toEmployee: 'Jane Smith',
-          toDept: 'MPDO',
-          toPosition: 'Planning Officer',
-          reason: 'New Purchase',
-          approvedBy: 'Procurement Officer',
-          notes: 'Brand new equipment'
-        }
-      ]
-    },
-    'TRF-002': {
-      itemId: 'ITEM-005',
-      itemName: 'Laptop',
-      category: 'IT Equipment',
-      value: '₱55,000',
-      serialNumber: 'LT-2023-005',
-      currentOwner: {
-        name: 'Jane Smith',
-        department: 'MPDO',
-        position: 'Planning Officer',
-        assignedDate: '2025-09-20'
-      },
-      transferHistory: [
-        {
-          date: '2025-09-20',
-          fromEmployee: 'Bob Wilson',
-          fromDept: 'GSO',
-          fromPosition: 'General Services Staff',
-          toEmployee: 'Jane Smith',
-          toDept: 'MPDO',
-          toPosition: 'Planning Officer',
-          reason: 'Equipment Upgrade',
-          approvedBy: 'Admin Manager',
-          notes: 'Employee requested transfer for work efficiency'
-        },
-        {
-          date: '2024-02-01',
-          fromEmployee: 'Initial Acquisition',
-          fromDept: '-',
-          fromPosition: '-',
-          toEmployee: 'Bob Wilson',
-          toDept: 'GSO',
-          toPosition: 'General Services Staff',
-          reason: 'New Purchase',
-          approvedBy: 'Procurement Officer',
-          notes: 'Brand new equipment'
-        }
-      ]
-    }
-  };
+  // const transferDetails = {
+  //   'TRF-001': {
+  //     itemId: 'ITEM-001',
+  //     itemName: 'Desktop Computer',
+  //     category: 'IT Equipment',
+  //     value: '₱35,000',
+  //     serialNumber: 'DC-2023-001',
+  //     currentOwner: {
+  //       name: 'John Doe',
+  //       department: 'GSO',
+  //       position: 'Admin Officer',
+  //       assignedDate: '2025-10-15'
+  //     },
+  //     transferHistory: [
+  //       {
+  //         date: '2025-10-15',
+  //         fromEmployee: 'Maria Garcia',
+  //         fromDept: 'MPDO',
+  //         fromPosition: 'Development Officer',
+  //         toEmployee: 'John Doe',
+  //         toDept: 'GSO',
+  //         toPosition: 'Admin Officer',
+  //         reason: 'Office Reallocation',
+  //         approvedBy: 'Admin Manager',
+  //         notes: 'Equipment in good condition at time of transfer'
+  //       },
+  //       {
+  //         date: '2024-05-10',
+  //         fromEmployee: 'Jane Smith',
+  //         fromDept: 'MPDO',
+  //         fromPosition: 'Planning Officer',
+  //         toEmployee: 'Maria Garcia',
+  //         toDept: 'MPDO',
+  //         toPosition: 'Development Officer',
+  //         reason: 'Internal Reassignment',
+  //         approvedBy: 'Department Head',
+  //         notes: 'Transferred within same department'
+  //       },
+  //       {
+  //         date: '2023-01-15',
+  //         fromEmployee: 'Initial Acquisition',
+  //         fromDept: '-',
+  //         fromPosition: '-',
+  //         toEmployee: 'Jane Smith',
+  //         toDept: 'MPDO',
+  //         toPosition: 'Planning Officer',
+  //         reason: 'New Purchase',
+  //         approvedBy: 'Procurement Officer',
+  //         notes: 'Brand new equipment'
+  //       }
+  //     ]
+  //   },
+  //   'TRF-002': {
+  //     itemId: 'ITEM-005',
+  //     itemName: 'Laptop',
+  //     category: 'IT Equipment',
+  //     value: '₱55,000',
+  //     serialNumber: 'LT-2023-005',
+  //     currentOwner: {
+  //       name: 'Jane Smith',
+  //       department: 'MPDO',
+  //       position: 'Planning Officer',
+  //       assignedDate: '2025-09-20'
+  //     },
+  //     transferHistory: [
+  //       {
+  //         date: '2025-09-20',
+  //         fromEmployee: 'Bob Wilson',
+  //         fromDept: 'GSO',
+  //         fromPosition: 'General Services Staff',
+  //         toEmployee: 'Jane Smith',
+  //         toDept: 'MPDO',
+  //         toPosition: 'Planning Officer',
+  //         reason: 'Equipment Upgrade',
+  //         approvedBy: 'Admin Manager',
+  //         notes: 'Employee requested transfer for work efficiency'
+  //       },
+  //       {
+  //         date: '2024-02-01',
+  //         fromEmployee: 'Initial Acquisition',
+  //         fromDept: '-',
+  //         fromPosition: '-',
+  //         toEmployee: 'Bob Wilson',
+  //         toDept: 'GSO',
+  //         toPosition: 'General Services Staff',
+  //         reason: 'New Purchase',
+  //         approvedBy: 'Procurement Officer',
+  //         notes: 'Brand new equipment'
+  //       }
+  //     ]
+  //   }
+  // };
 
   // const itemDetails = {
   //   'ITEM-001': {
@@ -350,80 +385,80 @@ const Reports = () => {
     }
   };
 
-  const inventoryItems = [
-    {
-      article: '1',
-      description: 'Desktop Computer',
-      propertyNo: 'PC-2024-001',
-      cost: '₱35,000.00',
-      location: 'IT Department',
-      condition: 'Good',
-      remarks: 'Working condition'
-    },
-    {
-      article: '2',
-      description: 'Office Chair',
-      propertyNo: 'FC-2024-015',
-      cost: '₱5,500.00',
-      location: 'Admin Office',
-      condition: 'Good',
-      remarks: 'Ergonomic chair'
-    },
-    {
-      article: '3',
-      description: 'Air Conditioning Unit',
-      propertyNo: 'AC-2024-003',
-      cost: '₱28,000.00',
-      location: 'Conference Room',
-      condition: 'Excellent',
-      remarks: '1.5HP inverter type'
-    },
-    {
-      article: '4',
-      description: 'Printer (Laser)',
-      propertyNo: 'PR-2024-008',
-      cost: '₱15,000.00',
-      location: 'Records Section',
-      condition: 'Good',
-      remarks: 'Monochrome laser printer'
-    },
-    {
-      article: '5',
-      description: 'Office Table',
-      propertyNo: 'FT-2024-022',
-      cost: '₱8,500.00',
-      location: 'Director\'s Office',
-      condition: 'Excellent',
-      remarks: 'Executive table'
-    },
-    {
-      article: '6',
-      description: 'Filing Cabinet',
-      propertyNo: 'FC-2024-018',
-      cost: '₱6,200.00',
-      location: 'Records Section',
-      condition: 'Good',
-      remarks: '4-drawer steel cabinet'
-    },
-    {
-      article: '7',
-      description: 'Projector',
-      propertyNo: 'PJ-2024-002',
-      cost: '₱22,000.00',
-      location: 'Training Room',
-      condition: 'Good',
-      remarks: 'LCD projector'
-    },
-    {
-      article: '8',
-      description: 'Laptop Computer',
-      propertyNo: 'LC-2024-012',
-      cost: '₱42,000.00',
-      location: 'Finance Department',
-      condition: 'Excellent',
-      remarks: 'Business laptop'
-    }
-  ];
+  // const inventoryItems = [
+  //   {
+  //     article: '1',
+  //     description: 'Desktop Computer',
+  //     propertyNo: 'PC-2024-001',
+  //     cost: '₱35,000.00',
+  //     location: 'IT Department',
+  //     condition: 'Good',
+  //     remarks: 'Working condition'
+  //   },
+  //   {
+  //     article: '2',
+  //     description: 'Office Chair',
+  //     propertyNo: 'FC-2024-015',
+  //     cost: '₱5,500.00',
+  //     location: 'Admin Office',
+  //     condition: 'Good',
+  //     remarks: 'Ergonomic chair'
+  //   },
+  //   {
+  //     article: '3',
+  //     description: 'Air Conditioning Unit',
+  //     propertyNo: 'AC-2024-003',
+  //     cost: '₱28,000.00',
+  //     location: 'Conference Room',
+  //     condition: 'Excellent',
+  //     remarks: '1.5HP inverter type'
+  //   },
+  //   {
+  //     article: '4',
+  //     description: 'Printer (Laser)',
+  //     propertyNo: 'PR-2024-008',
+  //     cost: '₱15,000.00',
+  //     location: 'Records Section',
+  //     condition: 'Good',
+  //     remarks: 'Monochrome laser printer'
+  //   },
+  //   {
+  //     article: '5',
+  //     description: 'Office Table',
+  //     propertyNo: 'FT-2024-022',
+  //     cost: '₱8,500.00',
+  //     location: 'Director\'s Office',
+  //     condition: 'Excellent',
+  //     remarks: 'Executive table'
+  //   },
+  //   {
+  //     article: '6',
+  //     description: 'Filing Cabinet',
+  //     propertyNo: 'FC-2024-018',
+  //     cost: '₱6,200.00',
+  //     location: 'Records Section',
+  //     condition: 'Good',
+  //     remarks: '4-drawer steel cabinet'
+  //   },
+  //   {
+  //     article: '7',
+  //     description: 'Projector',
+  //     propertyNo: 'PJ-2024-002',
+  //     cost: '₱22,000.00',
+  //     location: 'Training Room',
+  //     condition: 'Good',
+  //     remarks: 'LCD projector'
+  //   },
+  //   {
+  //     article: '8',
+  //     description: 'Laptop Computer',
+  //     propertyNo: 'LC-2024-012',
+  //     cost: '₱42,000.00',
+  //     location: 'Finance Department',
+  //     condition: 'Excellent',
+  //     remarks: 'Business laptop'
+  //   }
+  // ];
 
   const signatures = {
     certified: 'Maria Santos',
@@ -444,7 +479,10 @@ const Reports = () => {
   };
 
   const handleDownloadHistory = () => {
-    setShowPaperView(true);
+    getUsers();
+    setIsOpen(true);
+    console.log('employees: ', selectedRows);
+    // setShowPaperView(true);
   }
 
   const groupedData = inspectionData.reduce((acc, item) => {
@@ -454,6 +492,127 @@ const Reports = () => {
     acc[item.user_id].push(item);
     return acc;
   }, {});
+
+  const isAllSelected = selectedRows.length === inspectionData.length && inspectionData.length > 0;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(inspectionData.map(item => item.current_user_id));
+    }
+  };
+
+  const handleRowSelect = (idx, current_user_id) => {
+    if (selectedRows.includes(idx)) {
+      setSelectedRows(selectedRows.filter(i => i !== idx));
+    } else {
+      setSelectedRows([...selectedRows, idx]);
+    }
+
+    console.log("Selected user:", current_user_id);
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/getUsersAll.php`);
+      setEmployees(response.data.data)
+      console.log('Employee', response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  }
+
+  // const employees = [
+  //   {
+  //     id: 1,
+  //     name: "Sarah Johnson",
+  //     department: "Engineering",
+  //     assets: 12,
+  //     position: "Senior Developer",
+  //     avatar: "SJ"
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Michael Chen",
+  //     department: "Marketing",
+  //     assets: 8,
+  //     position: "Marketing Manager",
+  //     avatar: "MC"
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Emily Rodriguez",
+  //     department: "HR",
+  //     assets: 5,
+  //     position: "HR Specialist",
+  //     avatar: "ER"
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "David Kim",
+  //     department: "Finance",
+  //     assets: 15,
+  //     position: "Financial Analyst",
+  //     avatar: "DK"
+  //   },
+  //   {
+  //     id: 5,
+  //     name: "Jessica Williams",
+  //     department: "Operations",
+  //     assets: 10,
+  //     position: "Operations Lead",
+  //     avatar: "JW"
+  //   },
+  //   {
+  //     id: 6,
+  //     name: "Robert Taylor",
+  //     department: "Engineering",
+  //     assets: 18,
+  //     position: "Lead Engineer",
+  //     avatar: "RT"
+  //   }
+  // ];
+
+  const toggleEmployee = (employee) => {
+    setSelectedEmployees(prev => {
+      const isSelected = prev.some(e => e.user_id === employee.user_id);
+      if (isSelected) {
+        return prev.filter(e => e.user_id !== employee.user_id);
+      } else {
+        return [...prev, employee];
+      }
+    });
+  };
+
+  const isSelected = (employeeId) => {
+    return selectedEmployees.some(e => e.user_id === employeeId);
+  };
+
+  const selectAll = () => {
+    setSelectedEmployees([...employees]);
+  };
+
+  const isAllSelecteds = selectedEmployees.length === employees.length;
+
+  const getHistory = async () => {
+    console.log('employees: ', selectedEmployees);
+    try {
+      const response = await axios.get(`${BASE_URL}/historyInspect.php`, {
+        params: {
+          selectedEmployees: JSON.stringify(selectedEmployees)
+        }
+      });
+      setEmployeeInspectionData(response.data);
+      setIsOpen(false);
+      console.log('Datasss', response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    } finally {
+      setShowPaperView(true);
+      setSelectedEmployees([]);
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
@@ -998,17 +1157,44 @@ const Reports = () => {
 
                       {/* Right side: button */}
                       <button
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                         onClick={handleDownloadHistory}
+                        disabled={inspectionData.length === 0}
+                        className={`px-4 py-2 rounded-lg transition-colors 
+                          ${inspectionData.length === 0 
+                            ? "bg-gray-400 text-gray-200 cursor-not-allowed" 
+                            : "bg-blue-600 hover:bg-blue-700 text-white"}`}
                       >
                         Download History
                       </button>
                     </div>
                     <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                      {selectedRows.length > 0 && (
+                        <div className="bg-blue-50 border-b border-blue-100 px-8 py-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-blue-700 font-semibold">
+                              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'} selected
+                            </span>
+                            <button
+                              onClick={() => setSelectedRows([])}
+                              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              Clear selection
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
                             <tr>
+                              {/* <th className="text-left py-4 px-6 w-12">
+                                <input
+                                  type="checkbox"
+                                  checked={isAllSelected}
+                                  onChange={handleSelectAll}
+                                  className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                                />
+                              </th> */}
                               <th className="text-left py-4 px-6 font-bold text-xs text-slate-600 uppercase tracking-wider">Item ID</th>
                               <th className="text-left py-4 px-6 font-bold text-xs text-slate-600 uppercase tracking-wider">Asset Name</th>
                               <th className="text-left py-4 px-6 font-bold text-xs text-slate-600 uppercase tracking-wider">Department</th>
@@ -1021,7 +1207,15 @@ const Reports = () => {
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {inspectionData.map((item, idx) => (
-                              <tr key={idx} className="hover:bg-slate-50 transition">
+                              <tr key={`${item.current_user_id}-${idx}`} className="hover:bg-slate-50 transition">
+                                {/* <td className="py-4 px-6">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedRows.includes(idx)}
+                                    onChange={() => handleRowSelect(item.current_user_id)}
+                                    className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                                  />
+                                </td> */}
                                 <td className="py-4 px-6">
                                   <span className="font-mono text-sm font-semibold text-blue-600">{item.docNo}</span>
                                 </td>
@@ -1060,7 +1254,7 @@ const Reports = () => {
                 {/* Transfer Assets Tab */}
                 {activeTab === 'transfer' && (
                   <div>
-                    {selectedTransfer && transferDetails[selectedTransfer] ? (
+                    {selectedTransfer && transferDetails ? (
                       <div>
                         <button
                           onClick={() => setSelectedTransfer(null)}
@@ -1077,26 +1271,26 @@ const Reports = () => {
                               <RefreshCw size={28} />
                             </div>
                             <div>
-                              <h3 className="text-2xl font-bold">{transferDetails[selectedTransfer].itemName}</h3>
-                              <p className="text-purple-100 text-sm">{transferDetails[selectedTransfer].itemId}</p>
+                              <h3 className="text-2xl font-bold">{transferDetails.itemName}</h3>
+                              <p className="text-purple-100 text-sm">{transferDetails.itemId}</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-4 gap-4 mt-6">
                             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
                               <div className="text-xs text-purple-100 mb-1">Category</div>
-                              <div className="font-semibold text-sm">{transferDetails[selectedTransfer].category}</div>
+                              <div className="font-semibold text-sm">{transferDetails.category}</div>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
                               <div className="text-xs text-purple-100 mb-1">Value</div>
-                              <div className="font-semibold text-sm">{transferDetails[selectedTransfer].value}</div>
+                              <div className="font-semibold text-sm">{transferDetails.value}</div>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
                               <div className="text-xs text-purple-100 mb-1">Serial Number</div>
-                              <div className="font-semibold text-sm">{transferDetails[selectedTransfer].serialNumber}</div>
+                              <div className="font-semibold text-sm">{transferDetails.serialNumber}</div>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
                               <div className="text-xs text-purple-100 mb-1">Total Transfers</div>
-                              <div className="font-semibold text-sm">{transferDetails[selectedTransfer].transferHistory.length}</div>
+                              <div className="font-semibold text-sm">{transferDetails?.transferHistory?.length || 0}</div>
                             </div>
                           </div>
                         </div>
@@ -1111,19 +1305,19 @@ const Reports = () => {
                             <div className="grid grid-cols-4 gap-4">
                               <div>
                                 <div className="text-xs text-slate-600 mb-1">Employee Name</div>
-                                <div className="font-bold text-slate-800">{transferDetails[selectedTransfer].currentOwner.name}</div>
+                                <div className="font-bold text-slate-800">{transferDetails?.currentOwner?.name || '—'}</div>
                               </div>
                               <div>
                                 <div className="text-xs text-slate-600 mb-1">Position</div>
-                                <div className="font-semibold text-slate-700">{transferDetails[selectedTransfer].currentOwner.position}</div>
+                                <div className="font-semibold text-slate-700">{transferDetails?.currentOwner?.position || '—'}</div>
                               </div>
                               <div>
                                 <div className="text-xs text-slate-600 mb-1">Department</div>
-                                <div className="font-semibold text-slate-700">{transferDetails[selectedTransfer].currentOwner.department}</div>
+                                <div className="font-semibold text-slate-700">{transferDetails?.currentOwner?.department || '—'}</div>
                               </div>
                               <div>
                                 <div className="text-xs text-slate-600 mb-1">Assigned Since</div>
-                                <div className="font-semibold text-slate-700">{transferDetails[selectedTransfer].currentOwner.assignedDate}</div>
+                                <div className="font-semibold text-slate-700">{transferDetails?.currentOwner?.assignedDate || '—'}</div>
                               </div>
                             </div>
                           </div>
@@ -1136,11 +1330,11 @@ const Reports = () => {
                             Transfer History Timeline
                           </h3>
                           <div className="space-y-4">
-                            {transferDetails[selectedTransfer].transferHistory.map((transfer, idx) => (
+                            {transferDetails?.transferHistory?.map((transfer, idx) => (
                               <div key={idx} className="flex gap-4">
                                 <div className="flex flex-col items-center">
                                   <div className="w-4 h-4 rounded-full border-2 bg-purple-500 border-purple-300"></div>
-                                  {idx < transferDetails[selectedTransfer].transferHistory.length - 1 && (
+                                  {idx < transferDetails.transferHistory.length - 1 && (
                                     <div className="w-0.5 h-full bg-slate-200 mt-2"></div>
                                   )}
                                 </div>
@@ -1148,7 +1342,7 @@ const Reports = () => {
                                   <div className="flex items-center gap-2 mb-3">
                                     <span className="text-sm font-bold text-slate-800">{transfer.date}</span>
                                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                      Transfer #{transferDetails[selectedTransfer].transferHistory.length - idx}
+                                      Transfer #{transferDetails.transferHistory.length - idx}
                                     </span>
                                   </div>
                                   <div className="bg-gradient-to-r from-slate-50 to-purple-50 p-5 rounded-xl border border-slate-200">
@@ -1214,36 +1408,39 @@ const Reports = () => {
                               <tbody className="divide-y divide-slate-100">
                                 {transferData.map((transfer, idx) => (
                                   <tr 
-                                    key={idx} 
-                                    onClick={() => transferDetails[transfer.id] && setSelectedTransfer(transfer.id)}
-                                    className={`hover:bg-purple-50 transition ${transferDetails[transfer.id] ? 'cursor-pointer' : ''}`}
+                                    key={transfer.propertyNo}
+                                    onClick={() => {
+                                      getTransferDetail(transfer.propertyNo, transfer.type)
+                                      setSelectedTransfer(transfer.propertyNo)
+                                    }}
+                                    className={`hover:bg-purple-50 transition ${transfer.propertyNo ? 'cursor-pointer' : ''}`}
                                   >
                                     <td className="py-4 px-6">
-                                      <span className="font-mono text-sm font-semibold text-purple-600">{transfer.id}</span>
+                                      <span className="font-mono text-sm font-semibold text-purple-600">{transfer.ptr_no}</span>
                                     </td>
                                     <td className="py-4 px-6">
                                       <div>
-                                        <div className="font-medium text-slate-800">{transfer.itemName}</div>
-                                        <div className="text-xs text-slate-500">{transfer.itemId}</div>
+                                        <div className="font-medium text-slate-800">{transfer.description}</div>
+                                        <div className="text-xs text-slate-500">{transfer.propertyNo}</div>
                                       </div>
                                     </td>
                                     <td className="py-4 px-6">
-                                      <span className="text-sm text-slate-600">{transfer.transferDate}</span>
+                                      <span className="text-sm text-slate-600">{transfer.transfer_date}</span>
                                     </td>
                                     <td className="py-4 px-6">
                                       <div>
-                                        <div className="font-medium text-slate-700">{transfer.fromEmployee}</div>
+                                        <div className="font-medium text-slate-700">{transfer.from_name}</div>
                                         <div className="text-xs text-slate-500">{transfer.fromDept}</div>
                                       </div>
                                     </td>
                                     <td className="py-4 px-6">
                                       <div>
-                                        <div className="font-medium text-slate-700">{transfer.toEmployee}</div>
+                                        <div className="font-medium text-slate-700">{transfer.to_name}</div>
                                         <div className="text-xs text-slate-500">{transfer.toDept}</div>
                                       </div>
                                     </td>
                                     <td className="py-4 px-6">
-                                      <span className="text-sm text-slate-600">{transfer.reason}</span>
+                                      <span className="text-sm text-slate-600">{transfer.reason_for_transfer}</span>
                                     </td>
                                     <td className="py-4 px-6">
                                       <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${getStatusBadge(transfer.status)}`}>
@@ -1299,8 +1496,8 @@ const Reports = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-16">
               <div className="space-y-4">
-                {Object.entries(groupedData).map(([user_id, items], tableIndex) => (
-                  <div key={user_id} className="border-2 border-gray-300 rounded-lg shadow-sm p-6 bg-white">
+                {employeeInspectionData.map((group, tableIndex) => (
+                  <div key={group.user_id} className="border-2 border-gray-300 rounded-lg shadow-sm p-6 bg-white">
                     {/* Title Section */}
                     <div className="text-center mb-6">
                       <h1 className="text-lg font-bold uppercase">
@@ -1324,19 +1521,17 @@ const Reports = () => {
                     {/* Fund Info */}
                     <div className="text-sm">
                       <span className="font-semibold">Fund:</span>{' '}
-                      <span className="underline">{reportData.fund}</span>
+                      <span className="underline">{group.fund}</span>
                     </div>
 
                     {/* Accountability Info */}
                     <div className="text-sm mb-4">
                       <p>
                         For which{' '}
-                        <span className="font-semibold underline">{reportData.accountableOfficer}</span>,{' '}
-                        <span className="font-semibold underline">
-                          {reportData.officialDesignation}
-                        </span>
+                        <span className="font-semibold underline">{group.assignedTo}</span>,{' '}
+                        <span className="font-semibold underline">{'LGU Daet'}</span>
                         ,{' '}
-                        <span className="font-semibold underline">{reportData.lgu}</span> is accountable,
+                        <span className="font-semibold underline">{group.department}</span> is accountable,
                         having affirmed such accountability on{' '}
                         <span className="font-semibold underline">
                           {new Date(reportData.dateOfAssumption).toLocaleDateString('en-US', {
@@ -1363,7 +1558,7 @@ const Reports = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {items.map((item, index) => (
+                          {group.inspections.map((item, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="border border-gray-400 px-3 py-2 text-center">
                                 {item.articleCode}
@@ -1421,6 +1616,119 @@ const Reports = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50"
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 pt-6 pl-6 pr-6">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white">Employee Directory</h2>
+                  <div className="flex items-center gap-4 mt-2">
+                    <p className="text-blue-100">
+                      {selectedEmployees.length > 0 
+                        ? `${selectedEmployees.length} employee${selectedEmployees.length > 1 ? 's' : ''} selected`
+                        : `${employees.length} employees`
+                      }
+                    </p>
+                    <button
+                      onClick={isAllSelecteds ? () => setSelectedEmployees([]) : selectAll}
+                      className="px-4 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm rounded-lg transition-all font-medium backdrop-blur-sm border border-white border-opacity-30"
+                    >
+                      {isAllSelecteds ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 transition-colors w-10 h-10 flex items-center justify-center rounded-full"
+                >
+                  <span className="text-3xl">×</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto p-6 flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {employees.map((employee) => (
+                  <div
+                    key={employee.user_id}
+                    onClick={() => toggleEmployee(employee)}
+                    className={`rounded-xl p-5 border-2 transition-all cursor-pointer ${
+                      isSelected(employee.user_id)
+                        ? 'bg-gradient-to-br from-blue-100 to-purple-100 border-blue-500 shadow-lg'
+                        : 'bg-gradient-to-br from-white to-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
+                        isSelected(employee.user_id)
+                          ? 'bg-gradient-to-br from-blue-600 to-purple-700'
+                          : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                      }`}>
+                        {`${employee.firstname[0].toUpperCase()} ${employee.lastname[0].toUpperCase()}`}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-gray-800 text-lg">{`${employee.firstname} ${employee.lastname}`}</h3>
+                          {isSelected(employee.user_id) && (
+                            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mb-3">{employee.position || 'None'}</p>
+                        
+                        <div className="space-y-2">
+                          <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                            isSelected(employee.user_id) ? 'bg-blue-200' : 'bg-blue-50'
+                          }`}>
+                            <span className="text-xs text-gray-600 font-medium">Department</span>
+                            <span className="text-sm font-semibold text-gray-800">{employee.department}</span>
+                          </div>
+                          <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                            isSelected(employee.user_id) ? 'bg-purple-200' : 'bg-purple-50'
+                          }`}>
+                            <span className="text-xs text-gray-600 font-medium">Inspected Count</span>
+                            <span className="text-sm font-semibold text-purple-600">{employee.totalInspected}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50">
+              <div className="flex gap-3">
+                {selectedEmployees.length > 0 && (
+                  <button
+                    onClick={() => setSelectedEmployees([])}
+                    className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                  >
+                    Clear Selection
+                  </button>
+                )}
+                <button
+                  onClick={() => getHistory()}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-semibold shadow-md hover:shadow-lg"
+                >
+                  View History
+                </button>
               </div>
             </div>
           </div>
