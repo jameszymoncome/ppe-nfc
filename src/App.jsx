@@ -26,6 +26,7 @@ import ReportIssue from './pages/ReportIssue';
 import AssetTransferProgress from './pages/AssetTranferProgress';
 import ProgressItem from './pages/ProgressItem';
 import DocumentItems from './pages/DocumentItems';
+import DeviceMonitoring from './pages/DeviceMonitoring';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -70,6 +71,7 @@ import IC_Scan from './pages/inv_committee_pages/IC_Scan';
 import IC_ReportIssue from './pages/inv_committee_pages/IC_ReportIssue';
 import IC_WasteDisposal from './pages/inv_committee_pages/IC_WasteDisposal';
 import IC_DocumentItems from './pages/inv_committee_pages/IC_DocumentItems';
+import IC_DeviceMonitoring from './pages/inv_committee_pages/IC_DeviceMonitoring';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
@@ -307,6 +309,12 @@ const App = () => {
             </ProtectedRoute>} />
         <Route path="/em-property-assignment" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
               <EM_Property_Assignment />
+            </ProtectedRoute>} />
+        <Route path="/device-monitoring" element={<ProtectedRoute allowedRoles={['SUPER ADMIN']}>
+              <DeviceMonitoring />
+            </ProtectedRoute>} />
+        <Route path="/ic-device-monitoring" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
+              <IC_DeviceMonitoring />
             </ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

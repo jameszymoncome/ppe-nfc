@@ -21,6 +21,7 @@ import {BASE_URL} from '../utils/connection';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Swal from 'sweetalert2';
+import axios from "axios";
 
 const AssetTransfer = () => {
   const [transferData, setTransferData] = useState([]);
@@ -126,13 +127,13 @@ const handleAccept = async (transfer, file) => {
   }
 };
   const handleApprove2 = async (transfer) => {
-  // SweetAlert with file input
+  // SweetAlert file picker
   const { value: file } = await Swal.fire({
     title: "Upload Signed Document",
     input: "file",
     inputAttributes: {
-      accept: "application/pdf,image/*", // allow pdf and images
-      "aria-label": "Upload your signed transfer document"
+      accept: "application/pdf,image/*",
+      "aria-label": "Upload your signed transfer document",
     },
     showCancelButton: true,
     confirmButtonText: "Approve Transfer",
@@ -142,17 +143,38 @@ const handleAccept = async (transfer, file) => {
 
   const formData = new FormData();
   formData.append("ptr_no", transfer.ptr_no);
-  // formData.append("approved_by", current_user);
   formData.append("signed_doc", file);
-  formData.append("status", "Completed"); // send new status
+  formData.append("status", "Completed");
+
+  // Show initial progress alert
+  Swal.fire({
+    title: "Uploading...",
+    html: `
+      <div id="progress-container" style="width: 100%; background: #eee; border-radius: 8px; height: 16px;">
+        <div id="progress-bar" style="width: 0%; height: 100%; background: #4CAF50; border-radius: 8px;"></div>
+      </div>
+      <p id="progress-text" style="margin-top: 10px;">0%</p>
+    `,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
 
   try {
-    const res = await fetch(`${BASE_URL}/completeTransfer.php`, {
-      method: "POST",
-      body: formData,
+    const res = await axios.post(`${BASE_URL}/completeTransfer.php`, formData, {
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          const progressBar = document.getElementById("progress-bar");
+          const progressText = document.getElementById("progress-text");
+          if (progressBar) progressBar.style.width = `${percent}%`;
+          if (progressText) progressText.innerText = `${percent}%`;
+        }
+      },
     });
 
-    const result = await res.json();
+    const result = res.data;
 
     if (result.success) {
       Swal.fire("Success!", "Transfer completed!", "success");
@@ -162,7 +184,7 @@ const handleAccept = async (transfer, file) => {
     }
   } catch (err) {
     console.error("Approve error:", err);
-    Swal.fire("Error", "Something went wrong", "error");
+    Swal.fire("Error", "Something went wrong while uploading.", "error");
   }
 };
 

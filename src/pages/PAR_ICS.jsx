@@ -102,35 +102,41 @@ const PAR_ICS = () => {
   }, []);
 
   const fetchItems = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/getItems.php`, {
-        params: {
-          role: localStorage.getItem("accessLevel"),
-          usersID: localStorage.getItem("userId"),
-          departments: localStorage.getItem("department")
-        }
-      });
-      console.log(response.data);
+  try {
+    const response = await axios.get(`${BASE_URL}/getItems.php`, {
+      params: {
+        role: localStorage.getItem("accessLevel"),
+        usersID: localStorage.getItem("userId"),
+        departments: localStorage.getItem("department"),
+      },
+    });
 
-      const formatted = response.data.items.map((item, index) => ({
-        id: index + 1,
-        air_no: item.air_no,
-        documentNo: item.documentNo,
-        tagID: item.tagID,
-        type: item.type,
-        user: item.user,
-        office: item.office,
-        dateIssued: item.dateIssued,
-        items: item.items,
-        status: item.status || 'N/A',
-        downloadedForm: item.downloadedForm,
-      }));
+    console.log("API Response:", response.data);
 
-      setParIcsItem(formatted);
-    } catch (error) {
-      console.error('Error fetching end users:', error);
-    }
+    const items = Array.isArray(response.data)
+      ? response.data
+      : response.data.items || [];
+
+    const formatted = items.map((item, index) => ({
+      id: index + 1,
+      air_no: item.air_no,
+      documentNo: item.documentNo,
+      tagID: item.tagID,
+      type: item.type,
+      user: item.user,
+      office: item.office,
+      dateIssued: item.dateIssued,
+      items: item.items,
+      status: item.status || 'N/A',
+      downloadedForm: item.downloadedForm,
+    }));
+
+    setParIcsItem(formatted);
+  } catch (error) {
+    console.error('Error fetching end users:', error);
   }
+};
+
 
   const fetchStickerData = async (air_no) => {
     console.log("Downloading files for AIR No:", air_no);

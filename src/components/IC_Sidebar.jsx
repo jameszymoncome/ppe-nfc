@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
-import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync, Shredder, MessageCircleWarning } from 'lucide-react';
+import { MoreVertical, LayoutDashboard, FileText, ClipboardCheck, BarChart3, Users, Database, Menu, X, Building2, UserRoundPen, Folder, ChevronDown, ChevronRight, Smartphone, FolderSync, Shredder, MessageCircleWarning, Binoculars } from 'lucide-react';
 import lgu_seal from '/assets/images/lgu_seal.png'; 
 
 const IC_Sidebar = () => {
@@ -272,6 +272,17 @@ const IC_Sidebar = () => {
                             )}
                           </div>
                         </li>
+            <li>
+              <NavLink
+                to="/ic-device-monitoring"
+                className={({ isActive }) =>
+                  `${navLinkClass} hover:bg-gray-100 ${isActive ? activeClass : ''}`
+                }
+              >
+                <Binoculars className="w-5 h-5" />
+                <span className="text-sm font-medium">Device Monitoring</span>
+              </NavLink>
+            </li>
             <li>
               <NavLink
                 to="/ic-reports"

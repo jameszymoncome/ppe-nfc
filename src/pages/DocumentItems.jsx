@@ -109,7 +109,7 @@ export default function DocumentItems() {
       }
       // Fetch users except the logged-in user
       try {
-        const response = await fetch(`${BASE_URL}/getUsersExcept.php?exclude_id=${loggedInUserId}`);
+        const response = await fetch(`${BASE_URL}/getUsersExcept.php?exclude_id=${user_ids}`);
         const data = await response.json();
         setUserOptions(data.users || []);
         setShowUserModal(true);

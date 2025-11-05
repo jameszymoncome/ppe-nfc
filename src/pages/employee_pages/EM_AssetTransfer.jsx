@@ -21,6 +21,7 @@ import { BASE_URL } from '../../utils/connection';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const EM_AssetTransfer = () => {
   const [transferData, setTransferData] = useState([]);
@@ -35,8 +36,41 @@ const EM_AssetTransfer = () => {
   const [downloadTransfer, setDownloadTransfer] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const current_user = localStorage.getItem('userId');
+
+
+   // Upload helper (same pattern as AssetTransfer.jsx)
+  const uploadSignedDocument = async (file, ptr_no) => {
+    if (!file) return { success: false, message: 'No file selected' };
+    const formData = new FormData();
+    formData.append('ptr_no', ptr_no);
+    formData.append('signed_doc', file);
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+      const response = await axios.post(`${BASE_URL}/acceptTransfer.php`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+          setUploadProgress(percent);
+        },
+        timeout: 60000,
+      });
+      setUploading(false);
+      setUploadProgress(100);
+      return response.data;
+    } catch (err) {
+      setUploading(false);
+      setUploadProgress(0);
+      console.error('Upload failed', err);
+      // surface server message if present
+      const serverMsg = err?.response?.data?.message || err?.response?.data?.error;
+      throw new Error(serverMsg || err.message || 'Upload failed');
+    }
+  };
 
 const handleAccept = async (transfer, file) => {
   const formData = new FormData();
@@ -829,61 +863,67 @@ useEffect(() => {
       </div>
     {showModal && (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-lg font-semibold mb-4">Upload Signed Document</h2>
 
         <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setPdfFile(e.target.files[0])}
-            className="mb-4"
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => setPdfFile(e.target.files[0])}
+          className="mb-4"
         />
 
+        {uploading && (
+          <div className="w-full mb-4">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-1 text-center">
+              {uploadProgress}% Uploaded
+            </p>
+          </div>
+        )}
+
         <div className="flex justify-end space-x-2">
-            <button
+          <button
             onClick={() => setShowModal(false)}
             className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-            >
+            disabled={uploading}
+          >
             Cancel
-            </button>
-            <button
+          </button>
+          <button
             onClick={async () => {
-                if (!pdfFile) {
-                alert("Please select a PDF file.");
-                return;
-                }
-
-                const formData = new FormData();
-                formData.append("ptr_no", selectedTransfer.ptr_no);
-                formData.append("signed_doc", pdfFile); // 🔥 use signed_doc (not pdf)
-
-                try {
-                const res = await fetch(`${BASE_URL}/acceptTransfer.php`, {
-                    method: "POST",
-                    body: formData,
-                });
-
-                const result = await res.json();
-
-                if (result.success) {
-                    setShowModal(false);
-                    setPdfFile(null);
-                    fetchTransfers(); // refresh table
+              if (!pdfFile) {
+                return Swal.fire('Error', 'Please select a file first', 'error');
+              }
+              try {
+                const result = await uploadSignedDocument(pdfFile, selectedTransfer.ptr_no);
+                if (result?.success) {
+                  setShowModal(false);
+                  setPdfFile(null);
+                  fetchTransfers();
+                  Swal.fire('Success', result.message || 'File uploaded successfully', 'success');
                 } else {
-                    alert("Failed: " + result.message);
+                  Swal.fire('Error', result?.message || 'Upload failed', 'error');
                 }
-                } catch (err) {
-                console.error("Error uploading:", err);
-                }
+              } catch (err) {
+                console.error('Upload error:', err);
+                Swal.fire('Error', err.message || 'Upload failed', 'error');
+              }
             }}
-            className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-            >
-            Submit
-            </button>
+            className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Submit'}
+          </button>
         </div>
-       </div>
+      </div>
     </div>
-    )}
+  )}
     </div>
   );
 };
