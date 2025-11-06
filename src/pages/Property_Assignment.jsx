@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef} from 'react';
-import { Plus, Eye, X, Minus, Search, FileCheck, ClipboardList, BarChart, Users, Settings, FileText } from 'lucide-react';
+import { Plus, ChevronRight, X, Minus, ChevronDown, FileCheck, ClipboardList, BarChart, Users, Settings, FileText } from 'lucide-react';
 import Sidebar from '../components/Sidebar'; // Adjust the path if needed
 import axios from 'axios';
 import { BASE_URL } from '../utils/connection';
@@ -27,7 +27,6 @@ const Property_Assignment = () => {
   const [showSubDetails, setShowSubDetails] = useState(false);
   const [showArticleDropdown, setShowArticleDropdown] = useState(false);
   const [showError, setShowError] = useState(false);
-
   const [showItemModal, setShowItemModal] = useState(false);
   const [modalItem, setModalItem] = useState({
     airNo: '',
@@ -41,10 +40,13 @@ const Property_Assignment = () => {
     unit: 'unit',
     unitCost: '',
     usefulness: '',
+    structureType: '',
     addshowSubDetails: false
   });
-  const modalInputRef = useRef(null);
-  const [modalDropdownPosition, setModalDropdownPosition] = useState(null);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [expandedItems, setExpandedItems] = useState({});
+  const [selectedUsefulness, setSelectedUsefulness] = useState(null);
+  const [rawData, setRawData] = useState([]);
 
   const articleList = [
     { code: 'ART-001', name: 'Office Chair' },
@@ -56,8 +58,34 @@ const Property_Assignment = () => {
     { code: 'ART-007', name: 'Whiteboard' },
     { code: 'ART-008', name: 'Projector' },
   ];
-  
 
+  const categoryMap = {
+    "04": "Building and Other Structure",
+    "05": "Machinery and Equipment",
+    "06": "Transportation Equipment",
+    "07": "Furniture, Fixtures and Books"
+  };
+
+  const groupDataByCategory = (data) => {
+    const grouped = {};
+    
+    data.forEach(item => {
+      const prefix = item.id.substring(0, 2);
+      const category = categoryMap[prefix];
+      
+      if (category) {
+        if (!grouped[category]) {
+          grouped[category] = [];
+        }
+        grouped[category].push(item);
+      }
+    });
+    
+    return grouped;
+  };
+
+  const assetData = groupDataByCategory(rawData);
+  
   useEffect(() => {
     if(!endUser || selectedEndUser && endUser === selectedEndUser.enduser) {
       setEndUserResults([]);
@@ -78,8 +106,6 @@ const Property_Assignment = () => {
     fetchEndUsers();
   }, [endUser]);
 
-
-  // Article auto-suggest for modal
   useEffect(() => {
     if (!modalItem.article) {
       setArticleResults([]);
@@ -111,6 +137,7 @@ const Property_Assignment = () => {
       unit: 'unit',
       unitCost: '',
       usefulness: '',
+      structureType: '',
       addshowSubDetails: false
     });
     setShowItemModal(true);
@@ -119,7 +146,7 @@ const Property_Assignment = () => {
   const handleSaveItemModal = () => {
     if (showSubDetails) {
       const allFilled = Object.entries(modalItem)
-        .filter(([key]) => key !== 'showSubDetails')
+        .filter(([key]) => key !== 'showSubDetails' && key !== 'structureType')
         .every(([_, value]) => value !== '');
 
       if (!allFilled) {
@@ -138,7 +165,7 @@ const Property_Assignment = () => {
       }
     } else {
       const allFilled = Object.entries(modalItem)
-        .filter(([key]) => key !== 'model' && key !== 'serialNo' && key !== 'showSubDetails')
+        .filter(([key]) => key !== 'model' && key !== 'serialNo' && key !== 'showSubDetails' && key !== 'structureType')
         .every(([_, value]) => value !== '');
 
       if (!allFilled) {
@@ -187,6 +214,39 @@ const Property_Assignment = () => {
     fetchHead();
   }, []);
 
+  useEffect(() => {
+    const getcategories = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/getCategories.php`);
+        console.log('Category Data:', response.data.categories);
+
+        const formattedCategories = response.data.categories.map(cat => {
+          let usefulness;
+
+          try {
+            // Try to parse usefulness if it's a JSON string
+            const parsed = JSON.parse(cat.usefulness);
+            usefulness = typeof parsed === 'object' ? parsed : Number(parsed);
+          } catch {
+            // If parsing fails, just convert to number
+            usefulness = Number(cat.usefulness);
+          }
+
+          return {
+            ...cat,
+            usefulness
+          };
+        });
+
+        console.log('Formatted Category Data:', formattedCategories);
+        setRawData(formattedCategories);
+      } catch (error) {
+        console.error('Error fetching GSO head:', error);
+      }
+    };
+    getcategories();
+  }, []);
+
   const handleAddItem = async () => {
     const newItem = {
       id: Date.now(),
@@ -232,9 +292,29 @@ const Property_Assignment = () => {
   };
 
   const handleClear = () => {
-    setEndUser('');
-    setDepartment('');
-    setItems([]);
+    Swal.fire({
+      title: "Clear All Inputs?",
+      text: "Are you sure you want to clear all fields? This action cannot be undone.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, clear all",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "rounded-2xl",
+        confirmButton: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mx-2",
+        cancelButton: "bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mx-2",
+      },
+      buttonsStyling: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setEndUser('');
+        setDepartment('');
+        setItems([]);
+      }
+      else{
+        console.log('not clear');
+      }
+    });
   };
 
   const groupByAirInfo = (items) => {
@@ -265,11 +345,11 @@ const Property_Assignment = () => {
           const parNos = data.received.parNo || [];
 
           Swal.fire({
-            title: "PAR successfully created and saved.",
+            title: "PAR Successfully Created!",
             icon: "success",
             html: `
-              <p class="mt-2 font-semibold">Generated PAR No(s):</p>
-              <div class="mt-1 text-blue-600 font-bold text-sm">${parNos.join(', ')} successfully created</div>
+              <p class="mt-2 font-medium">The following PAR No(s) have been successfully created:</p>
+              <div class="mt-1 text-blue-600 font-semibold text-sm">${parNos.join(', ')}</div>
             `,
             confirmButtonText: "OK",
             customClass: {
@@ -300,11 +380,11 @@ const Property_Assignment = () => {
         if (data.success) {
           const icsNos = data.received.icsNo || [];
           Swal.fire({
-            title: "ICS successfully created and saved.",
+            title: "ICS Successfully Created!",
             icon: "success",
             html: `
-              <p class="mt-2 font-semibold">Generated ICS No(s):</p>
-              <div class="mt-1 text-blue-600 font-bold text-sm">${icsNos.join(', ')} successfully created</div>
+              <p class="mt-2 font-medium">The following ICS No(s) have been successfully created:</p>
+              <div class="mt-1 text-blue-600 font-semibold text-sm">${icsNos.join(', ')}</div>
             `,
             confirmButtonText: "OK",
             customClass: {
@@ -339,21 +419,17 @@ const Property_Assignment = () => {
           const icsNos = data.received.icsNo || [];
 
           Swal.fire({
-            title: "PAR/ICS successfully created and saved.",
+            title: "PAR / ICS Successfully Created!",
             icon: "success",
             html: `
               ${parNos.length > 0 ? `
-                <p class="mt-2 font-semibold">Generated PAR No(s):</p>
-                <div class="mt-1 text-blue-600 font-bold text-sm">
-                  ${parNos.join(', ')}successfully created
-                </div>
+                <p class="mt-2 font-medium">The following PAR No(s) have been successfully created:</p>
+                <div class="mt-1 text-blue-600 font-semibold text-sm">${parNos.join(', ')}</div>
               ` : ''}
 
               ${icsNos.length > 0 ? `
-                <p class="mt-4 font-semibold">Generated ICS No(s):</p>
-                <div class="mt-1 text-green-600 font-bold text-sm">
-                  ${icsNos.join(', ')}successfully created
-                </div>
+                <p class="mt-4 font-medium">The following ICS No(s) have been successfully created:</p>
+                <div class="mt-1 text-green-600 font-semibold text-sm">${icsNos.join(', ')}</div>
               ` : ''}
             `,
             confirmButtonText: "OK",
@@ -392,10 +468,6 @@ const Property_Assignment = () => {
     "unit",
     "unitCost"
   ];
-
-  // const hasCompleteItem = items.some(item =>
-  //   requiredFields.every(field => item[field] && item[field].toString().trim() !== "")
-  // );
 
   const handleConfirm = () => {
     if (!endUser) {
@@ -563,6 +635,32 @@ const Property_Assignment = () => {
     setModalItem({ ...modalItem, article: value });
     setShowArticleDropdown(true);
   };
+
+  const toggleCategory = (category) => {
+    // Close all other categories when opening a new one
+    setExpandedCategories({ [category]: !expandedCategories[category] });
+    setExpandedItems({}); // Also close all expanded items
+  };
+
+  const toggleItem = (itemId) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  const selectUsefulness = (itemName, type, value, itemId) => {
+    setSelectedUsefulness({ item: itemName, type, value });
+    
+    // Update modalItem with the selected data
+    setModalItem(prev => ({
+      ...prev,
+      articleCode: itemId || '', // e.g., "04-010", "05-020"
+      article: itemName || '', // e.g., "Buildings", "Machinery"
+      usefulness: value || '', // e.g., 10, 20, 30, 5, 7
+      structureType: type || '' // "Wood", "Mix", "Concrete", or empty string for non-buildings
+    }));
+  };
   
 
   return (
@@ -683,7 +781,12 @@ const Property_Assignment = () => {
                           <td className="border border-gray-300 px-3 py-2">{item.model}</td>
                           <td className="border border-gray-300 px-3 py-2">{item.serialNo}</td>
                           <td className="border border-gray-300 px-3 py-2">{item.unit}</td>
-                          <td className="border border-gray-300 px-3 py-2">{item.unitCost}</td>
+                          <td className="border border-gray-300 px-3 py-2">
+                            ₱{parseFloat(item.unitCost || 0).toLocaleString('en-PH', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </td>
                           <td className="border border-gray-300 px-3 py-2 text-center">
                             <button
                               onClick={() => handleRemoveItem(item.id)}
@@ -759,176 +862,6 @@ const Property_Assignment = () => {
         </div>
       </div>
 
-      {/* {showItemModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md md:max-w-lg p-4 md:p-6 relative overflow-y-auto max-h-[90vh]">
-            <button
-              onClick={() => setShowItemModal(false)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            >
-              ×
-            </button>
-            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-blue-800">Add Accountable Item</h2>
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleSaveItemModal();
-              }}
-              className="space-y-2 md:space-y-3"
-            >
-              <div>
-                <label className="block text-sm font-medium mb-1">AIR No.</label>
-                <input
-                  type="text"
-                  value={modalItem.airNo}
-                  onChange={e => setModalItem({ ...modalItem, airNo: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">AIR Date</label>
-                <input
-                  type="date"
-                  value={modalItem.airDate}
-                  onChange={e => setModalItem({ ...modalItem, airDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fund</label>
-                <select
-                  value={modalItem.fund}
-                  onChange={e => setModalItem({ ...modalItem, fund: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                >
-                  <option value="">-- Select Fund --</option>
-                  <option value="General Fund">General Fund</option>
-                  <option value="Special Education Fund">Special Education Fund</option>
-                  <option value="Trust Fund">Trust Fund</option>
-                </select>
-              </div>
-              <div className="relative">
-                <label className="block text-sm font-medium mb-1">Article</label>
-                <input
-                  ref={modalInputRef}
-                  type="text"
-                  value={modalItem.article}
-                  onChange={e => {
-                    const value = e.target.value;
-                    setModalItem({ ...modalItem, article: value });
-                    // For auto-suggest
-                    if (modalInputRef.current) {
-                      const rect = modalInputRef.current.getBoundingClientRect();
-                      setModalDropdownPosition({
-                        top: rect.bottom + window.scrollY,
-                        left: rect.left + window.scrollX,
-                        width: rect.width
-                      });
-                    }
-                  }}
-                  onFocus={() => {
-                    if (modalInputRef.current) {
-                      const rect = modalInputRef.current.getBoundingClientRect();
-                      setModalDropdownPosition({
-                        top: rect.bottom + window.scrollY,
-                        left: rect.left + window.scrollX,
-                        width: rect.width
-                      });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                  autoComplete="off"
-                />
-                {articleResults.length > 0 && modalItem.article && (
-                  <ul
-                    className="absolute left-0 top-full bg-white border border-gray-200 rounded shadow z-10 w-full max-h-40 overflow-y-auto text-xs mt-1"
-                    style={modalDropdownPosition ? { minWidth: modalDropdownPosition.width } : {}}
-                  >
-                    {articleResults.map(article => (
-                      <li
-                        key={article.articleCode || article.categoryID}
-                        className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                        onClick={() => {
-                          setModalItem({
-                            ...modalItem,
-                            article: article.article || article.categoryName,
-                            articleCode: article.articleCode || article.categoryID,
-                            usefulness: article.usefulness
-                          });
-                          setArticleResults([]);
-                        }}
-                      >
-                        {article.article || article.categoryName}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <input
-                  type="text"
-                  value={modalItem.description}
-                  onChange={e => setModalItem({ ...modalItem, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Model</label>
-                <input
-                  type="text"
-                  value={modalItem.model}
-                  onChange={e => setModalItem({ ...modalItem, model: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Serial No.</label>
-                <input
-                  type="text"
-                  value={modalItem.serialNo}
-                  onChange={e => setModalItem({ ...modalItem, serialNo: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Unit</label>
-                <input
-                  type="text"
-                  value={modalItem.unit}
-                  onChange={e => setModalItem({ ...modalItem, unit: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Unit Cost</label>
-                <input
-                  type="number"
-                  value={modalItem.unitCost}
-                  onChange={e => setModalItem({ ...modalItem, unitCost: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  required
-                />
-              </div>
-              <div className="flex justify-end mt-3">
-                <button
-                  type="submit"
-                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
-                >
-                  Save Item
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )} */}
-
       {showItemModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -952,7 +885,7 @@ const Property_Assignment = () => {
 
             {/* Form Content */}
             <div 
-              className="flex-1 px-6 py-5"
+              className="flex-1 px-6 py-5 overflow-y-auto"
               onClick={() => setShowArticleDropdown(false)}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4" onClick={(e) => e.stopPropagation()}>
@@ -1047,52 +980,104 @@ const Property_Assignment = () => {
                 {/* Right Column */}
                 <div className="space-y-4">
                   {/* Article */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                       Article <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      <input
-                        type="text"
-                        name="article"
-                        value={articleSearchQuery}
-                        onChange={e => handleArticleInputChange(e.target.value)}
-                        onFocus={() => setShowArticleDropdown(true)}
-                        className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
-                        placeholder="Search article name or code..."
-                        autoComplete="off"
-                      />
-                    </div>
                     
-                    {/* Dropdown Search Results */}
-                    {showArticleDropdown && articleSearchQuery && filteredArticles.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                        {filteredArticles.map((article, index) => (
-                          <div
-                            key={index}
-                            onClick={() => handleArticleSelect(article)}
-                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150 border-b border-gray-100 last:border-b-0"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-semibold text-gray-800">{article.categoryName}</div>
-                                <div className="text-sm text-gray-500">{article.categoryID}</div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    {selectedUsefulness && (
+                      <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm font-semibold text-slate-800 mt-0.5">
+                          {selectedUsefulness.item}
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1">
+                          {selectedUsefulness.type && `Type: ${selectedUsefulness.type} • `}
+                          Usefulness: <span className="font-bold text-blue-600">{selectedUsefulness.value} years</span>
+                        </p>
                       </div>
                     )}
 
-                    {/* No results message */}
-                    {showArticleDropdown && articleSearchQuery && filteredArticles.length === 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl">
-                        <div className="px-4 py-3 text-gray-500 text-sm">
-                          No articles found
-                        </div>
+                    <div className="border border-gray-300 rounded-lg max-h-64 overflow-y-auto bg-white">
+                      <div className="space-y-1 p-2">
+                        {Object.entries(assetData).map(([category, items]) => (
+                          <div key={category} className="border border-slate-200 rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => toggleCategory(category)}
+                              className="w-full flex items-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                            >
+                              {expandedCategories[category] ? (
+                                <ChevronDown className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                              )}
+                              <span className="text-sm font-semibold text-slate-800">{category}</span>
+                            </button>
+
+                            {expandedCategories[category] && (
+                              <div className="bg-white">
+                                {items.map((item) => (
+                                  <div key={item.id} className="border-t border-slate-200">
+                                    {typeof item.usefulness === 'object' ? (
+                                      <>
+                                        <button
+                                          onClick={() => toggleItem(item.id)}
+                                          className="w-full flex items-center gap-2 px-3 py-2 pl-6 hover:bg-slate-50 transition-colors text-left"
+                                        >
+                                          {expandedItems[item.id] ? (
+                                            <ChevronDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                                          ) : (
+                                            <ChevronRight className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                                          )}
+                                          <span className="text-xs text-slate-700">
+                                            <span className="font-mono text-slate-500">{item.id}</span> - {item.name}
+                                          </span>
+                                        </button>
+
+                                        {expandedItems[item.id] && (
+                                          <div className="pl-10 pr-3 pb-2 space-y-1.5">
+                                            <div className="grid grid-cols-1 gap-1.5">
+                                              {Object.entries(item.usefulness).map(([type, value]) => (
+                                                <button
+                                                  key={type}
+                                                  onClick={() => {
+                                                    selectUsefulness(item.name, type, value, item.id);
+                                                    setExpandedItems({});
+                                                    setExpandedCategories({});
+                                                  }}
+                                                  className="p-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-left transition-colors"
+                                                >
+                                                  <p className="text-xs text-slate-600 font-medium">{type}</p>
+                                                  <p className="text-sm font-bold text-blue-600">{value} years</p>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          selectUsefulness(item.name, null, item.usefulness, item.id);
+                                          setExpandedCategories({});
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 pl-6 hover:bg-slate-50 transition-colors text-left"
+                                      >
+                                        <span className="text-xs text-slate-700">
+                                          <span className="font-mono text-slate-500">{item.id}</span> - {item.name}
+                                        </span>
+                                        <span className="ml-auto mr-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                                          {item.usefulness} years
+                                        </span>
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Toggle Button for Additional Details */}
@@ -1179,13 +1164,38 @@ const Property_Assignment = () => {
                         Unit Cost <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         name="unitCost"
                         value={modalItem.unitCost}
-                        onChange={e => setModalItem({ ...modalItem, unitCost: e.target.value })}
-                        step="0.01"
+                        onChange={e => {
+                          // Allow only numbers and decimals while typing
+                          const raw = e.target.value.replace(/[₱,]/g, '');
+                          if (/^\d*\.?\d*$/.test(raw)) {
+                            setModalItem({ ...modalItem, unitCost: raw });
+                          }
+                        }}
+                        onBlur={e => {
+                          // Format when leaving the input
+                          const value = parseFloat(modalItem.unitCost);
+                          if (!isNaN(value)) {
+                            e.target.value = `₱${value.toLocaleString('en-PH', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`;
+                          } else {
+                            e.target.value = '';
+                          }
+                        }}
+                        onFocus={e => {
+                          // Show only plain number again when focused
+                          if (!isNaN(parseFloat(modalItem.unitCost))) {
+                            e.target.value = modalItem.unitCost;
+                          } else {
+                            e.target.value = '';
+                          }
+                        }}
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none"
-                        placeholder="0.00"
+                        placeholder="₱0.00"
                       />
                     </div>
 

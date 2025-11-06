@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useParams } from "react-router-dom";
 import { Bell } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { BASE_URL } from '../utils/connection';
+import EM_Sidebar from '../../components/EM_Sidebar';
+import { BASE_URL } from '../../utils/connection';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import axios from "axios";
 import Swal from "sweetalert2";
 import * as ReactDOM from 'react-dom/client'; // Add this import
 
-const AssetTransferProgress = () => {
+const EM_AssetTransferProgress = () => {
   const { ptr_no } = useParams();
   const location = useLocation();
   const passedItem = location.state?.item;
@@ -699,7 +699,7 @@ useEffect(() => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      <EM_Sidebar />
       <main className="flex-1 overflow-y-auto w-full pb-24">
         <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -851,4 +851,4 @@ useEffect(() => {
   );
 };
 
-export default AssetTransferProgress;
+export default EM_AssetTransferProgress;

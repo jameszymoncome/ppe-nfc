@@ -43,6 +43,7 @@ import AD_Assets from './pages/admin_pages/AD_Assets';
 import AD_ReportIssue from './pages/admin_pages/AD_ReportIssue';
 import AD_WasteDisposal from './pages/admin_pages/AD_WasteDisposal';
 import AD_DocumentItems from './pages/admin_pages/AD_DocumentItems';
+import AD_AssetTransferProgress from './pages/admin_pages/AD_AssetTransferProgress';
 //Employee Routes
 import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
@@ -56,6 +57,7 @@ import EM_ReportIssue from './pages/employee_pages/EM_ReportIssue';
 import EM_WasteDisposal from './pages/employee_pages/EM_WasteDisposal';
 import EM_DocumentItems from './pages/employee_pages/EM_DocumentItems';
 import EM_Property_Assignment from './pages/employee_pages/EM_Property_Assignment';
+import EM_AssetTransferProgress from './pages/employee_pages/EM_AssetTransferProgress';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -72,6 +74,7 @@ import IC_ReportIssue from './pages/inv_committee_pages/IC_ReportIssue';
 import IC_WasteDisposal from './pages/inv_committee_pages/IC_WasteDisposal';
 import IC_DocumentItems from './pages/inv_committee_pages/IC_DocumentItems';
 import IC_DeviceMonitoring from './pages/inv_committee_pages/IC_DeviceMonitoring';
+import IC_AssetTransferProgress from './pages/inv_committee_pages/IC_AssetTransferProgress';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
@@ -315,6 +318,15 @@ const App = () => {
             </ProtectedRoute>} />
         <Route path="/ic-device-monitoring" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
               <IC_DeviceMonitoring />
+            </ProtectedRoute>} />
+        <Route path="/assets/em-asset-transfer-progress/:ptr_no" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <EM_AssetTransferProgress />
+            </ProtectedRoute>} />
+        <Route path="/assets/ic-asset-transfer-progress/:ptr_no" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
+              <IC_AssetTransferProgress />
+            </ProtectedRoute>} />
+        <Route path="/assets/ad-asset-transfer-progress/:ptr_no" element={<ProtectedRoute allowedRoles={['ADMIN']}>
+              <AD_AssetTransferProgress />
             </ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
