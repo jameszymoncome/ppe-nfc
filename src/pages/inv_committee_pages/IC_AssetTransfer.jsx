@@ -941,149 +941,21 @@ useEffect(() => {
 
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-2">
-                      {/* View Button */}
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const items = await fetchTransferItems(item.from_officerID);
-                          setSelectedTransfer({ ...item, items });
-                          setShowTransferForm(true);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150"
-                        title="View Details"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View</span>
-                      </button>
-
-                      {/* Download Button */}
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const items = await fetchTransferItems(item.from_officerID);
-                          await handleDownload({ ...item, items });
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors duration-150"
-                        title="Download PDF"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>PDF</span>
-                      </button>
-
-                      {/* Accept Button */}
-                      {item.to_officerID === current_user && item.status === 'Pending' && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const ok = await updateTransferStatus(item.ptr_no, 'Accepted - Awaiting for Approval');
-                            if (ok) {
-                              Swal.fire('Accepted', 'You accepted the transfer request.', 'success');
-                            }
-                          }}
-                          className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors duration-150"
-                          title="Accept Transfer"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          <span>Accept</span>
-                        </button>
-                      )}
-
-                      {/* Signed Document */}
-                      {item.signed_doc && (
-                        <a
-                          href={`${BASE_URL}/${item.signed_doc}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors duration-150"
-                          title="View Signed Document"
-                        >
-                          <FileCheck className="w-3.5 h-3.5" />
-                          <span>Signed</span>
-                        </a>
-                      )}
-
-                      {/* Admin Buttons */}
-                      {(user_role === 'ADMIN' || user_role === 'SUPER ADMIN') && (
-                        <>
-                          {/* Approve Transfer */}
-                          {item.status === 'Accepted - Awaiting for Approval' && (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                const result = await Swal.fire({
-                                  title: 'Approve this transfer?',
-                                  text: 'This action will approve the asset transfer request.',
-                                  icon: 'warning',
-                                  showCancelButton: true,
-                                  confirmButtonColor: '#16a34a',
-                                  cancelButtonColor: '#d33',
-                                  confirmButtonText: 'Yes, approve it',
-                                });
-
-                                if (result.isConfirmed) {
-                                  handleApprove(item);
-                                  Swal.fire({
-                                    icon: 'success',
-                                    title: 'Approved!',
-                                    text: 'The transfer has been approved.',
-                                    timer: 1500,
-                                    showConfirmButton: false,
-                                  });
-                                }
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-150"
-                              title="Approve Transfer"
-                            >
-                              <FileCheck className="w-3.5 h-3.5" />
-                              <span>Approve</span>
-                            </button>
-                          )}
-
-                          {/* Complete Transfer */}
-                          {item.status === 'Approved - Awaiting for Signed Document' && (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                const result = await Swal.fire({
-                                  title: 'Complete this transfer?',
-                                  text: 'This will mark the transfer as completed and finalize the records.',
-                                  icon: 'question',
-                                  showCancelButton: true,
-                                  confirmButtonColor: '#16a34a',
-                                  cancelButtonColor: '#d33',
-                                  confirmButtonText: 'Yes, complete it',
-                                });
-
-                                if (result.isConfirmed) {
-                                  handleApprove2(item);
-                                }
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-150"
-                              title="Complete Transfer"
-                            >
-                              <FileCheck className="w-3.5 h-3.5" />
-                              <span>Complete</span>
-                            </button>
-                          )}
-                          {item.status === 'Completed' && (
-                            <button
+                          {/* View Button Only */}
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              fetchTransferHistory(item.item_no);
+                              navigate(`/assets/ic-asset-transfer-progress/${item.ptr_no}`, { state: { item } });
                             }}
-                            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors duration-150"
-                            title="View Transfer History"
+                            className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150"
+                            title="View Details"
                           >
-                            <BarChart className="w-3.5 h-3.5" />
-                            <span>History</span>
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View</span>
                           </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-
+                        </div>
                       </td>
+
                     </tr>
                   ))
                 ) : (

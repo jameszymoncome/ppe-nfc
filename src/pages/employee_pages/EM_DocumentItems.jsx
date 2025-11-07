@@ -58,6 +58,13 @@ export default function EM_DocumentItems() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedAssets, setSelectedAssets] = useState([]);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredUsers = userOptions.filter((user) =>
+  `${user.firstname} ${user.lastname} ${user.department}`
+    .toLowerCase()
+    .includes(searchQuery.toLowerCase())
+);
+
   // Get selected items
   const selectedItems = items.filter((_, idx) => selectedSet.has(idx));
 
@@ -447,24 +454,39 @@ const handleUserSelect = async (user) => {
       {showUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-2">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
+            {/* Close Button */}
             <button
               onClick={() => setShowUserModal(false)}
               className="absolute top-3 right-3 text-gray-600 hover:text-red-500 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               ×
             </button>
+
             <h2 className="text-xl font-semibold mb-4 text-blue-800">Select Recipient</h2>
+
+            {/* 🔍 Search Bar */}
+            <input
+              type="text"
+              placeholder="Search user..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full mb-4 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+
+            {/* User List */}
             <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
-              {userOptions.length === 0 ? (
-                <li className="py-4 text-center text-gray-500">No users available</li>
+              {filteredUsers.length === 0 ? (
+                <li className="py-4 text-center text-gray-500">No users found</li>
               ) : (
-                userOptions.map((user) => (
+                filteredUsers.map((user) => (
                   <li
                     key={user.user_id}
                     className="py-3 px-4 cursor-pointer hover:bg-blue-50 flex flex-col"
                     onClick={() => handleUserSelect(user)}
                   >
-                    <span className="font-medium text-gray-800">{user.firstname} {user.lastname}</span>
+                    <span className="font-medium text-gray-800">
+                      {user.firstname} {user.lastname}
+                    </span>
                     <span className="text-xs text-gray-500">{user.department}</span>
                   </li>
                 ))
@@ -606,7 +628,9 @@ const handleUserSelect = async (user) => {
                             <td className="border border-black px-2 py-1 text-center">{asset.unit}</td>
                             <td className="border border-black px-2 py-1 text-center">{asset.description}</td>
                             <td className="border border-black px-2 py-1 text-center">{asset.propertyNo}</td>
-                            <td className="border border-black px-2 py-1 text-center">{asset.unitCost}</td>
+                            <td className="border border-black px-2 py-1 text-center">
+                              ₱{Number(asset.unitCost).toLocaleString()}
+                            </td>
                             <td className="border border-black px-2 py-1 text-center">
                               <input
                                 type="text"

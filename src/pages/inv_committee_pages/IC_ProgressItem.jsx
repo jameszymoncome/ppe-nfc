@@ -50,6 +50,7 @@ const IC_ProgressItem = () => {
     const [numPages, setNumPages] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
     const [isAvailable, setIsAvailable] = useState(false);
+    const [checkAllStatus, setCheckAllStatus] = useState(false);
 
     const steps = [
         { id: 1, name: 'For Tagging', completed: currentStep > 1 },
@@ -199,17 +200,28 @@ const IC_ProgressItem = () => {
             const nfcIDs = response.data.map(item => item.nfcID);
             const downloadedForm = response.data.map(item => item.downloadedForm);
             const department = response.data.map(item => item.department);
+            const statusList = response.data.map(item => item.status);
             const itemss = response.data.map(item => ({
                 itemNo: item.itemNo,
                 userID: item.user_id,
                 type: item.type,
                 dateAcquired: item.dateAcquired
             }));
+
             let air_nos = response.data.map(item => item.air_no);
             let typesss = response.data.map(item => item.type);
+
+            const departments = response.data.length > 0 ? response.data[0].department : null;
+            const userID = response.data.length > 0 ? response.data[0].user_id : null;
+            
             const allNotDone = downloadedForm.every(form => form === "Not Done");
             const allUploaded = downloadedForm.every(form => form === "Upload Scanned Form");
             const allConfirmed = downloadedForm.every(form => form === "Confirmation");
+            const allPendingConfirmation = downloadedForm.every(form => form === "Pending Confirmation");
+
+            const allPendingConfirmationStatus = statusList.every(form => form === "Pending Confirmation");
+            setCheckAllStatus(allPendingConfirmationStatus);
+
             air_nos = [...new Set(air_nos)];
             typesss = [...new Set(typesss)];
             console.log('NFC IDs: ', itemss);
@@ -218,15 +230,15 @@ const IC_ProgressItem = () => {
             }
             if (allNotDone) {
                 setCurrentStep(1);
-            } else if (allUploaded) {
+            }
+            if (allUploaded) {
                 setCurrentStep(2);
-            } else if (allConfirmed) {
+            } 
+            if (allConfirmed) {
                 setCurrentStep(3);
                 downloadViewDocs(airnos, type);
             }
-            else {
-                setCurrentStep(1);
-            }
+
             if (air_nos.length === 1) {
                 air_nos = air_nos[0];
             }
@@ -238,6 +250,92 @@ const IC_ProgressItem = () => {
             setDepartments(department);
             setSelectedItems(itemss);
             setGetDocDatas(response.data);
+
+            if ((localStorage.getItem('accessLevel') === 'SUPER ADMIN' || localStorage.getItem('accessLevel') === 'INVENTORY COMMITTEE') && allPendingConfirmation && userID !== localStorage.getItem('userId')) {
+                console.log('titeeee');
+                setCurrentStep(3);
+                downloadViewDocs(airnos, type);
+                Swal.fire({
+                title: "Process Completed",
+                text: "The tagging process is complete, and the assets have been successfully tagged.",
+                icon: "info",
+                confirmButtonText: "OK",
+                allowOutsideClick: () => false, // we’ll override below
+                allowEscapeKey: false,
+                customClass: {
+                    popup: "rounded-2xl",
+                    confirmButton: "bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded text-lg font-semibold shadow-lg focus:ring-4 focus:ring-green-400 transition-all duration-200",
+                },
+                buttonsStyling: false,
+                didOpen: () => {
+                    const btn = Swal.getConfirmButton();
+                    btn.focus();
+
+                    // Override outside click manually for visual feedback
+                    const container = Swal.getContainer();
+                    container.addEventListener("click", (e) => {
+                    if (e.target === container) {
+                        // 👀 Add a noticeable shake or red flash
+                        Swal.getPopup().classList.add("shake");
+                        btn.classList.add("border-4", "border-red-500", "scale-105");
+
+                        setTimeout(() => {
+                        Swal.getPopup().classList.remove("shake");
+                        btn.classList.remove("border-4", "border-red-500", "scale-105");
+                        }, 600);
+                    }
+                    });
+                },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate("/ic-par-ics"); // ✅ Only runs when user clicks OK
+                    }
+                });
+            }
+
+            if (allPendingConfirmationStatus && userID === localStorage.getItem('userId')) {
+                console.log('sdbgbskjdgjs');
+                setCurrentStep(3);
+                downloadViewDocs(airnos, type);
+                Swal.fire({
+                    title: "Process Completed",
+                    text: "The tagging process is complete, and the assets have been successfully tagged.",
+                    icon: "info",
+                    confirmButtonText: "OK",
+                    allowOutsideClick: () => false, // we’ll override below
+                    allowEscapeKey: false,
+                    customClass: {
+                        popup: "rounded-2xl",
+                        confirmButton: "bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded text-lg font-semibold shadow-lg focus:ring-4 focus:ring-green-400 transition-all duration-200",
+                    },
+                    buttonsStyling: false,
+                    didOpen: () => {
+                        const btn = Swal.getConfirmButton();
+                        btn.focus();
+
+                        // Override outside click manually for visual feedback
+                        const container = Swal.getContainer();
+                        container.addEventListener("click", (e) => {
+                        if (e.target === container) {
+                            // 👀 Add a noticeable shake or red flash
+                            Swal.getPopup().classList.add("shake");
+                            btn.classList.add("border-4", "border-red-500", "scale-105");
+
+                            setTimeout(() => {
+                            Swal.getPopup().classList.remove("shake");
+                            btn.classList.remove("border-4", "border-red-500", "scale-105");
+                            }, 600);
+                        }
+                        });
+                },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate("/ic-par-ics"); // ✅ Only runs when user clicks OK
+                    }
+                });
+            }
+
+                
         } catch (error) {
             console.error('Error fetching end users:', error);
         }
@@ -335,7 +433,10 @@ const IC_ProgressItem = () => {
                 docsNo: air_no,
                 types: type,
                 currentStep: currentStep,
-                selectedItems: selectedItems
+                selectedItems: selectedItems,
+                department: localStorage.getItem('department'),
+                accessLevel: localStorage.getItem('accessLevel'),
+                position: localStorage.getItem('position')
             });
             console.log('Steppp: ', response.data);
             if (currentStep !== 3) getDocsData();
@@ -480,10 +581,21 @@ const IC_ProgressItem = () => {
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                        ${group.map(item => `${item.unitCost}`).join('<br>')}
+                            ${group.map(item => 
+                                '₱' + (item.unitCost).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                                })).join('<br>')
+                            }
                         </td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                        ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                            ${group.map(item => 
+                                '₱' + (item.unitCost * group.length).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                                }))
+                                .join('<br>')
+                            }
                         </td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
                         ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
@@ -558,14 +670,19 @@ const IC_ProgressItem = () => {
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                        ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                            ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
                         </td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                        ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                            ${group.map(item => `${item.itemNOs}`).join('<br>')}
                         </td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
                         <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                        ${group.map(item => `${item.unitCost}`).join('<br>')}
+                            ${group.map(item => 
+                                '₱' + Number(item.unitCost).toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                                })
+                            ).join('<br>')}
                         </td>
                     </tr>`).join('')}
                 </tbody>
@@ -600,7 +717,7 @@ const IC_ProgressItem = () => {
             </div>
         `;
         printContent((docsPrint === 'par') ? contentPAR : contentICS);
-    };
+    }
 
     const printContent = (html) => {
         const frame = document.createElement('iframe');
@@ -682,10 +799,21 @@ const IC_ProgressItem = () => {
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                      ${group.map(item => `${item.unitCost}`).join('<br>')}
+                        ${group.map(item => 
+                            '₱' + (item.unitCost).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                            })).join('<br>')
+                        }
                     </td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                      ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
+                        ${group.map(item => 
+                            '₱' + (item.unitCost * group.length).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                            }))
+                            .join('<br>')
+                        }
                     </td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
                       ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
@@ -767,7 +895,12 @@ const IC_ProgressItem = () => {
                     </td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                      ${group.map(item => `${item.unitCost}`).join('<br>')}
+                        ${group.map(item => 
+                            '₱' + Number(item.unitCost).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                            })
+                        ).join('<br>')}
                     </td>
                   </tr>`).join('')}
               </tbody>
@@ -890,7 +1023,7 @@ const IC_ProgressItem = () => {
             }, 2000);
         } else {
             setNfcId(uid);
-            setErrorMessage(response.data.message);
+            // setErrorMessage(response.data.message);
             console.log('Not found: ', response.data.message);
         }
 
@@ -905,7 +1038,7 @@ const IC_ProgressItem = () => {
         <div className="flex h-screen bg-gray-100 overflow-hidden">
             <IC_Sidebar />
 
-            <div className="flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-y-auto">
+            <div className="relative flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-y-auto">
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4">
                     <div>
@@ -1003,8 +1136,18 @@ const IC_ProgressItem = () => {
                                         </h2>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={handleDownloadForm}
+                                    className="relative w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 px-4 rounded-br-lg rounded-bl-lg hover:bg-gray-200 transition-colors font-medium"
+                                >
+                                    <span className="absolute top-2 left-2 bg-blue-500 text-white text-s font-bold rounded-full w-7 h-7 flex items-center justify-center">
+                                        1
+                                    </span>
+                                    <Download size={20} />
+                                    Download Form
+                                </button>
                                 <div
-                                    className={`mx-4 border-2 border-gray-300 border-dashed rounded-2xl my-4 flex flex-col items-center justify-center p-8 transition-colors duration-200 ${isDragging ? "bg-blue-50 border-blue-400" : ""}`}
+                                    className={`relative mx-4 border-2 border-gray-300 border-dashed rounded-2xl my-4 flex flex-col items-center justify-center p-8 transition-colors duration-200 ${isDragging ? "bg-blue-50 border-blue-400" : ""}`}
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={(e) => {
@@ -1025,6 +1168,9 @@ const IC_ProgressItem = () => {
                                         }
                                     }}
                                 >
+                                    <span className="absolute top-2 left-2 bg-blue-500 text-white text-s font-bold rounded-full w-7 h-7 flex items-center justify-center">
+                                        2
+                                    </span>
                                     <CloudUpload className="mb-2" size={40} />
                                     <div className="font-bold">Choose files or drag & drop them here</div>
                                     <div className="text-base font-small italic text-gray-700">PDF up to 50MB only</div>
@@ -1079,27 +1225,6 @@ const IC_ProgressItem = () => {
                                         <div className="mt-2 font-medium">PDF or image files only (max 50MB).</div>
                                     )}
                                 </div>
-                                <button
-                                    onClick={handleDownloadForm}
-                                    className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                                >
-                                    <Download size={20} />
-                                    Download Form
-                                </button>
-                                {/* <div className="p-4 flex justify-end border-t border-gray-200">
-                                    <button
-                                        onClick={() => {
-                                            setUploadScannedModal(false);
-                                            setDroppedFile([]);
-                                            setUploading(false);
-                                            setUploadProgress(0);
-                                            fetchItems();
-                                        }}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-colors"
-                                    >
-                                        Done
-                                    </button>
-                                </div> */}
                             </div>
                         </div>
                     )}
@@ -1109,15 +1234,6 @@ const IC_ProgressItem = () => {
                             <div className="bg-white rounded-2xl border border-gray-300 w-full max-w-6xl mx-auto overflow-hidden">
                                 <div className="flex justify-between items-center px-4 py-2 border-b">
                                     <h2 className="text-lg font-semibold">Preview PDF</h2>
-                                    <button
-                                        onClick={() => {
-                                        URL.revokeObjectURL(pdfUrl);
-                                        setPdfUrl(null);
-                                        }}
-                                        className="text-gray-600 hover:text-red-600 text-xl font-bold"
-                                    >
-                                        ✕
-                                    </button>
                                 </div>
 
                                 <div className="flex justify-center items-center p-4">
@@ -1143,35 +1259,56 @@ const IC_ProgressItem = () => {
                     )}
                 </div>
 
-                <div className="fixed bottom-6 right-6">
+                <div className="sticky bottom-0 left-0 right-0 flex justify-between px-6 py-4 bg-transparent">
+                    {/* Back Button */}
                     <button
-                        onClick={updateProgress}
+                        onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
+                        className={`px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all duration-300
+                        ${
+                            currentStep === 1
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                        disabled={currentStep === 1}
+                    >
+                        Back
+                    </button>
+
+                    {/* Next Button */}
+                    <button
+                        onClick={() => {
+                            if (currentStep === 3 && allPendingConfirmationStatus) {
+                                updateProgress();
+                            } else if (currentStep !== 3) {
+                                updateProgress();
+                            }
+                            setCurrentStep(prev => Math.min(prev + 1, 3));
+                        }}
                         className={`px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all duration-300
                             ${
-                            currentStep === 1
+                                currentStep === 1
                                 ? taggedItems.length !== getDocDatas.length
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700 text-white"
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white"
                                 : currentStep === 2
                                 ? (Array.isArray(droppedFile) && droppedFile.length > 0) ||
-                                (Array.isArray(serverFiles) && serverFiles.length > 0)
-                                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                                : "bg-gray-400 cursor-not-allowed"
+                                    (Array.isArray(serverFiles) && serverFiles.length > 0)
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                    : "bg-gray-400 cursor-not-allowed"
                                 : currentStep === 3
                                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                                 : "bg-gray-400 cursor-not-allowed"
                             }`}
-                        disabled={
-                            (currentStep === 1 && taggedItems.length !== getDocDatas.length) ||
-                            (currentStep === 2 &&
-                            !(
-                                (Array.isArray(droppedFile) && droppedFile.length > 0) ||
-                                (Array.isArray(serverFiles) && serverFiles.length > 0)
-                            ))
-                            // ✅ For step 3, button is always enabled, so no disable condition needed
-                        }
+                            disabled={
+                                (currentStep === 1 && taggedItems.length !== getDocDatas.length) ||
+                                (currentStep === 2 &&
+                                !(
+                                    (Array.isArray(droppedFile) && droppedFile.length > 0) ||
+                                    (Array.isArray(serverFiles) && serverFiles.length > 0)
+                                ))
+                    }
                     >
-                        Next
+                        {currentStep === 3 ? 'Confirm' : 'Next'}
                     </button>
                 </div>
             </div>
@@ -1236,9 +1373,9 @@ const IC_ProgressItem = () => {
                                             {nfcId}
                                             </div>
                                             {errorMessage ? (
-                                            <p className="text-red-600 text-sm">{errorMessage}</p>
+                                                <p className="text-red-600 text-sm">{errorMessage}</p>
                                             ) : (
-                                            <p className="text-gray-600 text-sm">NFC tag detected</p>
+                                                <p className="text-gray-600 text-sm">NFC tag detected</p>
                                             )}
                                         </div>
                                         )}
@@ -1257,7 +1394,7 @@ const IC_ProgressItem = () => {
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={!nfcId}
+                                disabled={!nfcId || errorMessage}
                                 className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                             >
                                 Save

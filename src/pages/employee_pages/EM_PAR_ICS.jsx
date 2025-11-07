@@ -1396,7 +1396,7 @@ const EM_PAR_ICS = () => {
 
   const goToViewItem = (airs, type, airnos) => {
     console.log("View item:", airs, type);
-    navigate("/progress-item", {
+    navigate("/em-progress-item", {
       state: { air_no: airs, type: type, airnos: airnos }
     });
   }
@@ -1503,17 +1503,13 @@ const EM_PAR_ICS = () => {
                       </span>
                     </td>
                     <td className="relative text-center">
-                      {doc.status === "For Tagging" || doc.status === "Upload Scanned Copy" ? (
-                        <span className="text-gray-500 text-sm italic">No Action</span>
-                      ) : (
-                        <button
-                          ref={(el) => (buttonRefs.current[doc.id] = el)}
-                          onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}
-                          className="p-1 rounded hover:bg-gray-100 transition"
-                        >
-                          <MoreVertical className="w-5 h-5 text-gray-700" />
-                        </button>
-                      )}
+                      <button
+                        ref={(el) => (buttonRefs.current[doc.id] = el)}
+                        onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}
+                        className="p-1 rounded hover:bg-gray-100 transition"
+                      >
+                        <MoreVertical className="w-5 h-5 text-gray-700" />
+                      </button>
                       {openMenuId === doc.id && (
                         <div
                           ref={(el) => (menuRefs.current[doc.id] = el)}
@@ -1545,7 +1541,7 @@ const EM_PAR_ICS = () => {
                             </>
                           )}
 
-                          {doc.status === "Upload Scanned Copy" && (
+                          {(doc.status === "Upload Scanned Copy" || doc.status === 'To Confirm') && (
                             <>
                               <button
                                 onClick={() => {
@@ -1556,7 +1552,9 @@ const EM_PAR_ICS = () => {
                                 className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
                               >
                                 <Eye className="h-4 w-4 text-blue-600" />
-                                <span>Upload Scanned Copy</span>
+                                <span>
+                                  {doc.status === "Upload Scanned Copy" ? 'Upload Scanned Copy' : 'To Confirm'}
+                                </span>
                               </button>
 
                               <button

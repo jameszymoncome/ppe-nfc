@@ -102,41 +102,35 @@ const PAR_ICS = () => {
   }, []);
 
   const fetchItems = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/getItems.php`, {
-      params: {
-        role: localStorage.getItem("accessLevel"),
-        usersID: localStorage.getItem("userId"),
-        departments: localStorage.getItem("department"),
-      },
-    });
+    try {
+      const response = await axios.get(`${BASE_URL}/getItems.php`, {
+        params: {
+          role: localStorage.getItem("accessLevel"),
+          usersID: localStorage.getItem("userId"),
+          departments: localStorage.getItem("department")
+        }
+      });
+      console.log(response.data);
 
-    console.log("API Response:", response.data);
+      const formatted = response.data.items.map((item, index) => ({
+        id: index + 1,
+        air_no: item.air_no,
+        documentNo: item.documentNo,
+        tagID: item.tagID,
+        type: item.type,
+        user: item.user,
+        office: item.office,
+        dateIssued: item.dateIssued,
+        items: item.items,
+        status: item.status || 'N/A',
+        downloadedForm: item.downloadedForm,
+      }));
 
-    const items = Array.isArray(response.data)
-      ? response.data
-      : response.data.items || [];
-
-    const formatted = items.map((item, index) => ({
-      id: index + 1,
-      air_no: item.air_no,
-      documentNo: item.documentNo,
-      tagID: item.tagID,
-      type: item.type,
-      user: item.user,
-      office: item.office,
-      dateIssued: item.dateIssued,
-      items: item.items,
-      status: item.status || 'N/A',
-      downloadedForm: item.downloadedForm,
-    }));
-
-    setParIcsItem(formatted);
-  } catch (error) {
-    console.error('Error fetching end users:', error);
+      setParIcsItem(formatted);
+    } catch (error) {
+      console.error('Error fetching end users:', error);
+    }
   }
-};
-
 
   const fetchStickerData = async (air_no) => {
     console.log("Downloading files for AIR No:", air_no);
@@ -601,11 +595,11 @@ const PAR_ICS = () => {
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
                 <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
                   ${group.map(item => 
-                    '₱' + (item.unitCost).toLocaleString('en-PH', {
+                    '₱' + Number(item.unitCost).toLocaleString('en-PH', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
-                    })).join('<br>')
-                  }
+                    })
+                  ).join('<br>')}
                 </td>
               </tr>`).join('')}
           </tbody>
@@ -675,158 +669,174 @@ const PAR_ICS = () => {
 
   const handlePrintPDF = () => {
     const contentICS = `
-      <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
-        <div style="text-align: center; font-size: 20px; font-weight: bold;">
-          INVENTORY CUSTODIAN SLIP
-        </div>
-        <div style="text-align: center; font-size: 11px;">
-          ${departments}
-        </div>
-        <div style="text-align: center; font-size: 11px;">
-          Local Goverment Unit of Daet
-        </div>
-        <div style="text-align: center; font-size: 11px;">
-          Daet Camarines Norte
-        </div>
+        <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
+            <div style="text-align: center; font-size: 20px; font-weight: bold;">
+            INVENTORY CUSTODIAN SLIP
+            </div>
+            <div style="text-align: center; font-size: 11px;">
+            ${departments}
+            </div>
+            <div style="text-align: center; font-size: 11px;">
+            Local Goverment Unit of Daet
+            </div>
+            <div style="text-align: center; font-size: 11px;">
+            Daet Camarines Norte
+            </div>
 
-        <table style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
-          <thead>
-            <tr>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Quantity</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Unit</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" colspan="2">Amount</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Description</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Inventory Item No.</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Estimated Useful Life</th>
-            </tr>
-            <tr>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Unit Cost</th>
-              <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Total Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${groupedItems.map(group => `
-              <tr style="background-color: #fff; padding: 5px;">
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => (item.unitCost * group.length).toFixed(2)).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
-                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
-                </td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+            <table style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+            <thead>
+                <tr>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Quantity</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Unit</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" colspan="2">Amount</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Description</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Inventory Item No.</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;" rowspan="2">Estimated Useful Life</th>
+                </tr>
+                <tr>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Unit Cost</th>
+                <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; font-size: 9px; font-weight: normal;">Total Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${groupedItems.map(group => `
+                <tr style="background-color: #fff; padding: 5px;">
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >${group[0]?.unit || '-'}</td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                        ${group.map(item => 
+                            '₱' + (item.unitCost).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                            })).join('<br>')
+                        }
+                    </td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                        ${group.map(item => 
+                            '₱' + (item.unitCost * group.length).toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                            }))
+                            .join('<br>')
+                        }
+                    </td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;" >
+                    ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                    </td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                    ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                    </td>
+                    <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                    ${group.map(item => `${item.unitCost}`).join('<br>')}
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+            </table>
 
-        <div style="padding-top: 50px; border: 1px solid #000; border-collapse: collapse; display: flex; justify-content: space-around;">
-          <div style="text-align: center; font-size: 10px; font-weight: bold;">
-            <div>Received by:</div>
-            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Signature over Printed Name of End User</div>
-            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Position/Office</div>
-            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Date</div>
-          </div>
-          <div style="text-align: center; font-size: 10px; font-weight: bold;">
-            <div>Issued by:</div>
-            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
-            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Position/Office</div>
-            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Date</div>
-          </div>
+            <div style="padding-top: 50px; border: 1px solid #000; border-collapse: collapse; display: flex; justify-content: space-around;">
+            <div style="text-align: center; font-size: 10px; font-weight: bold;">
+                <div>Received by:</div>
+                <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Signature over Printed Name of End User</div>
+                <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Position/Office</div>
+                <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Date</div>
+            </div>
+            <div style="text-align: center; font-size: 10px; font-weight: bold;">
+                <div>Issued by:</div>
+                <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+                <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Position/Office</div>
+                <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+                <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+                <div>Date</div>
+            </div>
+            </div>
         </div>
-      </div>
     `;
     const contentPAR = `
       <div style="font-family: Arial, sans-serif; font-size: 10px; padding: 20px;">
-        <div style="text-align: center; font-size: 20px; font-weight: bold;">
+          <div style="text-align: center; font-size: 20px; font-weight: bold;">
           PROPERTY ACKNOWLEDGMENT RECEIPT
-        </div>
-        <div style="text-align: center; font-size: 11px;">
+          </div>
+          <div style="text-align: center; font-size: 11px;">
           ${departments}
-        </div>
-        <div style="text-align: center; font-size: 11px;">
+          </div>
+          <div style="text-align: center; font-size: 11px;">
           Local Goverment Unit of Daet
-        </div>
-        <div style="text-align: center; font-size: 11px;">
+          </div>
+          <div style="text-align: center; font-size: 11px;">
           Daet Camarines Norte
-        </div>
+          </div>
 
-        <table border="1" cellspacing="0" cellpadding="10" style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
+          <table border="1" cellspacing="0" cellpadding="10" style="width:100%; margin-top: 30px; border-collapse: collapse; font-size: 10px; text-align: center;">
           <thead>
-            <tr>
+              <tr>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Quantity</th>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit</th>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Description</th>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Property Number</th>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Date Acquired</th>
               <th style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center; background-color: #f0f0f0;">Unit Cost</th>
-            </tr>
+              </tr>
           </thead>
           <tbody>
-            ${groupedItems.map(group => `
+              ${groupedItems.map(group => `
               <tr style="background-color: #fff; padding: 5px;">
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.itemNOs}`).join('<br>')}
-                </td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
-                <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                  ${group.map(item => `${item.unitCost}`).join('<br>')}
-                </td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group.length || '-'}</td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.unit || '-'}</td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                      ${group.map(item => `${item.description} ${item.model} ${item.serialNo}`).join('<br>')}
+                  </td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                      ${group.map(item => `${item.itemNOs}`).join('<br>')}
+                  </td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">${group[0]?.dateAcquired || '-'}</td>
+                  <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
+                      ${group.map(item => 
+                          '₱' + Number(item.unitCost).toLocaleString('en-PH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                          })
+                      ).join('<br>')}
+                  </td>
               </tr>`).join('')}
           </tbody>
-        </table>
+          </table>
 
-        <div style="margin-top: 90px; display: flex; justify-content: space-around;">
+          <div style="margin-top: 90px; display: flex; justify-content: space-around;">
           <div style="text-align: center; font-size: 10px; font-weight: bold;">
-            <div>Received by:</div>
-            <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Signature over Printed Name of End User</div>
-            <div style="margin-top: 25px;">${departments || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Position/Office</div>
-            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Date</div>
+              <div>Received by:</div>
+              <div style="margin-top: 25px;">${groupedItems[0][0]?.enduserName || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Signature over Printed Name of End User</div>
+              <div style="margin-top: 25px;">${departments || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Position/Office</div>
+              <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Date</div>
           </div>
           <div style="text-align: center; font-size: 10px; font-weight: bold;">
-            <div>Issued by:</div>
-            <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Signature over Printed Name of Supply and/or Property Custodian</div>
-            <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Position/Office</div>
-            <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
-            <div style="border-top: 1px solid black; margin-top: 5px;"></div>
-            <div>Date</div>
+              <div>Issued by:</div>
+              <div style="margin-top: 25px;">${headData.fullname || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Signature over Printed Name of Supply and/or Property Custodian</div>
+              <div style="margin-top: 25px;">${headData.position || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Position/Office</div>
+              <div style="margin-top: 25px;">${new Date().toLocaleDateString() || 'N/A'}</div>
+              <div style="border-top: 1px solid black; margin-top: 5px;"></div>
+              <div>Date</div>
           </div>
-        </div>
+          </div>
       </div>
     `;
     printContent((docsPrint === 'par') ? contentPAR : contentICS);
@@ -1530,7 +1540,7 @@ const PAR_ICS = () => {
                             </>
                           )}
 
-                          {doc.status === "Upload Scanned Copy" && (
+                          {(doc.status === "Upload Scanned Copy" || doc.status === 'To Confirm') && (
                             <>
                               <button
                                 onClick={() => {
@@ -1541,7 +1551,9 @@ const PAR_ICS = () => {
                                 className="flex items-center gap-2 px-4 py-2 w-full hover:bg-gray-100 text-gray-700 text-sm"
                               >
                                 <Eye className="h-4 w-4 text-blue-600" />
-                                <span>Upload Scanned Copy</span>
+                                <span>
+                                  {doc.status === "Upload Scanned Copy" ? 'Upload Scanned Copy' : 'To Confirm'}
+                                </span>
                               </button>
 
                               <button
