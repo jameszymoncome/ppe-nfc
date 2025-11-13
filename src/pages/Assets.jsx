@@ -611,7 +611,7 @@ const Assets = () => {
                     </div>
                     <div className="w-1/2 flex items-center gap-2 text-xs">
                         <span className="font-medium">PAR No.:</span>
-                        <span className="border-b border-gray-400 flex-1 italic text-gray-500">{g.docNo}</span>
+                        <span className="border-b border-gray-400 flex-1 text-black">{g.docNo}</span>
                     </div>
                     </div>
 
@@ -905,7 +905,7 @@ const Assets = () => {
                     </div>
                     <div className="w-1/2 flex items-center gap-2 text-xs">
                         <span className="font-medium">PAR No.:</span>
-                        <span className="border-b border-gray-400 flex-1 italic text-gray-500">{g.docNo}</span>
+                        <span className="border-b border-gray-400 flex-1 text-black">{g.docNo}</span>
                     </div>
                     </div>
 

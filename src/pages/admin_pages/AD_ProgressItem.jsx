@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, WifiOff, Wifi, X, CloudUpload, Download } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
+import AD_Sidebar from '../../components/AD_Sidebar';
 import { useLocation } from "react-router-dom";
 import axios from 'axios';
-import { BASE_URL } from '../utils/connection';
-import { sendMessage, onMessage } from '../components/websocket';
-import DeviceListModal from '../components/DeviceListModal';
+import { BASE_URL } from '../../utils/connection';
+import { sendMessage, onMessage } from '../../components/websocket';
+import DeviceListModal from '../../components/DeviceListModal';
 import html2pdf from 'html2pdf.js';
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -16,7 +16,7 @@ import { PDFDocument } from "pdf-lib";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-const ProgressItem = () => {
+const AD_ProgressItem = () => {
     const location = useLocation();
     const { air_no, type, airnos } = location.state || {};
     const navigate = useNavigate();
@@ -220,9 +220,9 @@ const ProgressItem = () => {
             const allUploaded = downloadedForm.every(form => form === "Upload Scanned Form");
             const allConfirmed = downloadedForm.every(form => form === "Confirmation");
             const allPendingConfirmation = downloadedForm.every(form => form === "Pending Confirmation");
+            setCheckAllStatus(allPendingConfirmation);
 
             const allPendingConfirmationStatus = statusList.every(form => form === "Pending Confirmation");
-            setCheckAllStatus(allPendingConfirmationStatus);
 
             air_nos = [...new Set(air_nos)];
             typesss = [...new Set(typesss)];
@@ -237,6 +237,11 @@ const ProgressItem = () => {
                 setCurrentStep(2);
             } 
             if (allConfirmed) {
+                setCurrentStep(3);
+                downloadViewDocs(airnos, type);
+            }
+
+            if (allPendingConfirmation) {
                 setCurrentStep(3);
                 downloadViewDocs(airnos, type);
             }
@@ -289,13 +294,15 @@ const ProgressItem = () => {
                 },
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        navigate("/par-ics"); // ✅ Only runs when user clicks OK
+                        navigate("/ad-par-ics"); // ✅ Only runs when user clicks OK
                     }
                 });
             }
 
-            if (allPendingConfirmationStatus && userID === localStorage.getItem('userId')) {
-                console.log('sdbgbskjdgjs');
+            const userIdss = parseInt(localStorage.getItem('userId'), 10);
+
+            if (allPendingConfirmationStatus && userIdss === userID) {
+                console.log('sdbgbskjdgjs', localStorage.getItem('userId'));
                 setCurrentStep(3);
                 downloadViewDocs(airnos, type);
                 Swal.fire({
@@ -331,7 +338,7 @@ const ProgressItem = () => {
                 },
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        navigate("/par-ics"); // ✅ Only runs when user clicks OK
+                        navigate("/ad-par-ics"); // ✅ Only runs when user clicks OK
                     }
                 });
             }
@@ -421,7 +428,7 @@ const ProgressItem = () => {
             });
             if (isConfirmed) {
                 await updateProgressFunction();
-                navigate('/par-ics');
+                navigate('/ad-par-ics');
             }
         };
 
@@ -437,9 +444,7 @@ const ProgressItem = () => {
                 selectedItems: selectedItems,
                 department: localStorage.getItem('department'),
                 accessLevel: localStorage.getItem('accessLevel'),
-                position: localStorage.getItem('position'),
-                userId: localStorage.getItem('userId'),
-                accountableID: accountableID
+                position: localStorage.getItem('position')
             });
             console.log('Steppp: ', response.data);
             if (currentStep !== 3) getDocsData();
@@ -825,7 +830,7 @@ const ProgressItem = () => {
                       ${group.map(item => `${item.itemNOs}`).join('<br>')}
                     </td>
                     <td style="border: 1px solid #000; padding: 8px; vertical-align: middle; text-align: center;">
-                      ${group.map(item => `${item.usefulness} years`).join('<br>')}
+                      ${group.map(item => `${item.unitCost}`).join('<br>')}
                     </td>
                   </tr>`).join('')}
               </tbody>
@@ -1039,7 +1044,7 @@ const ProgressItem = () => {
 
     return (
         <div className="flex h-screen bg-gray-100 overflow-hidden">
-            <Sidebar />
+            <AD_Sidebar />
 
             <div className="relative flex-1 bg-gray-50 p-4 md:p-6 lg:p-8 overflow-y-auto">
                 {/* Header */}
@@ -1141,6 +1146,7 @@ const ProgressItem = () => {
                                 </div>
                                 <button
                                     onClick={handleDownloadForm}
+                                    disabled
                                     className="relative w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 py-3 px-4 rounded-br-lg rounded-bl-lg hover:bg-gray-200 transition-colors font-medium"
                                 >
                                     <span className="absolute top-2 left-2 bg-blue-500 text-white text-s font-bold rounded-full w-7 h-7 flex items-center justify-center">
@@ -1280,17 +1286,14 @@ const ProgressItem = () => {
                     {/* Next Button */}
                     <button
                         onClick={() => {
-                            if (currentStep === 3) {
+                            if (currentStep === 3 && localStorage.getItem('userId') !== accountableID) {
+                                console.log('hindi pa');
+                                navigate('/ad-par-ics');
+                            }
+                            if (currentStep === 3 && checkAllStatus && localStorage.getItem('userId') === accountableID){
                                 updateProgress();
                             }
-                            if (currentStep !== 3 && !checkAllStatus){
-                                console.log('may bago');
-                                updateProgress();
-                            }
-                            if (currentStep !== 3 && checkAllStatus){
-                                console.log('walang bago');
-                                setCurrentStep(prev => Math.min(prev + 1, 3));
-                            }
+                            setCurrentStep(prev => Math.min(prev + 1, 3));
                         }}
                         className={`px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transition-all duration-300
                             ${
@@ -1776,4 +1779,4 @@ const ProgressItem = () => {
     )
 }
 
-export default ProgressItem;
+export default AD_ProgressItem;

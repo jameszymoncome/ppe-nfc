@@ -482,8 +482,6 @@ useEffect(() => {
                 </th>
                 <th className="px-4 py-3 text-left">Document No.</th>
                 <th className="px-4 py-3 text-left">Document Type</th>
-                <th className="px-4 py-3 text-left">Assigned To</th>
-                <th className="px-4 py-3 text-left">Department</th>
                 <th className="px-4 py-3 text-left">Items</th>
                 <th className="px-4 py-3 text-left">Status</th>
                 <th className="px-4 py-3 text-left">Date Acquired</th>
@@ -531,29 +529,6 @@ useEffect(() => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {group.document_type || "Unknown"}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-white">
-                            {(() => {
-                              if (!group.assigned_to) return "?";
-                              const parts = group.assigned_to.trim().split(" ");
-                              if (parts.length === 1) return parts[0][0].toUpperCase();
-                              return (
-                                parts[0][0].toUpperCase() +
-                                parts[parts.length - 1][0].toUpperCase()
-                              );
-                            })()}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {group.assigned_to || "Unassigned"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {group.department}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {group.itemCount} item{group.itemCount > 1 ? "s" : ""}
