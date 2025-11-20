@@ -29,6 +29,58 @@ const Login = () => {
     position: '',
   });
 
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgotPassword = async () => {
+  const { value: email } = await Swal.fire({
+    title: "Reset Password",
+    text: "Enter your email to receive a reset link",
+    input: "email",
+    inputPlaceholder: "your@email.com",
+    showCancelButton: true,
+    confirmButtonText: "Send Reset Link",
+    confirmButtonColor: "#2563eb"
+  });
+
+  if (!email) return;
+
+  try {
+    const response = await fetch(`${BASE_URL}/forgot_password.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      Swal.fire({
+        icon: "success",
+        title: "Email Sent!",
+        text: "A password reset link has been sent to your email.",
+        confirmButtonColor: "#2563eb"
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: data.message,
+        confirmButtonColor: "#ef4444"
+      });
+    }
+  } catch (err) {
+    Swal.fire({
+      icon: "error",
+      title: "Network Error",
+      text: "Cannot connect to server.",
+      confirmButtonColor: "#ef4444"
+    });
+  }
+};
+
+
   // Form validation
   const validateLoginForm = () => {
     if (!username.trim()) {
@@ -374,7 +426,11 @@ const Login = () => {
                   Remember me
                 </label>
               </div>
-              <button type="button" className="text-sm text-blue-600 hover:text-blue-500 transition-colors">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
+              >
                 Forgot Password?
               </button>
             </div>
@@ -588,6 +644,39 @@ const Login = () => {
           </div>
         </div>
       )}
+      {isForgotOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
+          <button
+            onClick={() => setIsForgotOpen(false)}
+            className="absolute top-3 right-3 text-gray-600 hover:text-red-500 text-xl"
+          >
+            ×
+          </button>
+
+          <h2 className="text-xl font-semibold text-center mb-4">Forgot Password</h2>
+          <p className="text-gray-600 text-sm mb-4">
+            Enter your email address and we will send a password reset link.
+          </p>
+
+          <input
+            type="email"
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+            placeholder="Enter your email"
+            className="w-full px-3 py-2 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <button
+            type="button"
+            className="text-sm text-blue-600 hover:text-blue-500"
+            onClick={() => navigate("/forgot-password")}
+          >
+            Forgot Password?
+          </button>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

@@ -27,6 +27,8 @@ import AssetTransferProgress from './pages/AssetTranferProgress';
 import ProgressItem from './pages/ProgressItem';
 import DocumentItems from './pages/DocumentItems';
 import DeviceMonitoring from './pages/DeviceMonitoring';
+import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgotPassword';
 //Admin/Dept Head Routes
 import AD_Dashboard from './components/AD_Dashboard';
 import AD_PAR_ICS from './pages/admin_pages/AD_PAR_ICS';
@@ -45,6 +47,7 @@ import AD_WasteDisposal from './pages/admin_pages/AD_WasteDisposal';
 import AD_DocumentItems from './pages/admin_pages/AD_DocumentItems';
 import AD_AssetTransferProgress from './pages/admin_pages/AD_AssetTransferProgress';
 import AD_ProgressItem from './pages/admin_pages/AD_ProgressItem';
+import TransferAssets from './pages/TransferAssets';
 //Employee Routes
 import EM_PAR_ICS from './pages/employee_pages/EM_PAR_ICS';
 import EM_Profile from './pages/employee_pages/EM_Profile';
@@ -60,6 +63,7 @@ import EM_DocumentItems from './pages/employee_pages/EM_DocumentItems';
 import EM_Property_Assignment from './pages/employee_pages/EM_Property_Assignment';
 import EM_AssetTransferProgress from './pages/employee_pages/EM_AssetTransferProgress';
 import EM_ProgressItem from './pages/employee_pages/EM_ProgressItem';
+import EM_TransferAssets from './pages/employee_pages/EM_TransferAssets';
 //Inventory Committee Routes
 import IC_Dashboard from './components/IC_Dashboard';
 import IC_PAR_ICS from './pages/inv_committee_pages/IC_PAR_ICS';
@@ -77,6 +81,7 @@ import IC_WasteDisposal from './pages/inv_committee_pages/IC_WasteDisposal';
 import IC_DocumentItems from './pages/inv_committee_pages/IC_DocumentItems';
 import IC_DeviceMonitoring from './pages/inv_committee_pages/IC_DeviceMonitoring';
 import IC_AssetTransferProgress from './pages/inv_committee_pages/IC_AssetTransferProgress';
+import IC_TransferAssets from './pages/inv_committee_pages/IC_TransferAssets';
 //End User Routes
 import EU_Dashboard from './components/EU_Dashboard';
 import EU_Profile from './pages/end_user_pages/EU_Profile';
@@ -282,22 +287,22 @@ const App = () => {
         <Route path="/ic-scan" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
               <IC_Scan />
             </ProtectedRoute>} />
-        <Route path="/ad-report-issue" element={<ProtectedRoute allowedRoles={['ADMIN']}>
+        <Route path="/assets/ad-report-issue" element={<ProtectedRoute allowedRoles={['ADMIN']}>
               <AD_ReportIssue />
             </ProtectedRoute>} />
-        <Route path="/ad-waste-disposal" element={<ProtectedRoute allowedRoles={['ADMIN']}>
+        <Route path="/assets/ad-waste-disposal" element={<ProtectedRoute allowedRoles={['ADMIN']}>
               <AD_WasteDisposal />
             </ProtectedRoute>} />
-        <Route path="/em-report-issue" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
+        <Route path="/assets/em-report-issue" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
               <EM_ReportIssue />
             </ProtectedRoute>} />
-        <Route path="/em-waste-disposal" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
+        <Route path="/assets/em-waste-disposal" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
               <EM_WasteDisposal />
             </ProtectedRoute>} />
-        <Route path="/ic-report-issue" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
+        <Route path="/assets/ic-report-issue" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
               <IC_ReportIssue />
             </ProtectedRoute>} />
-        <Route path="/ic-waste-disposal" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
+        <Route path="/assets/ic-waste-disposal" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
               <IC_WasteDisposal />
             </ProtectedRoute>} />
         <Route path="/assets/ad-document/:document_no" element={<ProtectedRoute allowedRoles={['ADMIN']}>
@@ -336,6 +341,17 @@ const App = () => {
         <Route path="/ad-progress-item" element={<ProtectedRoute allowedRoles={['ADMIN']}>
               <AD_ProgressItem />
             </ProtectedRoute>} />
+          <Route path="/transfer-assets" element={<ProtectedRoute allowedRoles={['SUPER ADMIN']}>
+              <TransferAssets />
+            </ProtectedRoute>} />
+          <Route path="/ic-transfer-assets" element={<ProtectedRoute allowedRoles={['INVENTORY COMMITTEE']}>
+              <IC_TransferAssets />
+            </ProtectedRoute>} />
+          <Route path="/em-transfer-assets" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}>
+              <EM_TransferAssets />
+            </ProtectedRoute>} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </BrowserRouter>
   );

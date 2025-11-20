@@ -11,3 +11,15 @@
 .swal2-popup.shake {
   animation: shake 0.4s;
 }
+
+.react-select__control {
+  @apply border border-gray-300 rounded px-1 shadow-sm;
+}
+
+.react-select__control--is-focused {
+  @apply ring-2 ring-blue-500 border-blue-500;
+}
+
+.react-select__menu {
+  @apply text-gray-700;
+}

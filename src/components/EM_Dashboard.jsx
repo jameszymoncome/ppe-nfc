@@ -1,115 +1,188 @@
-import React, { useState } from 'react';
-import { Search, Mail, FileText, Building, Wrench, Printer, Home, FileCheck, Eye, BarChart, Users, Settings } from 'lucide-react';
-import EM_Sidebar from './EM_Sidebar';
+import React, { useEffect, useState } from "react";
+import EM_Sidebar from "./EM_Sidebar";
+import {
+  Activity,
+  Calendar,
+  CheckCircle,
+  FileText,
+  Package,
+  ClipboardPlus,
+  Eye,
+} from "lucide-react";
+
+import { BASE_URL } from "../utils/connection";
 
 const EM_Dashboard = () => {
-  const firstName = localStorage.getItem('firstName');
-  const lastName = localStorage.getItem('lastname');
+  const firstName = localStorage.getItem("firstName");
+  const lastName = localStorage.getItem("lastname");
+  
+  // IMPORTANT: must match backend parameter ?usersID=
+  const userId = localStorage.getItem("userId");
 
-  const sidebarItems = [
-    { name: 'Dashboard', icon: Home, active: true },
-    { name: 'PPE Entry Form', icon: FileCheck, active: false },
-    { name: 'Inspection', icon: Eye, active: false },
-    { name: 'Report', icon: BarChart, active: false },
-    { name: 'Account Management', icon: Users, active: false },
-    { name: 'Manage Tables', icon: Settings, active: false }
-  ];
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const metrics = [
-    { title: 'Total PAR Items', value: '1,056', subtitle: '+36 items added since Last Year', trend: 'up' },
-    { title: 'Total ICS (Semi-Expendable) Items', value: '1,056', subtitle: '+36 items added since Last Year', trend: 'up' },
-    { title: 'Buildings and Structures', value: '—', subtitle: '— components Updated', trend: 'neutral' },
-    { title: 'Pending MFC Tagging', value: '57', subtitle: '+52 Items still not tagged', trend: 'up' },
-    { title: 'Unreleased PAR/ICS', value: '1,056', subtitle: 'Awaiting department acknowledgment', trend: 'neutral' },
-    { title: 'Items for Reassignment/Disposal', value: '—', subtitle: '— pending approval', trend: 'neutral' },
-    { title: 'Repair & Lost Reports This Month', value: '—', subtitle: '— Reports +— Lost reports', trend: 'neutral' },
-    { title: 'Total Users / Departments', value: '345 Users', subtitle: '57 Departments', trend: 'neutral' }
-  ];
+  // FETCH EMPLOYEE ITEMS FROM BACKEND
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/getItems.php?role=EMPLOYEE&usersID=${userId}`
+        );
 
-  const quickLinks = [
-    { name: 'Property Assignment', icon: Mail, color: 'bg-blue-800' },
-    { name: 'PAR and ICS', icon: FileText, color: 'bg-blue-800' },
-    { name: 'Building and Structures', icon: Building, color: 'bg-blue-800' },
-    { name: 'Log Repair / Lost Item', icon: Wrench, color: 'bg-blue-800' },
-    { name: 'Generate Reports', icon: Printer, color: 'bg-blue-800' }
-  ];
+        const data = await res.json();
 
-  const recentActivity = [
-    {
-      date: '12/07/2025',
-      name: 'Angelo Aban',
-      office: 'Office of the Mayor',
-      activity: 'Description'
+        if (data.items) {
+          setItems(data.items);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.log("Error loading employee items:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [userId]);
+
+  const totalAssets = items.length;
+  const assigned = items.filter((d) => d.status === "Assigned").length;
+  const pending = items.filter((d) => d.status === "For Tagging").length;
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Assigned":
+        return "bg-green-100 text-green-700";
+      case "For Tagging":
+        return "bg-yellow-100 text-yellow-700";
+      case "Done Tagging":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-gray-100 text-gray-600";
     }
-  ];
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-gray-100">
       <EM_Sidebar />
 
-      {/* Main content area */}
-      <div className="flex-1 p-8 overflow-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-800 mb-2">Welcome, {firstName} {lastName}!</h1>
-          <p className="text-gray-600">Here's a quick overview of your tasks and activity for today.</p>
-        </div>
+      {/* MAIN PAGE */}
+      <div className="flex-1 overflow-auto">
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {metrics.map((metric, index) => (
-            <div key={index} className="bg-gray-200 rounded-lg p-6">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">{metric.title}</h3>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</div>
-              {metric.subtitle && (
-                <p className="text-xs text-gray-500">{metric.subtitle}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-md">
+          <div className="p-8">
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Activity size={32} />
+              Employee Dashboard
+            </h1>
 
-        {/* Quick Links */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Links</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {quickLinks.map((link, index) => (
-              <div key={index} className={`${link.color} rounded-lg p-6 text-white cursor-pointer hover:opacity-90 transition-opacity`}>
-                <div className="flex flex-col items-center text-center">
-                  <link.icon className="h-8 w-8 mb-3" />
-                  <span className="text-sm font-medium">{link.name}</span>
-                </div>
-              </div>
-            ))}
+            <p className="text-blue-200 flex items-center gap-2">
+              <Calendar size={16} /> Your personal assets only
+            </p>
+
+            <p className="mt-2 text-lg font-semibold">
+              Welcome, {firstName} {lastName}
+            </p>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+            <p className="text-gray-500 flex items-center gap-2">
+              <Package size={20} /> Total My Assets
+            </p>
+            <h2 className="text-4xl font-bold mt-1">{totalAssets}</h2>
           </div>
-          <div className="overflow-x-auto">
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+            <p className="text-gray-500 flex items-center gap-2">
+              <CheckCircle size={20} /> Assigned
+            </p>
+            <h2 className="text-4xl font-bold mt-1">{assigned}</h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-yellow-500">
+            <p className="text-gray-500 flex items-center gap-2">
+              <FileText size={20} /> For Tagging
+            </p>
+            <h2 className="text-4xl font-bold mt-1">{pending}</h2>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow border-l-4 border-purple-500">
+            <p className="text-gray-500 flex items-center gap-2">
+              <Activity size={20} /> Recent Updates
+            </p>
+            <h2 className="text-4xl font-bold mt-1">
+              {items.slice(0, 5).length}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* RECENT ASSETS TABLE */}
+        <div className="px-8 pb-8">
+          <div className="bg-white rounded-xl shadow overflow-hidden">
+
+            <h2 className="p-4 border-b text-lg font-semibold text-blue-800">
+              My Recent Assets
+            </h2>
+
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office/Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                  <th className="p-3 text-left">Document No</th>
+                  <th className="p-3 text-left">Type</th>
+                  <th className="p-3 text-left">Date Issued</th>
+                  <th className="p-3 text-left">Status</th>
+                  <th className="p-3 text-left">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentActivity.map((activity, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.office}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.activity}</td>
-                  </tr>
-                ))}
+
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={6} className="text-center py-6">Loading...</td></tr>
+                ) : items.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center py-6">No assets found.</td></tr>
+                ) : (
+                  items.slice(0, 15).map((item, i) => (
+                    <tr key={i} className={i % 2 ? "bg-gray-50" : "bg-white"}>
+                      <td className="p-3">{item.documentNo}</td>
+                      <td className="p-3">{item.type}</td>
+                      <td className="p-3">{item.dateIssued}</td>
+
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </td>
+
+                      <td className="p-3 flex items-center gap-3">
+                        {/* VIEW BUTTON */}
+                        <button className="text-blue-600 hover:text-blue-800">
+                          <Eye size={18} />
+                        </button>
+
+                        {/* ADD INSPECTION DETAILS */}
+                        <button
+                          className="text-green-600 hover:text-green-800"
+                          onClick={() =>
+                            console.log("Add inspection for:", item.documentNo)
+                          }
+                        >
+                          <ClipboardPlus size={18} />
+                        </button>
+                      </td>
+
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+
           </div>
         </div>
       </div>

@@ -3,44 +3,54 @@ import { User, Mail, Phone, Building, Calendar, Edit3, Save, X, Eye, EyeOff } fr
 import IC_Sidebar from '../../components/IC_Sidebar';
 import { BASE_URL } from '../../utils/connection';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const IC_Profile = () => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [userData, setUserData] = useState('');
   const [editData, setEditData] = useState({ ...userData });
   const [loading, setLoading] = useState(true);
+  const [showResignModal, setShowResignModal] = useState(false);
+  const [showSelection, setShowSelection] = useState(false);
   const [error, setError] = useState('');
+  const [userToReplace, setUserToReplace] = useState(null);
+  const [selectedReplacement, setSelectedReplacement] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
+  const [departmentName, setDepartmentName] = useState('TITEEE');
+  const [deptPosition, setDeptPostition] = useState('');
+  const [users, setUsers] = useState([]);
 
   const userRole = localStorage.getItem('accessLevel');
 
   useEffect(() => {
-  const fetchProfile = async () => {
-    const userId = localStorage.getItem('userId');
-    try {
-      const res = await fetch(`${BASE_URL}/profile.php?user_id=${userId}`);
-      const data = await res.json();
-      if (data.success) {
-        console.log('User Profile:', data.data);
-        setUserData(data.data);           // ✅ Set user data here
-        setEditData(data.data);           // ✅ Initialize editData here
-        setLoading(false);                // ✅ Stop loading
-      } else {
-        console.error(data.message);
-        setError(data.message);
+    const fetchProfile = async () => {
+      const userId = localStorage.getItem('userId');
+      try {
+        const res = await fetch(`${BASE_URL}/profile.php?user_id=${userId}`);
+        const data = await res.json();
+        if (data.success) {
+          console.log('User Profile:', data.data);
+          setUserToReplace(data.data);
+          setUserData(data.data);           // ✅ Set user data here
+          setEditData(data.data);           // ✅ Initialize editData here
+          setLoading(false);                // ✅ Stop loading
+        } else {
+          console.error(data.message);
+          setError(data.message);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError('Failed to fetch user profile.');
         setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching profile:', err);
-      setError('Failed to fetch user profile.');
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchProfile();
-}, []);
-
-  
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setEditData(prev => ({
@@ -49,53 +59,51 @@ const IC_Profile = () => {
     }));
   };
 
-
-const handleSave = async () => {
-  try {
-    Swal.fire({
-      title: 'Saving...',
-      text: 'Please wait while we update your profile.',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-
-    const res = await fetch(`${BASE_URL}/updateProfile.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editData)
-    });
-
-    const result = await res.json();
-    Swal.close();
-
-    if (result.success) {
-      setUserData(editData);
-      setIsEditing(false);
-
+  const handleSave = async () => {
+    try {
       Swal.fire({
-        icon: 'success',
-        title: 'Profile Updated',
-        text: result.message || 'Your profile has been updated successfully.'
+        title: 'Saving...',
+        text: 'Please wait while we update your profile.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
       });
-    } else {
+
+      const res = await fetch(`${BASE_URL}/updateProfile.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editData)
+      });
+
+      const result = await res.json();
+      Swal.close();
+
+      if (result.success) {
+        setUserData(editData);
+        setIsEditing(false);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Profile Updated',
+          text: result.message || 'Your profile has been updated successfully.'
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: result.message || 'Something went wrong while updating the profile.'
+        });
+      }
+    } catch (err) {
+      Swal.close();
       Swal.fire({
         icon: 'error',
-        title: 'Update Failed',
-        text: result.message || 'Something went wrong while updating the profile.'
+        title: 'Server Error',
+        text: 'Unable to connect to the server. Please try again later.'
       });
     }
-  } catch (err) {
-    Swal.close();
-    Swal.fire({
-      icon: 'error',
-      title: 'Server Error',
-      text: 'Unable to connect to the server. Please try again later.'
-    });
-  }
-};
-
+  };
 
   const handleCancel = () => {
     setEditData(userData);
@@ -119,6 +127,98 @@ const handleSave = async () => {
     return parts.filter(Boolean).join(' ');
   };
 
+  const showModalConstatiner = () => {
+    Swal.fire({
+      title: "Confirmation",
+      text: "Are your sure you want to transfer all of your assets?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, I'm sure.",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "rounded-2xl",
+        confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
+        cancelButton: "bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded mx-2",
+      },
+      buttonsStyling: false,
+    }).then((result) => {
+      if (result.isConfirmed){
+        transferItem();
+      }
+    });
+  };
+
+  const transferItem = async () => {
+    try {
+      const response = await axios.post(`${BASE_URL}/transferAssets.php`, {
+        usersID: localStorage.getItem('userId'),
+        department: localStorage.getItem('department'),
+        role: localStorage.getItem("accessLevel")
+      });
+      if (response.data.success){
+        if (localStorage.getItem("accessLevel") === "EMPLOYEE" || localStorage.getItem("accessLevel") === "INVENTORY COMMITTEE"){
+          setShowResignModal(true);
+        }
+        else {
+          Swal.fire({
+            title: "Transfer Completed",
+            text: "Transferring is done.",
+            icon: "success",
+            showCancelButton: true,
+            confirmButtonText: "OK",
+            cancelButtonText: "Close",
+            customClass: {
+              popup: "rounded-2xl",
+              confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded",
+              cancelButton: "bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded mx-2",
+            },
+            buttonsStyling: false,
+          });
+        }
+      }
+      else {
+        console.log('Transfer Name:', response.data.message);
+        Swal.fire({
+          title: "No assets available",
+          text: "The system cannot proccess to transfer because no assets are assigned to this user.",
+          icon: "warning",
+          confirmButtonText: "Okay",
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          },
+          buttonsStyling: false,
+        });
+      }
+    } catch (error) {
+        console.error('Error fetching scrapped items:', error);
+    }
+  };
+
+  const getDeptHead = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/getDepartmentHead.php`, {
+          params: {
+              department: localStorage.getItem('department')
+          }
+      });
+      console.log('Department Head:', response.data.data);
+      setUsers(response.data.data);
+      // setDepartmentName(response.data.data.deptName);
+      // setDeptPostition(response.data.data.position);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  }
+
+  const fetchUsers = () => {
+    fetch(`${BASE_URL}/retrieve_users.php`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUsers(data.data);
+      });
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <IC_Sidebar />
@@ -136,13 +236,23 @@ const handleSave = async () => {
                 <p className="text-gray-600">Manage your account information</p>
               </div>
               {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Edit3 size={20} />
-                  Edit Profile
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => showModalConstatiner()}
+                    className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Edit3 size={20} />
+                    Transfer All Asset
+                  </button>
+
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Edit3 size={20} />
+                    Edit Profile
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <button
@@ -381,8 +491,103 @@ const handleSave = async () => {
           </>
         )}
       </div>
+
+      {showResignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+            <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-yellow-700">Transfering Assets</h3>
+              <button
+                onClick={() => {
+                  setShowResignModal(false);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-700">
+                Where you transfer your assets with:
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  className="w-full px-4 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 font-medium"
+                  onClick={() => {
+                    fetchUsers();
+                    setShowSelection(true);
+                    setSelectedReplacement('choose')}
+                  }
+                >
+                  Choose a employee
+                </button>
+                <button
+                  className="w-full px-4 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-medium"
+                  onClick={() => {
+                    setShowSelection(true);
+                    getDeptHead();
+                    setSelectedReplacement('dept')}
+                  }
+                >
+                  Transfer to Depeartment Head
+                </button>
+              </div>
+
+              {showSelection && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select {selectedReplacement === "choose" ? "Employee" : "Department Head"}</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
+                    onChange={e => {
+                      setSelectedUser(e.target.value)
+                      console.log(e.target.value)
+                    }}
+                    value={selectedUser}
+                  >
+                    <option value="choose">Select {selectedReplacement === "choose" ? "user" : "department head"}</option>
+                    {users
+                      .filter(u => u.user_id !== userToReplace?.user_id)
+                      .map(u => (
+                        <option key={u.user_id} value={u.user_id}>
+                          {u.full_name} ({u.department})
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                    onClick={() => {
+                      navigate("/inv-transfer-assets", {
+                        state: { userId: selectedUser }
+                      });
+                    }}
+                    
+                  >
+                    Select Asset to Transfer
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowResignModal(false);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) }
     </div>
   );
 };
 
 export default IC_Profile;
+
+

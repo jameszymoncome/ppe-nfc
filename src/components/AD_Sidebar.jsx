@@ -167,19 +167,6 @@ const AD_Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/assets/ad-asset-transfer"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
-                            isActive ? 'bg-blue-100 text-blue-700' : ''
-                          }`
-                        }
-                      >
-                        <FolderSync className="w-4 h-4 mr-2" />
-                        <span className="text-sm">Transfer</span>
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
                         to="/assets/ad-assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
@@ -189,6 +176,19 @@ const AD_Sidebar = () => {
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         <span className="text-sm">Assets</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/assets/ad-asset-transfer"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <FolderSync className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Transfer</span>
                       </NavLink>
                     </li>
                     <li>

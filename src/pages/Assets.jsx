@@ -1172,45 +1172,49 @@ const Assets = () => {
 
                   {/* SIGNATURE SECTION */}
                   <div className="grid grid-cols-2 border border-black mt-4 text-xs">
-                    <div className="p-2 border-r border-black">
-                      <p className="font-semibold mb-1">Received by :</p>
 
-                      <div className="border-b border-black h-5 mb-1 flex items-center justify-center">
+                    {/* RECEIVED BY */}
+                    <div className="p-4 text-center border-r border-black">
+                      <p className="font-medium mb-2">Received by:</p>
+
+                      <div className="border-b border-gray-400 h-7 mb-1 flex items-center justify-center font-semibold">
                         {g.items[0]?.enduserName || "N/A"}
                       </div>
-                      <p className="text-[9px] text-center">Signature over Printed Name of End User</p>
+                      <p className="text-[9px]">Signature over Printed Name of End User</p>
 
-                      <div className="border-b border-black h-5 mt-2 mb-1 flex items-center justify-center">
+                      <div className="border-b border-gray-400 h-7 mt-3 mb-1 flex items-center justify-center font-semibold">
                         {g.dept || "N/A"}
                       </div>
-                      <p className="text-[9px] text-center">Position/Office</p>
+                      <p className="text-[9px]">Position/Office</p>
 
-                      <div className="border-b border-black h-5 mt-2 mb-1 flex items-center justify-center">
+                      <div className="border-b border-gray-400 h-7 mt-3 mb-1 flex items-center justify-center font-semibold">
                         {new Date().toLocaleDateString()}
                       </div>
-                      <p className="text-[9px] text-center">Date</p>
+                      <p className="text-[9px]">Date</p>
                     </div>
 
-                    <div className="p-2">
-                      <p className="font-semibold mb-1">Issued by :</p>
+                    {/* ISSUED BY */}
+                    <div className="p-4 text-center border-l border-black">
+                      <p className="font-medium mb-2">Issued by:</p>
 
-                      <div className="border-b border-black h-5 mb-1 flex items-center justify-center">
+                      <div className="border-b border-gray-400 h-7 mb-1 flex items-center justify-center font-semibold">
                         {g.head?.fullname || "N/A"}
                       </div>
-                      <p className="text-[9px] text-center">Signature over Printed Name of Supply</p>
-                      <p className="text-[9px] text-center">and/or Property Custodian</p>
+                      <p className="text-[9px]">Signature over Printed Name of Supply and/or Property Custodian</p>
 
-                      <div className="border-b border-black h-5 mt-2 mb-1 flex items-center justify-center">
+                      <div className="border-b border-gray-400 h-7 mt-3 mb-1 flex items-center justify-center font-semibold">
                         {g.head?.position || "N/A"}
                       </div>
-                      <p className="text-[9px] text-center">Position/Office</p>
+                      <p className="text-[9px]">Position/Office</p>
 
-                      <div className="border-b border-black h-5 mt-2 mb-1 flex items-center justify-center">
+                      <div className="border-b border-gray-400 h-7 mt-3 mb-1 flex items-center justify-center font-semibold">
                         {new Date().toLocaleDateString()}
                       </div>
-                      <p className="text-[9px] text-center">Date</p>
+                      <p className="text-[9px]">Date</p>
                     </div>
+
                   </div>
+
 
                 </div>
               </div>
@@ -1532,8 +1536,7 @@ const Assets = () => {
                         <div className="border-b border-black h-6 mb-1 flex items-center justify-center">
                         {g.head?.fullname || 'N/A'}
                         </div>
-                        <p className="text-[10px] text-center">Signature over Printed Name of Supply</p>
-                        <p className="text-[10px] text-center">and/or Property Custodian</p>
+                        <p className="text-[10px] text-center">Signature over Printed Name of Supply and/or Property Custodian</p>
                         <div className="border-b border-black h-6 mb-1 mt-3 flex items-center justify-center">
                         {g.head?.position || 'N/A'}
                         </div>

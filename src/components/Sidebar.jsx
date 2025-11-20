@@ -383,19 +383,6 @@ const Sidebar = () => {
                   <ul className="ml-6 mt-2 space-y-1">
                     <li>
                       <NavLink
-                        to="/assets/asset-transfer"
-                        className={({ isActive }) =>
-                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
-                            isActive ? 'bg-blue-100 text-blue-700' : ''
-                          }`
-                        }
-                      >
-                        <FolderSync className="w-4 h-4 mr-2" />
-                        <span className="text-sm">Transfer</span>
-                      </NavLink>
-                    </li>
-                    <li>
-                      <NavLink
                         to="/assets/assets"
                         className={({ isActive }) =>
                           `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
@@ -405,6 +392,19 @@ const Sidebar = () => {
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         <span className="text-sm">Assets</span>
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to="/assets/asset-transfer"
+                        className={({ isActive }) =>
+                          `${navLinkClass} hover:bg-gray-50 pl-4 py-2 flex items-center ${
+                            isActive ? 'bg-blue-100 text-blue-700' : ''
+                          }`
+                        }
+                      >
+                        <FolderSync className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Transfer</span>
                       </NavLink>
                     </li>
                     <li>
